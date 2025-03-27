@@ -1,0 +1,34 @@
+<script type="application/javascript">
+	function sendRequest(){
+		$("#responseAPI").html("<br/><i class='fa fa-refresh fa-spin fa-5x'></i>");
+		$.ajax(settings)
+			.done(function (response) { 
+				var o = "";
+				if(response.result==0){
+					//------------------------------------------------------------
+					o+= "<h2>Data:</h2>";
+					o+="<pre><ul>"; 
+					o+="<li>Total: "+response.total+"</li>";
+					o+="</ul></pre>"; 
+					//------------------------------------------------------------
+					var data = response.data;
+					o+= "<h2>Organization:</h2>";
+					o+="<pre><ol>"; 
+					for(var i in data){ 
+						o+="<li><ul style='border-bottom:1px solid #eee'>"; 
+						for(var j in data[i]){ o+="<li>"+j+": "+data[i][j]+"</li>"; }
+						o+="</ul></li>"; 
+					}
+					o+="</ol></pre>"; 
+					//------------------------------------------------------------
+					o+= "<h2>Response:</h2>";
+					o+="<pre>"; 
+					o+=JSON.stringify(response);
+					o+="</pre>"; 
+					//------------------------------------------------------------
+				}else{ o+= "<h2>Message:</h2><pre>"+response.msg;+"</pre>"; }
+				$("#responseAPI").html(o); 
+			})
+			.fail(function (xhr) { $("#responseAPI").text(xhr.status+": "+xhr.statusText); });
+	}
+</script>

@@ -1,0 +1,45 @@
+<script type="application/javascript">
+	function sendRequest(){
+		$("#responseAPI").html("");
+		if(validateData()){ return; }
+		$("#responseAPI").html("<br/><i class='fa fa-refresh fa-spin fa-5x'></i>");
+		settings.data.orgid      = $("#orgid"     ).val().trim();
+		settings.data.pagination = $("#pagination").val().trim();
+		settings.data.perpage    = $("#perpage"   ).val().trim();
+		settings.data.startpage  = $("#startpage" ).val().trim();
+		settings.data.order      = $("#order"     ).val().trim();
+		settings.data.sort       = $("#sort"      ).val().trim();
+		settings.data.added_by   = $("#added_by"  ).val().trim();
+		$.ajax(settings)
+			.done(function (tmp, response, xhr) { 
+				//--------------------------------------------------------
+				var o = "";
+				//--------------------------------------------------------
+				o+= "<h2>Data:</h2>";
+				o+="<pre><ul>"; 
+				o+="<li>Page number: "+xhr.responseJSON.pageNumber+"</li>";
+				o+="<li>Per page: "+xhr.responseJSON.perPage+"</li>";
+				o+="<li>Total: "+xhr.responseJSON.totalWords+"</li>";
+				o+="<li>is last page: "+xhr.responseJSON.endsign+"</li>";
+				o+="</ul></pre>"; 
+				//--------------------------------------------------------
+				o+= "<h2>Words:</h2>";
+				var data = xhr.responseJSON.words;
+				o+="<pre><ol>"; 
+				for(var i in data){ o+="<li>"+data[i]+"</li>"; }
+				o+="</ol></pre>"; 
+				//--------------------------------------------------------
+				o+= "<h2>Response:</h2>";
+				o+="<pre>"; 
+				o+=JSON.stringify(xhr.responseJSON);
+				o+="</pre>"; 
+				//--------------------------------------------------------
+				$("#responseAPI").html(o); 
+				//--------------------------------------------------------
+			})
+			.fail(function (xhr){
+				$("#responseAPI").html(xhr.status+": "+xhr.statusText); 
+				if(xhr.status==400){ $("#responseAPI").append("<br/><br/><br/>"+xhr.responseJSON.message); }
+			});
+	}
+</script>

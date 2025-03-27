@@ -1,0 +1,29 @@
+<script type="application/javascript">
+	function sendRequest(){
+		$("#responseAPI").html("");
+		if(validateData()){ return; }
+		$("#responseAPI").html("<br/><i class='fa fa-refresh fa-spin fa-5x'></i>");
+		settings.data.orgid  = $("#orgid" ).val().trim();
+		settings.data.userid = $("#userid").val().trim();
+		settings.data.term   = $("#term"  ).val().trim();
+		$.ajax(settings)
+			.done(function (tmp, response, xhr) { 
+				var o = "";
+				if(xhr.status==204){ 
+					o+= "<h2>Message:</h2><pre>Term not found in database</pre>"; 
+					o+= "<h2>Response:</h2>";
+					o+="<pre>"; 
+					o+="</pre>"; 
+				}else{
+					o+= "<h2>Message:</h2>";
+					o+="<pre>"+xhr.responseJSON.message+"</pre>"; 
+					o+= "<h2>Response:</h2>";
+					o+="<pre>"; 
+					o+=JSON.stringify(xhr.responseJSON);
+					o+="</pre>"; 
+				}
+				$("#responseAPI").html(o); 
+			})
+			.fail(function (xhr) { $("#responseAPI").text(xhr.status+": "+xhr.statusText); });
+	}
+</script>

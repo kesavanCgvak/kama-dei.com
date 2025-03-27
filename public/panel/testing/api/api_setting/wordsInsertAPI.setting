@@ -1,0 +1,14 @@
+{
+  "async": true,
+  "crossDomain": true,
+  "url": "/api/v1/words/term_insert",
+  "method": "POST",
+  "cache": false,
+  "headers": {
+    "apikey": "xxxxxxxxxx",
+    "cache-control": "no-cache"
+  },
+  "dataType": "json",
+  "processData": true,
+  "data": {"orgid":"15", "words":["air","2 door","7UP"]}
+}

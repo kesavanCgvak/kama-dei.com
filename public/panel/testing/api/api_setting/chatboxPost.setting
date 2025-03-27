@@ -1,0 +1,14 @@
+{
+  "async": true,
+  "crossDomain": true,
+  "url": "/api/v1/chatbox/",
+  "method": "POST",
+  "cache": false,
+  "headers": {
+    "apikey": "xxxxxxxxxx",
+    "cache-control": "no-cache"
+  },
+  "dataType": "json",
+  "processData": true,
+  "data": {"userid":"227", "orgid":"1", "state":"1", "inquiry":{"request":{"type":"text","message":"I,am,hungry","answers":[]}}}
+}

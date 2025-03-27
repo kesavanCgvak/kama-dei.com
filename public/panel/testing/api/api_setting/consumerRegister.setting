@@ -1,0 +1,14 @@
+{
+  "async": true,
+  "crossDomain": true,
+  "url": "/api/v1/chatbox/consumer_register",
+  "method": "POST",
+  "cache": false,
+  "headers": {
+    "apikey": "xxxxxxxxxx",
+    "cache-control": "no-cache"
+  },
+  "dataType": "json",
+  "processData": true,
+  "data": {"email":"behrooz@kama-dei.com", "orgid":"1", "name":"behrooz"}
+}

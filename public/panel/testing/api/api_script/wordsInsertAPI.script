@@ -1,0 +1,76 @@
+<script type="application/javascript">
+	function sendRequest(){
+		$("#responseAPI").html("");
+		if(validateData()){ return; }
+		$("#responseAPI").html("<br/><i class='fa fa-refresh fa-spin fa-5x'></i>");
+		var words = "";
+		$('#sourceAPI input[name="word"]').each(function(){
+			var tmp = $(this).val().trim();
+			words += ((words=='') ?"\""+tmp.replace(/"/g,"'")+"\"" :",\""+tmp.replace(/"/g,"'")+"\"");
+		});
+		settings.data.orgid = $("#orgid").val().trim();
+		settings.data.words = "["+words+"]";
+		$.ajax(settings)
+			.done(function (tmp, response, xhr) { 
+				//--------------------------------------------------------
+				var o = "";
+				//--------------------------------------------------------
+				if(typeof xhr.responseJSON.result!=='undefined'){
+					o+= "<h2>Message:</h2>";	
+					var data = xhr.responseJSON;
+					o+="<pre>"+xhr.responseJSON.msg+"</pre>"; 
+				}else{
+					o+= "<h2>Words:</h2>";	
+					var data = xhr.responseJSON;
+					o+="<pre><ol>"; 
+					for(var i in data){ o+="<li>"+data[i][0]+((data[i][1]=='1') ?"&nbsp;&nbsp;<i><b>Added</b></i>" :"")+"</li>"; }
+					o+="</ol></pre>"; 
+				}
+				//--------------------------------------------------------
+				o+= "<h2>Response:</h2>";
+				o+="<pre>"; 
+				o+=JSON.stringify(xhr.responseJSON);
+				o+="</pre>"; 
+				//--------------------------------------------------------
+				$("#responseAPI").html(o); 
+				//--------------------------------------------------------
+			})
+			.fail(function (xhr){
+				$("#responseAPI").html(xhr.status+": "+xhr.statusText); 
+				if(xhr.status==400){ $("#responseAPI").append("<br/><br/><br/>"+xhr.responseJSON.message); }
+			});
+	}
+
+	isdDefault = false;
+	function getSetting(inURL, server){
+		$.post(
+			inURL,
+			{},
+			function(retVal){ 
+				settings=JSON.parse(retVal);
+				settings.url = server+settings.url;
+				var oData = "";
+
+				oData+= '<div><div class="input-group m-b-1" style="margin:5px 0 15px;"><span class="input-group-addon">orgid</span>';
+				oData+="<input type='text' class='form-control' id='orgid' value='"+settings.data.orgid+"'/></div></div>"; 
+
+				for(var i in settings.data.words){ 
+					if(i!='words'){
+						oData+= '<div><div class="input-group m-b-1" style="margin:5px 0 15px;"><span class="input-group-addon">word</span>';
+						oData+="<input type='text' class='form-control' name='word' value='"+settings.data.words[i]+"' style='max-width:86%;margin-right:10px;'/>"; 
+						oData+='<button class="btn btn-danger" style="padding:8px;" onClick="callEraseThis($(this))"><i class="fa fa-trash"></i></button></div></div>';
+					}
+				}
+				oData+='<div id="moreIiem"></div>';
+				oData+='<button class="btn btn-success" style="padding:8px;" onClick="callMoreItem($(this),\'word\',\'word\')">Add more word</button>';
+				oData = "Data: <pre>"+oData+"</pre>";
+				$("#sourceAPI").html(
+					"URL: "+settings.url+"<br/><br/>"+
+					"Method: "+settings.method+"<br/><br/>"+
+					oData+
+					'<button class="btn btn-info form-control" onClick="sendRequest()">Send request</button>'
+				);
+			}
+		).fail(function (xhr){ $("#sourceAPI").text(xhr.status+": "+xhr.statusText); $("#responseAPI").html(""); });
+	}
+</script>

@@ -1,0 +1,171 @@
+/*//////////////////////////////////////////////////////////////////
+[ FONT ]*/
+
+@font-face {
+  font-family: Montserrat-Regular;
+  src: url('../fonts/montserrat/Montserrat-Regular.ttf'); 
+}
+
+@font-face {
+  font-family: Montserrat-Bold;
+  src: url('../fonts/montserrat/Montserrat-Bold.ttf'); 
+}
+
+@font-face {
+  font-family: Montserrat-Black;
+  src: url('../fonts/montserrat/Montserrat-Black.ttf'); 
+}
+
+@font-face {
+  font-family: Montserrat-SemiBold;
+  src: url('../fonts/montserrat/Montserrat-SemiBold.ttf'); 
+}
+
+@font-face {
+  font-family: Montserrat-Medium;
+  src: url('../fonts/montserrat/Montserrat-Medium.ttf'); 
+}
+
+h1 {
+	color: #FF0000;
+}
+
+h2 {
+	font-family: Montserrat-Medium;
+	text-align:  left; color: #005DAA;
+}
+
+p {
+	font-family: Montserrat-Medium;
+
+}
+
+.wrap-contact100 {
+	background: #fff;
+	border: 10px solid #ccc;
+	border-radius: 10px;
+	margin: 10px 10px 0px 0px;
+	overflow: auto;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+
+}
+
+
+input#wisdom {
+	font-size: 1em;
+	width: 500px;
+
+	position: relative;
+	border: 1px solid #ccc;
+	background-color: #eee;
+	border-radius: 10px;
+	padding: 5px;
+	margin: 10px 10px 10px 10px;
+}
+
+input::placeholder {
+	color: #ccc;
+	font-style: italic;
+}
+
+div#conversation {
+	margin: 10px 10px 10px 10px;
+	width: 500px;
+	height: 400px;
+	border: 1px solid #ccc;
+	background-color: #eee;
+	border-radius: 10px;
+	padding: 5px;
+	overflow: scroll;
+}
+
+form#chatform {
+	margin-top: 10px;
+}
+
+p.userRequest {
+	margin: 4px;
+	padding: 4px 10px 4px 10px;
+	border-radius: 10px;
+	text-align: auto;
+	min-width: 50%;
+	max-width: 60%;
+	float: left;
+	background-color: #7d7;
+}
+
+p.kamaRequest {
+	margin: 4px;
+	padding: 4px 10px 4px 10px;
+	border-radius: 10px;
+	text-align: auto;
+	min-width: 50%;
+	max-width: 60%;
+	float: left;
+	background-color: #FFE4B5;
+}
+
+p.lexResponse {
+	margin: 4px;
+	padding: 4px 10px 4px 10px;
+	border-radius: 10px;
+	text-align: auto;
+	min-width: 50%;
+	max-width: 60%;
+	float: right;
+	background-color: #bbf;
+	font-style: italic;
+}
+
+p.kamaResponse {
+	margin: 4px;
+	padding: 4px 10px 4px 10px;
+	border-radius: 10px;
+	text-align: auto;
+	min-width: 50%;
+	max-width: 60%;
+	float: right;
+	background-color: #add8e6;
+	font-style: italic;
+}
+
+p.lexError {
+	margin: 4px;
+	padding: 4px 10px 4px 10px;
+	border-radius: 10px;
+	text-align: auto;
+	min-width: 50%;
+	max-width: 60%;
+	float: right;
+	background-color: #f77;
+}
+
+button {
+	margin: 4px;
+	padding: 4px 10px 4px 10px;
+	border-radius: 10px;
+	text-align: auto;
+	min-width: 50%;
+	max-width: 100%;
+	float: right;
+}
+
+.bg {
+	/* The image used */
+	background-image: url("../images/rbc_bgp.png");
+
+	/* Full height */
+	height: 100%; 
+
+	/* Center and scale the image nicely */
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+body, html {
+height: 100%;
+margin: 0;
+}

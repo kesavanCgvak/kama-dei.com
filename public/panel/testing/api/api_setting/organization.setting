@@ -1,0 +1,9 @@
+{
+  "async": true,
+  "crossDomain": true,
+  "url": "/api/v1/organization",
+  "method": "GET",
+  "headers": {
+    "cache-control": "no-cache"
+  }
+}

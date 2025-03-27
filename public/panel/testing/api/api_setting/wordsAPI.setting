@@ -1,0 +1,14 @@
+{
+  "async": true,
+  "crossDomain": true,
+  "url": "/api/v1/words",
+  "method": "POST",
+  "cache": false,
+  "headers": {
+    "apikey": "xxxxxxxxxx",
+    "cache-control": "no-cache"
+  },
+  "dataType": "json",
+  "processData": true,
+  "data": {"orgid":"1", "pagination":"true", "perpage":"10", "startpage":"2", "order":"desc", "sort":"created", "added_by":"all"}
+}

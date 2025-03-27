@@ -1,0 +1,81 @@
+.fixed-table-body {
+  height: auto;
+}
+
+.table-hover>tbody>tr:hover>td, .table-hover>tbody>tr:hover>th {
+    background-color: whitesmoke;
+}
+
+.toastify {
+  z-index: 10000000
+}
+
+.action-form {
+  width: 905px !important;
+  max-width: 100%;
+ /* height: 500px !important;*/
+  /*overflow: auto;*/
+}
+
+.action-form input:not([type='button']):not([type='submit']):not([type='checkbox']), .action-form select {
+  width: 100% !important;
+}
+
+.col-leftTermId, .col-leftTermIdEdit, .col-relationTypeId, .col-relationTypeIdEdit, .col-rightTermId, .col-rightTermIdEdit {
+  /*width: 33.33%;*/
+  display: inline;
+  padding: 0 2px;
+}
+
+.col-ownership, .col-ownershipEdit, .col-ownerId, .col-ownerIdEdit ,.col-memo
+,.col-storageType ,.col-chatIntro,.col-extendedEntityId,.col-extendedAttributeId,
+.col-extendedSubTypeId,.col-attributeTypeId,.col-defaultvalue{
+  /*width: 50%;*/
+  display: inline;
+  padding: 0 2px;
+}
+
+.col-ownership .btn-group, .col-ownershipEdit .btn-group {
+  /*width: 100%;*/
+}
+
+.col-ownership .btn-group label.btn, .col-ownershipEdit .btn-group label.btn {
+  /*width: 33.33%;*/
+}
+
+.action-form input[type='submit'] {
+  float: right;
+}
+
+
+
+
+.tmp_label{
+  width: 74px !important;
+  margin-left: 25px;
+}
+.form-control{
+  display: inline;
+}
+.col-attributes{
+  margin-top: 20px;
+  margin-bottom: 40px;
+}
+#attributes {
+  border: 1px solid #afdaff;
+}
+#attributes  div{
+  display: inline;
+}
+
+#attributes input{
+  width: 640px !important;
+}
+
+
+.attributes-group{
+  display:block !important;
+  padding-bottom: 8px;
+  padding-top: 8px;
+  border: 0.2px solid #efe9e9;
+}

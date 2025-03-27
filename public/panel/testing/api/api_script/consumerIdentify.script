@@ -1,0 +1,115 @@
+<script type="application/javascript">
+	function sendRequest(){
+		$("#responseAPI").html("");
+		if(validateData()){ return; }
+		$("#responseAPI").html("<br/><i class='fa fa-refresh fa-spin fa-5x'></i>");
+		settings.data.orgid      = $("#orgid").val().trim();
+		settings.data.email      = $("#email").val().trim();
+		settings.data.portalcode = $("#portalcode").val().trim();
+
+		$.ajax(settings)
+			.done(function (tmp, response, xhr) { 
+				var o = "";
+				//--------------------------------------------------------
+				o+= "<h2>Data:</h2>";
+				o+="<pre><ul><li>ID: "+xhr.responseJSON.id+"</li><li>Name: "+xhr.responseJSON.name+"</li></pre>"; 
+				//--------------------------------------------------------
+				o+= "<h2>Response:</h2>";
+				o+="<pre>"; 
+				o+=JSON.stringify(xhr.responseJSON);
+				o+="</pre>"; 
+				//--------------------------------------------------------
+				o+= "<h2>Active Users:</h2>";
+				o+="<pre>"; 
+					o+='<div class="input-group m-b-1" style="margin:5px 0 15px;">'+
+							'<button class="btn btn-info" onclick="activeUsers()" >Active Users</button>'+
+						'</div>';
+				o+='<div class="input-group m-b-1" style="margin:5px 0 15px;width:100%" >'+
+						"<h2>Response:</h2>"+
+						"<pre id='divApiKeyManager0'>"+
+						"</pre>"+
+					'</div>';
+				o+="</pre>"; 
+				//--------------------------------------------------------
+				o+= "<h2>Login:</h2>";
+				o+="<pre>"; 
+				o+='<div class="input-group m-b-1" style="margin:5px 0 15px;">'+
+						'<span class="input-group-addon">User ID</span>'+
+						'<input type="text" class="form-control" id="user_id" value="'+xhr.responseJSON.id+'" disabled>'+
+					'</div>';
+				o+='<div class="input-group m-b-1" style="margin:5px 0 15px;">'+
+						'<span class="input-group-addon">Portal ID</span>'+
+						'<input type="text" class="form-control" id="portal_id" value="'+$("#portalcode").val()+'" disabled>'+
+					'</div>';
+				o+='<div class="input-group m-b-1" style="margin:5px 0 15px;width:100%" >'+
+						"<h2>Response:</h2>"+
+						"<pre id='divApiKeyManager'>"+				
+						"</pre>"+
+					'</div>';
+				o+="</pre>"; 
+				//--------------------------------------------------------
+				$("#responseAPI").html(o); 
+				callApiManagerClass();
+			})
+		.fail(function (xhr) { $("#responseAPI").text(xhr.status+": "+xhr.statusText); });
+	}
+
+	function callApiManagerClass(){
+		var data = {};
+		data.user_id   = $("#user_id"  ).val().trim();
+		data.portal_id = $("#portal_id").val().trim();
+		$.post( APIURL+"/api/dashboard/testing/apilogin", data,
+			function(retVal){
+				$("#divApiKeyManager").html(JSON.stringify(retVal)); 
+				if(retVal.result==0){
+					let o= "<h2>Authenticate:</h2>";
+					o+="<pre>"; 
+					o+='<div class="input-group m-b-1" style="margin:5px 0 15px;">'+
+							'<span class="input-group-addon">User ID</span>'+
+							'<input type="text" class="form-control" value="'+retVal.user_id+'" disabled>'+
+						'</div>';
+					o+='<div class="input-group m-b-1" style="margin:5px 0 15px;">'+
+							'<span class="input-group-addon">Api Key</span>'+
+							'<input type="text" class="form-control" id="api_key" value="'+retVal.api_key+'" disabled>'+
+						'</div>';
+
+					o+='<div class="input-group m-b-1" style="margin:5px 0 15px;">'+
+							'<button class="btn btn-info" onclick="authenticate()" >Authenticate</button>'+
+						'</div>';
+					o+='<div class="input-group m-b-1" style="margin:5px 0 15px;width:100%" >'+
+							"<h2>Response:</h2>"+
+							"<pre id='divApiKeyManager2'>"+				
+							"</pre>"+
+						'</div>';
+					o+="</pre>"; 
+					$("#divApiKeyManager").append(o); 
+				}
+			} 
+		)
+		.fail(function (xhr){ $("#sourceAPI").text(xhr.status+": "+xhr.statusText); $("#responseAPI").html(""); });
+	}
+
+	function authenticate(){
+		var data = {};
+		data.user_id = $("#user_id").val().trim();
+		data.api_key = $("#api_key").val().trim();
+		$.post( APIURL+"/api/dashboard/testing/apiauthenticate", data,
+			function(retVal){
+				$("#divApiKeyManager2").html(JSON.stringify(retVal)); 
+			} 
+		)
+		.fail(function (xhr){ $("#sourceAPI").text(xhr.status+": "+xhr.statusText); $("#responseAPI").html(""); });
+	}
+	
+	function activeUsers(){
+		var data = {};
+		data.user_id = $("#user_id").val().trim();
+		data.api_key = $("#api_key").val().trim();
+		$.post( APIURL+"/api/dashboard/testing/activeusers", data,
+			function(retVal){
+				$("#divApiKeyManager0").html(JSON.stringify(retVal)); 
+			} 
+		)
+		.fail(function (xhr){ $("#sourceAPI").text(xhr.status+": "+xhr.statusText); $("#responseAPI").html(""); });
+	}	
+</script>

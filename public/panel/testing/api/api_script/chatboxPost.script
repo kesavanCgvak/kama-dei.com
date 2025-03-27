@@ -1,0 +1,102 @@
+<script type="application/javascript">
+	function sendRequest(){
+		$("#responseAPI").html("");
+		if(validateData()){ return; }
+		$("#responseAPI").html("<br/><i class='fa fa-refresh fa-spin fa-5x'></i>");
+
+		settings.data.orgid  = $("#orgid" ).val().trim();
+		settings.data.userid = $("#userid").val().trim();
+		settings.data.state  = $("#state" ).val().trim();
+
+		var answers = "";
+		$('#sourceAPI input[name="answers"]').each(function(){
+			var tmp = $(this).val().trim();
+			answers += ((answers=='') ?"\""+tmp.replace(/"/g,"'")+"\"" :",\""+tmp.replace(/"/g,"'")+"\"");
+		});
+		var type    = "\"type\":\""    + $("#state"  ).val().trim().replace(/"/g,"'") + "\",";
+		var message = "\"message\":\"" + $("#message").val().trim().replace(/"/g,"'") + "\",";
+		
+		answers = "\"answers\":["+answers+"]";
+		settings.data.inquiry = "{\"request\":{"+type+message+answers+"}}";
+		
+		$('html,body').animate({scrollTop: $('#responseAPI').offset().top-80},'slow');
+		$.ajax(settings)
+			.done(function (tmp, response, xhr) { 
+				//--------------------------------------------------------
+				var o = "";
+				//--------------------------------------------------------
+				o+= "<h2>Data:</h2>";
+				o+="<pre><ul>"; 
+				o+="<li>Type: "+xhr.responseJSON.response.type+"</li>";
+				o+="<li>Message: "+xhr.responseJSON.response.message+"</li>";
+				o+="<li>State: "+xhr.responseJSON.response.state+"</li>";
+				o+="</ul></pre>"; 
+				//--------------------------------------------------------
+				o+= "<h2>Answers:</h2>";
+				var data = xhr.responseJSON.response.answers;
+				o+="<pre><ol>"; 
+				for(var i in data){ o+="<li>"+data[i]+"</li>"; }
+				o+="</ol></pre>"; 
+				//--------------------------------------------------------
+				o+= "<h2>Response:</h2>";
+				o+="<pre>"; 
+				o+=JSON.stringify(xhr.responseJSON);
+				o+="</pre>"; 
+				//--------------------------------------------------------
+				$("#responseAPI").html(o); 
+				//--------------------------------------------------------
+			})
+			.fail(function (xhr){
+				$("#responseAPI").html(xhr.status+": "+xhr.statusText); 
+				if(xhr.status==400){ $("#responseAPI").append("<br/><br/><br/>"+xhr.responseJSON.message); }
+			});
+	}
+
+
+	isdDefault = false;
+	function getSetting(inURL, server){
+		$.post(
+			inURL,
+			{},
+			function(retVal){ 
+				settings=JSON.parse(retVal);
+				settings.url = server+settings.url;
+				var oData = "";
+
+				for(var i in settings.data){ 
+					if(i=='inquiry'){ continue; }
+					oData+= '<div><div class="input-group m-b-1" style="margin:5px 0 15px;"><span class="input-group-addon">'+i+'</span>';
+					oData+="<input type='text' class='form-control' id='"+i+"' value='"+settings.data[i]+"'/></div></div>"; 
+				}
+
+				oData += "Inquiry: <pre>";
+				for(var i in settings.data.inquiry.request){ 
+					if(i=='answers'){ continue; }
+					oData+= '<div><div class="input-group m-b-1" style="margin:5px 0 15px;"><span class="input-group-addon">'+i+'</span>';
+					oData+="<input type='text' class='form-control' id='"+i+"' value='"+settings.data.inquiry.request[i]+"'/></div></div>"; 
+				}
+				oData += "Answers: <pre>";
+				for(var i in settings.data.inquiry.request.answers){ 
+					oData+= '<div><div class="input-group m-b-1" style="margin:5px 0 15px;"><span class="input-group-addon">answer</span>';
+					oData+="<input type='text' class='form-control' name='answers' value='"+settings.data.inquiry.request.answers[i]+"' style='max-width:86%;margin-right:10px;'/>"; 
+					oData+='<button class="btn btn-danger" style="padding:8px;" onClick="callEraseThis($(this))"><i class="fa fa-trash"></i></button></div></div>';
+				}
+				oData+='<div id="moreIiem"></div>';
+				oData+='<button class="btn btn-success" style="padding:8px;" onClick="callMoreItem($(this),\'answer\',\'answers\')">Add more answer</button>';
+				oData+="</pre>";
+				oData+="</pre>";
+				
+				oData = "Data: <pre>"+oData+"</pre>";
+				$("#sourceAPI").html(
+					"URL: "+settings.url+"<br/><br/>"+
+					"Method: "+settings.method+"<br/><br/>"+
+					oData+
+					'<button class="btn btn-info form-control" onClick="sendRequest()">Send request</button>'
+				);
+				$("#sourceAPI #state, #sourceAPI #type").prop('readonly', true);
+				
+			}
+		).fail(function (xhr){ $("#sourceAPI").text(xhr.status+": "+xhr.statusText); $("#responseAPI").html(""); });
+	}
+
+</script>

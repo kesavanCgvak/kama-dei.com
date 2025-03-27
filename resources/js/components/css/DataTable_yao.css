@@ -1,0 +1,79 @@
+.fixed-table-body {
+  height: auto;
+}
+
+.table-hover>tbody>tr:hover>td, .table-hover>tbody>tr:hover>th {
+  background-color: whitesmoke;
+}
+
+.toastify {
+  z-index: 10000000
+}
+
+.action-form {
+  width: 630px !important;
+  max-width: 100%;
+}
+
+.action-form input:not([type='button']):not([type='submit']):not([type='checkbox']), .action-form select {
+  width: 100% !important;
+}
+
+.col-leftTermId, .col-leftTermIdEdit, .col-relationTypeId, .col-relationTypeIdEdit, .col-rightTermId, .col-rightTermIdEdit {
+  width: 33.33%;
+  display: inline-block;
+  padding: 0 2px;
+}
+
+.col-ownerId_entity,.col-ownership_entity,.col-ownership, .col-ownershipEdit, .col-ownerId, .col-ownerIdEdit ,.col-memo
+,.col-storageType ,.col-chatIntro,.col-extendedEntityId,.col-extendedAttributeId,
+.col-extendedSubTypeId,.col-attributeTypeId,.col-defaultvalue,.col-includedExtDataName,.col-includedExtDataChatIntro{
+  width: 50%;
+  display: inline-block;
+  padding: 0 2px;
+}
+
+.col-entityId,.col-parentTable,.col-parentId{
+  width: 33.33%;
+  display: inline-block;
+  padding: 0 2px;
+}
+
+.col-ownership .btn-group, .col-ownershipEdit .btn-group {
+  width: 100%;
+}
+
+.col-ownership .btn-group label.btn, .col-ownershipEdit .btn-group label.btn {
+  width: 33.33%;
+}
+
+.action-form input[type='submit'] {
+  float: right;
+}
+
+.modal .bootstrap-table{
+  background: white;
+  width: 50%;
+  margin-left: 25%;
+  margin-top: 25%;
+}
+
+#extendedlink .action-form{
+  width: 900px !important;
+  max-width: 100%;
+}
+
+#extendedlink .pull-right{
+  /*opacity: 0;*/
+}
+#form_select_entityId .pull-right{
+  opacity: 1;
+}
+#form_select_parentId .pull-right{
+  opacity: 1;
+}
+#extendedlink .col-chatIntro{
+  width: 100%;
+  display: inline-block;
+  padding: 0 2px;
+}

@@ -1,0 +1,125 @@
+.userInfo {
+  padding: 30px;
+  text-align: center;
+}
+
+.userInfoWrapper {
+  background: linear-gradient(154deg, #03A9F4 0, #FFC107 100%);
+  border-radius: 2px;
+  overflow: hidden;
+  min-height: 350px;
+}
+
+.userLogo {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 75px;
+  padding-top: 35px;
+  margin: auto;
+  margin-bottom: 20px;
+  border: 1px solid;
+}
+
+.userName {
+  color: whitesmoke;
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+
+.userEmail {
+  color: white;
+}
+
+.submitWrapper {
+  text-align: right;
+}
+
+.changePass {
+  background: rgba(255, 255, 255, 0.2);
+  margin: auto;
+  margin-top: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  position: absolute;
+  bottom: 25px;
+  left: 25px;
+  right: 25px;
+  transition: all 0.25s;
+}
+
+.changePass:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.changePass a {
+  color: white;
+  display: block;
+  text-align: center;
+  padding: 10px 20px;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.messages .alert {
+  opacity: 0;
+}
+
+.isAdmin {
+  width: 200px;
+  height: 30px;
+  display: inline-block;
+  border-top: 1px solid;
+  border-bottom: 1px solid white;
+  border-image: linear-gradient(90deg, transparent, white, transparent) 1;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .4), transparent);
+  color: white;
+  text-align: center;
+  padding-top: 6px;
+  transform: rotate(-45deg);
+  position: absolute;
+  top: 30px;
+  left: -53px;
+}
+
+#settingsForm .form-control-static {
+  padding: 7px;
+  background: whitesmoke;
+}
+
+#settingsForm .form-group {
+  box-shadow: 0 0 1px lightgray;
+  padding-top: 4px;
+  transition: all 0.25s;
+}
+
+#settingsForm .form-group > label {
+  padding-left: 7px;
+}
+
+#settingsForm .form-group:hover {
+    box-shadow: 0 0 2px grey;
+}
+
+@media (min-width: 768px) {
+  .settingsContent {
+    display: table;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .settingsContent > div {
+    display: table-cell;
+    float: none;
+    vertical-align: middle;
+  }
+
+  #settingsForm {
+    padding: 10px 40px 0 10px;
+    border-right: 1px solid;
+    border-image: linear-gradient(white, gray, white) 1;
+  }
+}
