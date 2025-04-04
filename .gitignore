@@ -47,3 +47,5 @@ app/Http/Controllers/Api/Chat/ChatController.php
 .env_stage
 .gitattributes
 copy.env
+.history
+node_modules
