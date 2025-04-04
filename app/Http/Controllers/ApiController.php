@@ -342,9 +342,41 @@ class ApiController extends Controller
     public function publishCollection(Request $request)
     {
         $publishedCollectionName = $request->published_collection_name == 'null' ? null : $request->published_collection_name;
+
+        $collectionExist = false; // Default value
+
+        if (!empty($publishedCollectionName)) {
+            $headers = [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'apikey' => env('API_KEY'),
+            ];
+    
+            $end_point = '/list_collections_of_org/v1';
+    
+            $body = [
+                'org' => $request->org_id,
+            ];
+    
+            $response = Http::withHeaders($headers)
+                ->asForm()
+                ->post(env('API_BASE_URL') . $end_point, $body);
+    
+            if ($response->successful() && $response->body() != 'null' && $response->status() == 200) {
+                $data = $response->json();
+                // Check if $publishedCollectionName exists in collection_name field
+                foreach ($data as $collection) {
+                    if ($collection['collection_name'] === $publishedCollectionName) {
+                        $collectionExist = true;
+                        break;
+                    }
+                }
+            }
+        }
+
         try {
             $isRenamed = false;
-            if (!empty($publishedCollectionName) && $publishedCollectionName != $request->collection_name) {
+            if ((!empty($publishedCollectionName) && $publishedCollectionName != $request->collection_name) || $collectionExist) {
                 $headers = [
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
