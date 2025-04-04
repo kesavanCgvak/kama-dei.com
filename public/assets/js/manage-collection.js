@@ -940,7 +940,7 @@ function validateCollectionName() {
 
     // Rule 5: Must not be a valid IP address
     const ipRegex =
-        /^(?:(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)$/;
+    /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$/;
     if (ipRegex.test(collectionName)) {
         helpText.text('Collection name cannot be an IP address.');
         return false;
@@ -1339,6 +1339,12 @@ $(document).on("click", ".publish-collection", function (event) {
     let publishedCollectionName = $collectionWrapper.attr('data-published-collection-name');
     let collectionId = $collectionWrapper.find('.accordion-header').attr('data-id');
     let $files = $collectionWrapper.find('.accordion-content').find('.local-files');
+
+    // Check if the bucket is empty
+    if ($files.length === 0) {
+        toastr.error('Bucket cannot be empty. Please add files before publishing.');
+        return false;
+    }
 
     let filesMap = {};
     $files.each(function (index, file) {
