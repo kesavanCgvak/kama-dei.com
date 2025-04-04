@@ -168,6 +168,7 @@ $(document).on('change', '#orgID', function (e) {
 
 $(document).on("click", ".file-delete", function () {
     let $selectedItem = $(this).closest('li');
+    let $accordionItem = $selectedItem.closest('.accordion-item');
     let collectionFileId = $(this).closest('li').attr('data-details-id');
     let elementIdentifier = $(this).closest('li').attr('data-file-id');
     let confirmation = confirm('Are you sure you want to delete this file?');
@@ -189,14 +190,14 @@ $(document).on("click", ".file-delete", function () {
             if (response.status === 'success') {
                 hideLoader();
                 toastr.success(response.message || "File deleted successfully.");
-                $(`#cloud-storage .accordion-content .file-item[data-file-id="${elementIdentifier}"]`).removeClass('file-selected').find('.list-action').html('');
-                $element = $(`#documents-collection .accordion-content .file-item[data-file-id="${elementIdentifier}"]`);
-                updateUnPublishedStatus($element.closest('.accordion-item'));
+              //  $(`#cloud-storage .accordion-content .file-item[data-file-id="${elementIdentifier}"]`).removeClass('file-selected').find('.list-action').html('');
+              //  $element = $(`#documents-collection .accordion-content .file-item[data-file-id="${elementIdentifier}"]`);
+              $selectedItem.remove();
+                updateUnPublishedStatus($accordionItem);
                 setTimeout(function () {
-                    $element.remove();
                     initSortable();
                     getFileDifferences(true);
-                    updateFileNotexist(); // Update file existence status
+                    //updateFileNotexist(); // Update file existence status
                 }, 200);
 
             } else {
@@ -524,7 +525,7 @@ connectWith: ".ui-sortable", // Allow sorting with other lists
             });
 
             if (!hasDuplicates) {
-                createLocketItems(data, droppedItem.data("file-id"));
+                createLocalItems(data, droppedItem);
                 return;
 
             } else {
@@ -550,8 +551,9 @@ connectWith: ".ui-sortable", // Allow sorting with other lists
     });
 }
 
-function createLocketItems(data, id) {
+function createLocalItems(data, droppedItem) {
     data['_token'] = $('meta[name="csrf-token"]').attr('content');
+    droppedItem.addClass('file-selected');
     $.ajax({
         type: "post",
         url: "/storeLocalIems",
@@ -562,11 +564,11 @@ function createLocketItems(data, id) {
         success: function (response) {
             hideLoader();
             if (response.status === 'success') {
-                let $element = $("#documents-collection .accordion-content").find(`[data-file-id='${response.data.file_id}']`); // Find the element by data-file-id
-                $element.attr("data-details-id", response.data.id)
-                $element.find('.list-action').html(`<i class="fa fa-trash-o file-delete cursor-pointer"></i>`);
-                $element.addClass('local-files');
-                updateUnPublishedStatus($element.closest('.accordion-item'));
+                //let droppedItem.find(`[data-file-id='${response.data.file_id}']`); // Find the element by data-file-id
+                droppedItem.attr("data-details-id", response.data.id)
+                droppedItem.find('.list-action').html(`<i class="fa fa-trash-o file-delete cursor-pointer"></i>`);
+                droppedItem.addClass('local-files');
+                updateUnPublishedStatus(droppedItem.closest('.accordion-item'));
                 toastr.success('File information stored successfully.');
                 setTimeout(function () { getFileDifferences(); }, 500); // Call getFileDifferences();
             }
@@ -1317,8 +1319,8 @@ $(document).on("click", ".publish-collection", function (event) {
         SharePoint: { key1: "sharepoint_site", key2: "folders_or_files_in_sharepoint" },
         MFiles: { key1: "vault", key2: "folders_or_files_in_vault" }
     };
-    
-    let { key1, key2 } = storageKeys[storage_type] || { key1: "bucket_name", key2: "data_folders_in_s3" };    
+
+    let { key1, key2 } = storageKeys[storage_type] || { key1: "bucket_name", key2: "data_folders_in_s3" };
 
     let $collectionWrapper = $(this).closest('.accordion-item');
     let collectionName = $collectionWrapper.attr('data-collection-name');
