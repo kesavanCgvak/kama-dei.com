@@ -55,16 +55,18 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
                             ?>
                         <?php endif; ?>
                     </select>
+                    <div class="organization-help-text">Select your organization and then select storage type to start your input</div>
                 </div>
             </div>
             <div class="col-md-6 col-sm-12 d-flex align-items-center">
                 <div class="col-md-3"><label>Select Storage Type</label></div>
                 <div class="col-md-9">
-                    <select id="storage_type" name="storage_type" class="form-control">
+                    <select id="storage_type" disabled name="storage_type" class="form-control">
                         <option value="">Select Type</option>
                     </select>
                 </div>
             </div>
+
         </div>
     </div>
     <script type="application/javascript">

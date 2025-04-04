@@ -33,7 +33,7 @@ function getSystemSourceTypes() {
                 $storageTypeSelect.find('option:not(:first)').remove();
 
                 // Add new options from the response
-                response.data.forEach(function(item) {
+                response.data.forEach(function (item) {
                     $storageTypeSelect.append(
                         $('<option>', {
                             value: item.value,
@@ -142,8 +142,9 @@ $(document).on("keyup", "#search-cloud-storage", function (event) {
     let searchValue = $(this).val();
     if (searchValue.trim().length < 3) {
         clearSearch('cloud');
+        expandCollapseAllAccordions($('#cloud-storage'), 'collapse');
     } else {
-        expandAllAccordions($('#cloud-storage'));
+        expandCollapseAllAccordions($('#cloud-storage'), 'expand');
         initDocumentSearch('cloud');
     }
 });
@@ -153,8 +154,9 @@ $(document).on("keyup", "#document-search", function (event) {
     let searchValue = $(this).val();
     if (searchValue.trim().length < 3) {
         clearSearch('local');
+        expandCollapseAllAccordions($('#documents-collection'), 'collapse');
     } else {
-        expandAllAccordions($('#documents-collection'));
+        expandCollapseAllAccordions($('#documents-collection'), 'expand');
         initDocumentSearch('local');
     }
 });
@@ -163,8 +165,23 @@ $(document).on('change', '#orgID', function (e) {
     $("#storage_type").val('');
     $("#cloud-storage").find('.collection-card-body .accordion-container').html('');
     $("#documents-collection").find('.collection-card-body').html('');
+    let orgId = $(this).val();
+    if (orgId > 0) {
+        toggleStorageTypeDisable(false)
+    } else {
+        toggleStorageTypeDisable(true);
+    }
     cancelAllAjaxRequests();
 });
+
+function toggleStorageTypeDisable(state) {
+    let $storageTypeSelect = $('#storage_type');
+    if (state === true) {
+        $storageTypeSelect.prop('disabled', true);
+    } else {
+        $storageTypeSelect.prop('disabled', false);
+    }
+}
 
 $(document).on("click", ".file-delete", function () {
     let $selectedItem = $(this).closest('li');
@@ -190,14 +207,12 @@ $(document).on("click", ".file-delete", function () {
             if (response.status === 'success') {
                 hideLoader();
                 toastr.success(response.message || "File deleted successfully.");
-              //  $(`#cloud-storage .accordion-content .file-item[data-file-id="${elementIdentifier}"]`).removeClass('file-selected').find('.list-action').html('');
-              //  $element = $(`#documents-collection .accordion-content .file-item[data-file-id="${elementIdentifier}"]`);
-              $selectedItem.remove();
+                $selectedItem.remove();
                 updateUnPublishedStatus($accordionItem);
                 setTimeout(function () {
                     initSortable();
                     getFileDifferences(true);
-                    //updateFileNotexist(); // Update file existence status
+                    updateFileNotexist(); // Update file existence status
                 }, 200);
 
             } else {
@@ -315,7 +330,6 @@ function updateCollectiononDb(collection, id) {
         },
         success: function (response) {
             // Handle success
-            // toastr.success('Collection updated successfully');
         },
         error: function (xhr, status, error) {
             hideLoader();
@@ -488,7 +502,7 @@ function initSortable() {
         placeholder: "ui-state-highlight", // Highlight area where the item will be placed
         //  connectWith: ".sortable-connected", // Allow sorting with other lists (use the same class for other uls)
         cancel: '.local-files',
-connectWith: ".ui-sortable", // Allow sorting with other lists
+        connectWith: ".ui-sortable", // Allow sorting with other lists
         connectToSortable: "#cloud-storage .accordion-content li",
         update: function (event, ui) {
             let droppedItem = ui.item; // The dropped item
@@ -550,8 +564,8 @@ connectWith: ".ui-sortable", // Allow sorting with other lists
         }
     }).disableSelection();
 
-     // Initialize message visibility
-     $(".ui-sortable").each(function () {
+    // Initialize message visibility
+    $(".ui-sortable").each(function () {
         updateDropZoneMessage($(this));
     });
 }
@@ -569,7 +583,6 @@ function createLocalItems(data, droppedItem) {
         success: function (response) {
             hideLoader();
             if (response.status === 'success') {
-                //let droppedItem.find(`[data-file-id='${response.data.file_id}']`); // Find the element by data-file-id
                 droppedItem.attr("data-details-id", response.data.id)
                 droppedItem.find('.list-action').html(`<i class="fa fa-trash-o file-delete cursor-pointer"></i>`);
                 droppedItem.addClass('local-files');
@@ -708,7 +721,7 @@ function updateFileNotexist() {
         } else {
             localFile.addClass('file-not-exists').removeClass('file-selected file-outdated');
             localFile.closest('.accordion-item').addClass('not-published').find('.accordion-header').attr('title', 'Not Published');
-            expandAllAccordions(localFile.closest('.accordion-item'));
+            expandCollapseAllAccordions(localFile.closest('.accordion-item'), 'expand');
         }
     });
 }
@@ -768,20 +781,6 @@ function validateCollectionNote() {
     return true;
 }
 
-// function saveLocalCollection(overwrite=false) {
-//     let actionMode = $("#action-mode").val();
-//     let storage_type = $('#storage_type').val().trim();
-//     let collectionName = $('#collection-name').val().trim() + `-${storage_type}`;
-//     let collectionDescription = $('#collection-description').val().trim();
-//     let collecionItemId = $('#previous-name').attr("data-collection-id");
-
-//     closeModel($('#create-collection'));
-//     if (actionMode === "create") {
-//         saveLocalCollection(collectionName, 'collection')
-//         return;
-//     }
-//     renameCollection(collectionName, collecionItemId, collectionDescription);
-// }
 
 function addNewCollection() {
     if (!validateCollectionName()) {
@@ -982,7 +981,6 @@ function checkDuplicateCollection(collection_name, storage_type, collection_id, 
         success: function (response) {
             hideLoader();
             let data = response.data;
-            console.log(data);
             if (data !== null && collection_id !== null) {
                 let consfirmation = confirm('A Collection already exists with this name. If you proceed, the Collection will be overwritten and document assignments will be removed.');
                 if (consfirmation) {
@@ -994,7 +992,7 @@ function checkDuplicateCollection(collection_name, storage_type, collection_id, 
                 toastr.error('Collection already exists with this name.');
                 return;
             }
-            if(data === null) {
+            if (data === null) {
                 callback(false);
             }
 
@@ -1040,10 +1038,8 @@ function initDocumentSearch(type) {
     }
 
     setTimeout(function () {
-
         $parentWrapper.find('.file-item').each(function () {
             const title = $(this).find('.title').text().toLowerCase();
-
             $parentWrapper.find('.folder-name').addClass('hide-search');
             if (title.includes(searchTerm.toLowerCase())) {
                 $(this).removeClass('hide-search');
@@ -1051,7 +1047,19 @@ function initDocumentSearch(type) {
                 $(this).addClass('hide-search');
             }
         });
-    }, 500);
+    }, 100);
+    setTimeout(function () {
+        $accordionItems.find('.collection').each(function() {
+            const $collection = $(this);
+            const visibleItems = $collection.find('.collection-item').filter(function() {
+                return !$(this).hasClass('hide-search');
+            }).length;
+            $collection.find('.drop-message').remove();
+            if (visibleItems === 0) {
+                $collection.append('<div class="drop-message">Drag and Drop files here</div>');
+            }
+        });
+    }, 150);
 }
 
 function toggleFolder(folderId, event) {
@@ -1142,21 +1150,21 @@ function buildLocalCollectionAccordion(collections) {
 
 function setupToastr() {
     toastr.options = {
-        "closeButton": false,
+        "closeButton": true, // Show close button
         "debug": false,
-        "newestOnTop": false,
-        "progressBar": false,
+        "newestOnTop": true, // Stack newer toasts on top
+        "progressBar": true, // Show progress bar
         "positionClass": "toast-top-right",
-        "preventDuplicates": false,
+        "preventDuplicates": true,
         "onclick": null,
-        "showDuration": "300",
-        "hideDuration": "1000",
-        "timeOut": "5000",
-        "extendedTimeOut": "1000",
+        "timeOut": "0", // Set to 0 for persistent toast
+        "extendedTimeOut": "0", // Set to 0 for persistent toast
         "showEasing": "swing",
         "hideEasing": "linear",
         "showMethod": "fadeIn",
-        "hideMethod": "fadeOut"
+        "hideMethod": "fadeOut",
+        "tapToDismiss": true, // Allow clicking on toast to dismiss
+        "closeOnHover": false // Don't close on hover
     }
 }
 
@@ -1262,7 +1270,6 @@ function createCloudAccordionItem(data) {
                           <li><button class="btn-context-menu refresh-collection">Refresh</button></li>
                       </ul>`;
     let toolTipText = '';
-    console.log('data:', data);
     return `
           <div class="accordion-item" id="section-${data}" data-bucket-name="${data}">
               <div class="accordion-header" title="${toolTipText}">
@@ -1285,7 +1292,7 @@ function createCloudAccordionItem(data) {
 }
 
 function buildLocalCollectionFiles(collectionData) {
-    let $fileHtml = `<ul class="collection ui-sortable" style="min-height: 60px">`;
+    let $fileHtml = `<ul class="collection ui-sortable">`;
     $.each(collectionData, function (index, collection) {
         let sanitizedFileName = sanitizeFileName(collection.file_name);
         let iocnName = getFileIcon(collection.file_name);
@@ -1505,7 +1512,6 @@ function getBucketfiles(filesData, bucketName) {
     if (filesByFolder.length === 0) {
         return $fileHtml;
     }
-   // console.log(filesByFolder, collection_name);
     $.each(filesByFolder, function (folder, files) {
 
         if (folder !== 'root') {
@@ -1518,8 +1524,6 @@ function getBucketfiles(filesData, bucketName) {
 
         $.each(files, function (key, file) {
             let fileName = file['file']['name'];
-            console.log(fileName);
-            //  fileName = findAndReplace(actulFileName, folder + '/', '');
             if (fileName.slice(-1) !== '/') {
                 let sanitizedFileName = sanitizeFileName(bucketName + '-' + fileName);
                 let iocnName = getFileIcon(fileName);
@@ -1765,11 +1769,18 @@ function toggleAccordion() {
 }
 
 
-function expandAllAccordions($selector) {
+function expandCollapseAllAccordions($selector, mode='expand') {
+    if (mode === 'collapse') {
+        $selector.find('.accordion-header').removeClass('show-accordion');
+        $selector.find('.accordion-content').css('display', 'none');
+        $selector.find('.accordion-header').find('.collapse-btn > i').removeClass('fa-angle-up').addClass('fa-angle-down');
+        return;
+    }
     $selector.find('.accordion-content').css('display', 'block');
     $selector.find('.accordion-header').removeClass('show-accordion');
     $selector.find('.accordion-header').find('.collapse-btn > i').removeClass('fa-angle-down').addClass('fa-angle-up');
 }
+
 
 function initContextMenu() {
     // Show submenu on more button click
