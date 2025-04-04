@@ -203,6 +203,7 @@ white-space: normal;
 
 .collection {
     padding-left: 0px !important;
+    min-height: 60px !important;
 }
 
 .loader-accordion {
@@ -517,4 +518,8 @@ padding: 2px 18px;
 .rule-validation {
     margin: 2px !important;
     font-weight: bold;
+}
+
+.organization-help-text {
+    margin-top: 8px;
 }
