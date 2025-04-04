@@ -130,8 +130,8 @@ class CollectionController extends Controller
         // Fetch the collections with the required conditions
         $local_collections = Collection::where('storage_type', $request->input('storage_type'))
             ->where('organization_id', $request->input('orgID'))
-            ->orderBy('id', 'desc')
             ->with('collectionData')
+            ->orderBy('collection_name', 'asc') // Then order results
             ->get();
 
         // Wrap the collection in the resource
