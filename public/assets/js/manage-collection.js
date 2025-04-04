@@ -382,16 +382,21 @@ $(document).on("click", ".copy-collection", function (event) {
     event.preventDefault();
     const originalItem = $(this).closest('.accordion-item');
     const submenu = $(this).closest('.submenu');
+    let storage_type = $('#storage_type').val();
     submenu.slideUp();
     const clonedItem = originalItem.clone();
     let baseBucketName = clonedItem.attr('data-collection-name');
-    let newBucketName = baseBucketName + '-copy1';
+    let parts = baseBucketName.split('-');
+    let lastPart = parts.pop(); // e.g., "SharePoint"
+    let baseNameWithoutStorage = parts.join('-'); // e.g., "Transport"
+
+    let counter = 1;
+    let newBucketName = `${baseNameWithoutStorage}-copy${counter}-${lastPart}`;
 
     // Add a numeric suffix if the bucket name already exists
-    let counter = 1;
     while (bucketNameExists(newBucketName)) {
         counter++;
-        newBucketName = `${baseBucketName}-copy${counter}`;
+        newBucketName = `${baseNameWithoutStorage}-copy${counter}-${lastPart}`;
     }
 
     // Update the `data-bucket-name` attribute in the cloned item
@@ -1317,8 +1322,8 @@ $(document).on("click", ".publish-collection", function (event) {
         SharePoint: { key1: "sharepoint_site", key2: "folders_or_files_in_sharepoint" },
         MFiles: { key1: "vault", key2: "folders_or_files_in_vault" }
     };
-    
-    let { key1, key2 } = storageKeys[storage_type] || { key1: "bucket_name", key2: "data_folders_in_s3" };    
+
+    let { key1, key2 } = storageKeys[storage_type] || { key1: "bucket_name", key2: "data_folders_in_s3" };
 
     let $collectionWrapper = $(this).closest('.accordion-item');
     let collectionName = $collectionWrapper.attr('data-collection-name');
