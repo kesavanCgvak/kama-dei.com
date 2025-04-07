@@ -15,13 +15,12 @@ class AuditLogController extends Controller
     public function getData(Request $request)
     {
         $columns = [
-            0 => 'id',
-            1 => 'description',
-            2 => 'action_description',
-            3 => 'user_id',
-            4 => 'ip_address',
-            5 => 'created_at',
-            6 => 'action_type',
+            0 => 'description',
+            1 => 'action_description',
+            2 => 'user_id',
+            3 => 'ip_address',
+            4 => 'created_at',
+            5 => 'action_type',
         ];
 
         $totalData = AuditLog::count();
@@ -44,7 +43,7 @@ class AuditLogController extends Controller
 
             $auditLogs = AuditLog::leftJoin('actions', 'audit_logs.action_id', '=', 'actions.id')
                 ->select('audit_logs.*', 'actions.name as action_name', 'actions.description')
-                ->where('audit_logs.id', 'LIKE', "%{$search}%")
+                // ->where('audit_logs.id', 'LIKE', "%{$search}%")
                 ->orWhere('audit_logs.action_id', 'LIKE', "%{$search}%")
                 ->orWhere('audit_logs.user_id', 'LIKE', "%{$search}%")
                 ->orWhere('audit_logs.ip_address', 'LIKE', "%{$search}%")
@@ -59,7 +58,7 @@ class AuditLogController extends Controller
 
             $totalFiltered = AuditLog::leftJoin('actions', 'audit_logs.action_id', '=', 'actions.id')
                 ->select('audit_logs.*', 'actions.name as action_name', 'actions.description')
-                ->where('audit_logs.id', 'LIKE', "%{$search}%")
+                // ->where('audit_logs.id', 'LIKE', "%{$search}%")
                 ->orWhere('audit_logs.action_id', 'LIKE', "%{$search}%")
                 ->orWhere('audit_logs.user_id', 'LIKE', "%{$search}%")
                 ->orWhere('audit_logs.ip_address', 'LIKE', "%{$search}%")
@@ -73,7 +72,7 @@ class AuditLogController extends Controller
         $data = [];
         if (!empty($auditLogs)) {
             foreach ($auditLogs as $auditLog) {
-                $nestedData['id'] = $auditLog->id;
+                // $nestedData['id'] = $auditLog->id;
                 $nestedData['description'] = $auditLog->description;
                 $nestedData['action_description'] = $auditLog->action_description;
                 $nestedData['user_id'] = $auditLog->user_id;
