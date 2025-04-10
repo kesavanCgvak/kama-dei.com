@@ -572,7 +572,7 @@ function initSortable() {
 
 function createLocalItems(data, droppedItem) {
     data['_token'] = $('meta[name="csrf-token"]').attr('content');
-    droppedItem.addClass('file-selected');
+    // droppedItem.addClass('file-selected');
     $.ajax({
         type: "post",
         url: "/storeLocalIems",
@@ -663,17 +663,20 @@ $(document).off('click', ".sync-file").on('click', ".sync-file", function () {
     });
 });
 
+function clearClouldFileSelection() {
+    let $cloudFiles = $('#cloud-storage .accordion-content .file-item');  //  if (clearFileSelection) {
+    $cloudFiles.removeClass('file-outdated file-selected');
+}
 
 function getFileDifferences(clearFileSelection = false) {
-    // Loop through each file item in #accordionCloud
-    let $cloudFiles = $('#cloud-storage .accordion-content .file-item');
-    if (clearFileSelection) {
-        $cloudFiles.removeClass('file-outdated file-selected');
-    }
-    $cloudFiles.each(function () {
+
+    let $expandedCloudAccordions = $('#cloud-storage .accordion-item .show-accordion').siblings('.accordion-content').find('.file-item');
+
+    $expandedCloudAccordions.each(function () {
         let cloudFileId = $(this).data('file-id');
         // Check for matching file in #accordionLocal
-        let localFile = $('#documents-collection .accordion-content .file-item[data-file-id="' + cloudFileId + '"]');
+        let localFile = $('#documents-collection .accordion-item .show-accordion').siblings('.accordion-content').find('.file-item[data-file-id="' + cloudFileId + '"]');
+       // let localFile = $('#documents-collection .accordion-content .file-item[data-file-id="' + cloudFileId + '"]');
 
         if (localFile.length > 0) {
             let cloudFile = $('#cloud-storage .accordion-content .file-item[data-file-id="' + cloudFileId + '"]');
@@ -703,8 +706,8 @@ function getFileDifferences(clearFileSelection = false) {
         }
     });
 
-    if ($cloudFiles.length > 0) {
-        updateFileNotexist();
+    if ($expandedCloudAccordions.length > 0) {
+         updateFileNotexist();
     }
 }
 
@@ -1020,11 +1023,13 @@ function clearSearch(type) {
 
 function initDocumentSearch(type) {
     $searchContainer = $('#search-cloud-storage');
+    clearClouldFileSelection();
     $parentWrapper = $('#cloud-storage');
     if (type === 'local') {
         $searchContainer = $('#document-search');
         $parentWrapper = $('#documents-collection');
     }
+
     let searchTerm = $searchContainer.val().trim().toLowerCase();
     let $accordionItems = $parentWrapper.find('.accordion-item');
 
@@ -1049,9 +1054,9 @@ function initDocumentSearch(type) {
         });
     }, 100);
     setTimeout(function () {
-        $accordionItems.find('.collection').each(function() {
+        $accordionItems.find('.collection').each(function () {
             const $collection = $(this);
-            const visibleItems = $collection.find('.collection-item').filter(function() {
+            const visibleItems = $collection.find('.collection-item').filter(function () {
                 return !$(this).hasClass('hide-search');
             }).length;
             $collection.find('.drop-message').remove();
@@ -1128,7 +1133,7 @@ function getLocalCollections(storage_type, orgID) {
                 }
                 $('#local_bucket_section').html(response);
                 initSortable();
-                getFileDifferences();
+                //getFileDifferences();
             },
             error: function (xhr, status, error) {
                 hideLoader();
@@ -1202,7 +1207,7 @@ function getClouldCollection(storage_type, org_id) {
                     setAccordions(responseData.data)
                         .then(() => {
                             initSortable();
-                            getFileDifferences();
+                            // getFileDifferences();
                             // Resolve the deferred object when everything is done
                             deferred.resolve();
                         })
@@ -1734,7 +1739,7 @@ function getClouldBucketItemsOld($clickedObject, bucketName) {
                 $files = getBucketfiles(response.data, bucketName)
                 $clickedObject.find('.accordion-content').html($files);
                 initDragable()
-                getFileDifferences();
+                // getFileDifferences();
                 initSortable();
             },
             error: function (xhr, status, error) {
@@ -1756,26 +1761,32 @@ function toggleAccordion() {
     // Detect if the .accordion-content is displayed or hidden
     $(document).on('click', '.collapse-btn', function () {
         let content = $(this).closest('.accordion-header').next('.accordion-content');
+        let collectionType = $(this).closest('.collection-wrapper').attr('id');
         let parentContainer = $(this).closest('.collection-card-body');
         let icon = $(this).find('i');
         let displayValue = content.css('display');
+
         // Check the display property
         parentContainer.find('.accordion-header').removeClass('show-accordion').next('.accordion-content').slideUp();
         if (displayValue === 'none') {
             $(this).closest('.accordion-header').addClass('show-accordion');
             icon.removeClass('fa-angle-down').addClass('fa-angle-up');
             content.slideDown(600);
-            getFileDifferences();
+            //getFileDifferences();
         } else {
             $(this).closest('.accordion-header').removeClass('show-accordion');
             icon.removeClass('fa-angle-up').addClass('fa-angle-down');
             content.slideUp(600);
         }
+        clearClouldFileSelection();
+        if (collectionType === 'documents-collection') {
+            setTimeout(function () { getFileDifferences(); }, 100);
+        }
     });
 }
 
 
-function expandCollapseAllAccordions($selector, mode='expand') {
+function expandCollapseAllAccordions($selector, mode = 'expand') {
     if (mode === 'collapse') {
         $selector.find('.accordion-header').removeClass('show-accordion');
         $selector.find('.accordion-content').css('display', 'none');

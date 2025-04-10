@@ -76,7 +76,7 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
 
 <div class="row">
     <div class="col-md-6 col-sm-12">
-        <div class="card" id="cloud-storage">
+        <div class="card collection-wrapper" id="cloud-storage">
             <div class="card-header card-header-documents">
                 <h2>Cloud Storage</h2>
                 <div class="input-group">
@@ -89,8 +89,8 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
             </div>
         </div>
     </div>
-    <div class="col-md-6 col-sm-12" id="documents-collection">
-        <div class="card">
+    <div class="col-md-6 col-sm-12">
+        <div class="card collection-wrapper" id="documents-collection">
             <div class="card-header card-header-documents">
                 <h2>Collections</h2>
                 <div class="document-action">
