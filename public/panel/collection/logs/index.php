@@ -77,6 +77,39 @@
             -o-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
             transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
         }
+
+        .tooltip-inner {
+            max-width: 400px;
+            text-align: left;
+            padding: 10px;
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .custom-tooltip {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 400px;
+            z-index: 1000;
+            display: none;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .truncate-cell {
+            max-width: 350px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: relative;
+            cursor: help;
+        }
     </style>
 </head>
 
@@ -102,6 +135,7 @@
             var table = $('#auditLogsTable').DataTable({
                 "processing": true,
                 "serverSide": true,
+                "pageLength": 25, // Set default page length to 25
                 "ajax": {
                     "url": "/audit-logs/data",
                     "type": "GET"
@@ -111,7 +145,18 @@
                         "data": "description"
                     },
                     {
-                        "data": "action_description"
+                        "data": "action_description",
+                        "render": function(data, type, row) {
+                            if (type === 'display') {
+                                return '<div class="truncate-cell" data-tooltip="' +
+                                       data.replace(/"/g, '&quot;') + '">' +
+                                       data.substring(0, 150) +
+                                       (data.length > 150 ? '...' : '') +
+                                       '</div>';
+                            }
+                            return data;
+                        },
+                        "width": "200px"
                     },
                     {
                         "data": "user_id"
@@ -120,11 +165,12 @@
                         "data": "ip_address"
                     },
                     {
-                        "data": "created_at"
+                        "data": "created_at",
+                        "width": "150px",
+                        "className": "date-column"
                     },
                     {
-                        "data": "action_type",
-                        "orderable": false
+                        "data": "action_type"
                     }
                 ],
                 "order": [
@@ -132,7 +178,37 @@
                 ]
             });
 
+            // Custom tooltip handling
+            $(document).on('mouseenter', '.truncate-cell', function(e) {
+                var tooltip = $('<div class="custom-tooltip"></div>')
+                    .text($(this).data('tooltip'))
+                    .appendTo('body');
 
+                var pos = $(this).offset();
+                var tooltipWidth = tooltip.outerWidth();
+                var tooltipHeight = tooltip.outerHeight();
+
+                tooltip.css({
+                    top: pos.top - tooltipHeight - 10,
+                    left: pos.left + ($(this).width() / 2) - (tooltipWidth / 2)
+                }).fadeIn('fast');
+
+                $(this).data('tooltip-element', tooltip);
+            });
+
+            $(document).on('mouseleave', '.truncate-cell', function() {
+                var tooltip = $(this).data('tooltip-element');
+                if (tooltip) {
+                    tooltip.fadeOut('fast', function() {
+                        $(this).remove();
+                    });
+                }
+            });
+
+            // Clean up any remaining tooltips before table redraws
+            table.on('preXhr', function() {
+                $('.custom-tooltip').remove();
+            });
         });
     </script>
 </body>

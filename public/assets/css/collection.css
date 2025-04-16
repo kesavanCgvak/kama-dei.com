@@ -9,7 +9,9 @@
     margin: 0px;
     padding: 14px 0px;
 }
-
+.panel .panel-body {
+    border-bottom: 1px solid #c8cacb;
+}
 .card-body {
     margin: 10px;
 }
@@ -344,9 +346,27 @@ ul.list-draagable {
     margin: 0;
     list-style: none !important;
 }
+.list-details {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
 
+.list-item-name {
+    flex: 1; /* This will make the name take up remaining space */
+}
+
+.list-action {
+    margin-left: auto; /* Push to the right */
+    padding-right: 10px; /* Add some spacing from the right edge */
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 40px; /* Ensure minimum width for icons */
+}
 .circle {
-    display: inline-block;
+    display: block;
     width: 30px;
     padding: 8px 9px;
     height: 30px;
@@ -454,7 +474,9 @@ ul.list-draagable {
     background-color: #0056b3;
 }
 
-
+.modal {
+//    z-index: 10500; /* Ensure modal is above other elements */
+}
 .modal-header {
 padding: 2px 18px;
 }

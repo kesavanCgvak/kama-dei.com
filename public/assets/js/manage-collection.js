@@ -503,7 +503,7 @@ function initSortable() {
         //  connectWith: ".sortable-connected", // Allow sorting with other lists (use the same class for other uls)
         cancel: '.local-files',
         connectWith: ".ui-sortable", // Allow sorting with other lists
-        connectToSortable: "#cloud-storage .accordion-content li",
+        connectToSortable: "body",
         update: function (event, ui) {
             let droppedItem = ui.item; // The dropped item
             // Highlight the border of the dropped item
@@ -676,7 +676,7 @@ function getFileDifferences(clearFileSelection = false) {
         let cloudFileId = $(this).data('file-id');
         // Check for matching file in #accordionLocal
         let localFile = $('#documents-collection .accordion-item .show-accordion').siblings('.accordion-content').find('.file-item[data-file-id="' + cloudFileId + '"]');
-       // let localFile = $('#documents-collection .accordion-content .file-item[data-file-id="' + cloudFileId + '"]');
+        // let localFile = $('#documents-collection .accordion-content .file-item[data-file-id="' + cloudFileId + '"]');
 
         if (localFile.length > 0) {
             let cloudFile = $('#cloud-storage .accordion-content .file-item[data-file-id="' + cloudFileId + '"]');
@@ -707,7 +707,7 @@ function getFileDifferences(clearFileSelection = false) {
     });
 
     if ($expandedCloudAccordions.length > 0) {
-         updateFileNotexist();
+        updateFileNotexist();
     }
 }
 
@@ -943,7 +943,7 @@ function validateCollectionName() {
 
     // Rule 5: Must not be a valid IP address
     const ipRegex =
-    /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$/;
+        /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$/;
     if (ipRegex.test(collectionName)) {
         helpText.text('Collection name cannot be an IP address.');
         return false;
@@ -1297,7 +1297,7 @@ function createCloudAccordionItem(data) {
 }
 
 function buildLocalCollectionFiles(collectionData) {
-    let $fileHtml = `<ul class="collection ui-sortable">`;
+    let $fileHtml = `<ul class="collection ui-sortable"><div class="drop-message">Drag and Drop files here</div>`;
     $.each(collectionData, function (index, collection) {
         let sanitizedFileName = sanitizeFileName(collection.file_name);
         let iocnName = getFileIcon(collection.file_name);
@@ -1310,7 +1310,10 @@ function buildLocalCollectionFiles(collectionData) {
            data-details-id="${collection.id}"
            >
       <div class="list-details">
-      <span class="circle"><i class="${iocnName} list-icon"></i></span>
+      <div className="list-item-icon">
+       <span class="circle"><i class="${iocnName} list-icon"></i></span>
+      </div>
+        <div class="list-item-name">
           <span class="title">${collection.file_name}</span>
           <div class="file-info">
               <span class="file-size">${formatFileSize(collection.size)}
@@ -1322,6 +1325,7 @@ function buildLocalCollectionFiles(collectionData) {
       <div class="list-action">
       <i class="fa fa-trash-o file-delete cursor-pointer" title="Delete File" data-id="${collection.id}"></i>
       </div>
+        </div>
     </li>`;
     });
     $fileHtml += `</ul>`;
@@ -1545,18 +1549,22 @@ function getBucketfiles(filesData, bucketName) {
                   data-last-modified="${file['file']['lastModifiedDateTime']}"
                    data-file-id="${sanitizedFileName}"
                    >
-              <div class="list-details">
-              <span class="circle"><i class="${iocnName} list-icon"></i></span>
-                  <span class="title">${fileName}</span>
-                  <div class="file-info">
-                      <span class="file-size">${formatFileSize(file['file']['size'])}
-                              KB</span>
-                  </div>
-                  <p>Last modified: <span class="file-date">${file['file']['last_modified_readable']}</span>
-                  </p>
-              </div>
+                <div class="list-details">
+                <div className="list-item-icon">
+                    <span class="circle"><i class="${iocnName} list-icon"></i></span>
+                    </div>
+                    <div class="list-item-name">
+                    <span class="title">${fileName}</span>
+                    <div class="file-info">
+                        <span class="file-size">${formatFileSize(file['file']['size'])}
+                                KB</span>
+                    </div>
+                    <p>Last modified: <span class="file-date">${file['file']['last_modified_readable']}</span>
+                    </p>
+                </div>
               <div class="list-action">
               </div>
+                </div>
           </li>`;
             }
         });
@@ -1607,21 +1615,29 @@ function getFileIcon(fileName) {
 
 function initDragable() {
     $("#cloud-storage .accordion-content li").draggable({
-        helper: function () {
+        helper: function (event) {
             let $original = $(this);
             let $clone = $original.clone();
 
-            // Properties to copy
-            let properties = [
-                "width", "height", "background", "color",
-                "padding", "margin", "border"
-            ];
+            // Calculate offset from cursor to element edge
+            let offsetX = event.pageX - $original.offset().left;
+            let offsetY = event.pageY - $original.offset().top;
 
-            // Copy each property individually
-            properties.forEach(property => {
-                $clone.css(property, $original.css(property));
+            // Style the clone
+            $clone.css({
+                'position': 'fixed',
+                'width': $original.width(),
+                'height': $original.height(),
+                'background': '#fff',
+                'box-shadow': '0 4px 8px rgba(0,0,0,0.2)',
+                'border': '2px solid #007bff',
+                'opacity': '0.9',
+                'list-style': 'none',
+                'pointer-events': 'none',
+                'left': event.pageX - offsetX,
+                'top': event.pageY - offsetY,
+                'z-index': '10500'
             });
-
             return $clone;
         },
         revert: "valid",
@@ -1636,10 +1652,26 @@ function initDragable() {
             // Highlight the original item when dragging starts
             $(this).addClass("dragging");
         },
-        stop: function () {
+        drag: function (event, ui) {
+            // Get original offsets
+            let $original = $(this);
+            let offsetX = event.pageX - $original.offset().left;
+            let offsetY = event.pageY - $original.offset().top;
+
+            // Update helper position
+            ui.helper.css({
+                'left': event.pageX - offsetX,
+                'top': event.pageY - offsetY,
+            });
+        },
+        stop: function (event, ui) {
             // Remove the highlight after dragging stops
             $(this).removeClass("dragging");
+             // Remove inline styles from the helper (clone)
+            ui.helper.removeAttr('style');
+
             $(".ui-sortable").removeClass("highlight-dropzone"); // Remove highlight from all drop areas
+
         },
     });
 }
@@ -1659,8 +1691,6 @@ function updateDropZoneMessage($dropZone) {
         if ($dropZone.find(".drop-message").length === 0) {
             $dropZone.append('<div class="drop-message">Drag and Drop files here</div>');
         }
-    } else {
-        $dropZone.find(".drop-message").remove();
     }
 }
 

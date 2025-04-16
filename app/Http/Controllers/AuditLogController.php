@@ -15,12 +15,12 @@ class AuditLogController extends Controller
     public function getData(Request $request)
     {
         $columns = [
-            0 => 'description',
-            1 => 'action_description',
-            2 => 'user_id',
-            3 => 'ip_address',
-            4 => 'created_at',
-            5 => 'action_type',
+            0 => 'actions.description',
+            1 => 'audit_logs.action_description',
+            2 => 'audit_logs.user_id',
+            3 => 'audit_logs.ip_address',
+            4 => 'audit_logs.created_at',
+            5 => 'audit_logs.action_type',
         ];
 
         $totalData = AuditLog::count();
@@ -49,8 +49,8 @@ class AuditLogController extends Controller
                 ->orWhere('audit_logs.ip_address', 'LIKE', "%{$search}%")
                 ->orWhere('audit_logs.created_at', 'LIKE', "%{$search}%")
                 ->orWhere('audit_logs.action_type', 'LIKE', "%{$search}%")
-                ->orWhere('actions.name', 'LIKE', "%{$search}%")
                 ->orWhere('actions.description', 'LIKE', "%{$search}%")
+                ->orWhere('audit_logs.action_description', 'LIKE', "%{$search}%")
                 ->offset($start)
                 ->limit($limit)
                 ->orderBy($order, $dir)
@@ -64,8 +64,8 @@ class AuditLogController extends Controller
                 ->orWhere('audit_logs.ip_address', 'LIKE', "%{$search}%")
                 ->orWhere('audit_logs.created_at', 'LIKE', "%{$search}%")
                 ->orWhere('audit_logs.action_type', 'LIKE', "%{$search}%")
-                ->orWhere('actions.name', 'LIKE', "%{$search}%")
                 ->orWhere('actions.description', 'LIKE', "%{$search}%")
+                ->orWhere('audit_logs.action_description', 'LIKE', "%{$search}%")
                 ->count();
         }
 

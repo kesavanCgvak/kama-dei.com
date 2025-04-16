@@ -351,17 +351,17 @@ class ApiController extends Controller
                 'Content-Type' => 'application/json',
                 'apikey' => env('API_KEY'),
             ];
-    
+
             $end_point = '/list_collections_of_org/v1';
-    
+
             $body = [
                 'org' => $request->org_id,
             ];
-    
+
             $response = Http::withHeaders($headers)
                 ->asForm()
                 ->post(env('API_BASE_URL') . $end_point, $body);
-    
+
             if ($response->successful() && $response->body() != 'null' && $response->status() == 200) {
                 $data = $response->json();
                 // Check if $publishedCollectionName exists in collection_name field
@@ -417,7 +417,7 @@ class ApiController extends Controller
             $response = Http::withHeaders($headers)
                 ->asForm()
                 ->post(env('API_BASE_URL') . $end_point, $body);
-                
+
             $statusCode = $response->status();
 
             if ($response->successful() && $response->body() != 'null' && $response->status() == 200) {
@@ -474,10 +474,10 @@ class ApiController extends Controller
             "SharePoint" => ["fileIndex" => "folders_or_files_in_sharepoint", "bucketKey" => "sharepoint_site"],
             "MFiles" => ["fileIndex" => "folders_or_files_in_vault", "bucketKey" => "vault"]
         ];
-        
+
         $selectedStorage = $storageMapping[$storageType] ?? ["fileIndex" => "data_folders_in_s3", "bucketKey" => "bucket_name"];
         $fileIndex = $selectedStorage["fileIndex"];
-        
+
         $result = [];
         foreach ($data as $bucket) {
             $bucketName = $bucket[$selectedStorage["bucketKey"]];

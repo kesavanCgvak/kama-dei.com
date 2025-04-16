@@ -55,8 +55,8 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
                             ?>
                         <?php endif; ?>
                     </select>
-                    <div class="organization-help-text">Select your organization and then select storage type to start your input</div>
                 </div>
+
             </div>
             <div class="col-md-6 col-sm-12 d-flex align-items-center">
                 <div class="col-md-3"><label>Select Storage Type</label></div>
@@ -66,7 +66,12 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
                     </select>
                 </div>
             </div>
+            <div class="col-md-6 col-sm-12 ">
+                <div class="col-md-3"></div>
+                <div class="col-md-9"><div class="organization-help-text">Select your organization and then select storage type to start your input</div>
+            </div>
 
+            </div>
         </div>
     </div>
     <script type="application/javascript">
@@ -74,7 +79,7 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
     </script>
 </div>
 
-<div class="row">
+<div class="row" id="sortable-container">
     <div class="col-md-6 col-sm-12">
         <div class="card collection-wrapper" id="cloud-storage">
             <div class="card-header card-header-documents">
