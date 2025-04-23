@@ -45,9 +45,9 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
                             }
                             ?>
                         <?php else: ?>
+                            <option value="" data-feedback='1'>-Select-</option>
                             <?php
-                            $org = \App\Organization::find($orgID);
-                            ?>
+                            $org = \App\Organization::orderBy("organizationShortName", 'asc')->find($orgID);                            ?>
                             <option value="<?= $org->organizationId; ?>" data-feedback='<?= $org->feedback; ?>'>
                                 <?= $org->organizationShortName; ?>
                             </option>
@@ -123,9 +123,9 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
                 <h4 class="rule-validation">Collection name guidance:</h4>
                 <ul>
                     <li>Must not be blank.</li>
-                    <li>Spaces are not allowed in the collection name.</li>
+                    <li>Spaces are not allowed in the Collection name.</li>
                     <li>Must be between 3 and 63 characters long.</li>
-                    <li>Must start capital letter or a digit, and end a lowercase letter or a digit. The name can contain dots, hyphens and underscores.</li>
+                    <li>Must start with a capital letter or a digit, and end with a lowercase letter or a digit. The name can contain dots, hyphens and underscores.</li>
                     <li>Cannot contain consecutive special characters (e.g. '..' or '--' or '__').</li>
                     <li>Must not match the format of an IP address (e.g. `192.168.0.1` ).</li>
                     <li>Must not already exist.</li>

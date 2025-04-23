@@ -128,6 +128,9 @@ class ApiController extends Controller
             return response()->json(['data' => [], 'state' => 'success'], $response->status());
         } elseif ($response->successful() && $response->status() == 200) {
             $buckets = $response->json();
+            if (is_array($buckets)) {
+                sort($buckets, SORT_STRING | SORT_FLAG_CASE);
+            }
             $data = $buckets;
         } else {
             $responseBody = $response->json();
@@ -289,7 +292,10 @@ class ApiController extends Controller
                     'vault' => $request->bucketName
                 ];
             }
-
+            // Sort the root folder files by name
+            usort($filesByFolder['root'], function($a, $b) {
+                return strcmp($a['file']['name'], $b['file']['name']);
+            });
             // Prepare final response
             return response()->json([
                 'state' => 'success',
@@ -553,6 +559,11 @@ class ApiController extends Controller
             return response()->json(['data' => [], 'state' => 'success'], $response->status());
         } elseif ($response->successful() && $response->status() == 200) {
             $buckets = $response->json();
+            if(!empty($buckets)) {
+                usort($buckets, function($a, $b) {
+                    return strcmp($a['value'], $b['value']);
+                });
+            }
             $data = $buckets;
         } else {
             $responseBody = $response->json();

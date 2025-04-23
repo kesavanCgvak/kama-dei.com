@@ -28,7 +28,7 @@ function getSystemSourceTypes() {
             if (response.state === 'success') {
                 // Get the select element
                 let $storageTypeSelect = $('#storage_type');
-
+                //toggleStorageTypeDisable(false);
                 // Clear existing options except the first one
                 $storageTypeSelect.find('option:not(:first)').remove();
 
@@ -189,11 +189,13 @@ $(document).on("click", ".file-delete", function () {
     let collectionFileId = $(this).closest('li').attr('data-details-id');
     let elementIdentifier = $(this).closest('li').attr('data-file-id');
     let confirmation = confirm('Are you sure you want to delete this file?');
+
     if (!confirmation) {
         return false;
     }
 
-    let data = { id: collectionFileId };
+    let collectionName = $(this).closest(".accordion-item").find(".accordion-header").data("collection");
+    let data = { id: collectionFileId, collectionName: collectionName };
     $selectedItem.addClass('delete-item');
     $.ajax({
         type: "POST",
@@ -209,11 +211,13 @@ $(document).on("click", ".file-delete", function () {
                 toastr.success(response.message || "File deleted successfully.");
                 $selectedItem.remove();
                 updateUnPublishedStatus($accordionItem);
+                checkPublishStatus($accordionItem);
+                $(`#cloud-storage .accordion-content li[data-file-id="${elementIdentifier}"]`).removeClass('file-selected');
                 setTimeout(function () {
                     initSortable();
-                    getFileDifferences(true);
                     updateFileNotexist(); // Update file existence status
                 }, 200);
+                setTimeout(function () { getFileDifferences(); }, 500);
 
             } else {
                 throw new Error(response.message || "Unknown error occurred");
@@ -300,7 +304,7 @@ function deleteLocalCollection(collection_id) {
             if (response.status == 'success') {
                 hideLoader();
                 toastr.success(response.message || "Collection deleted successfully.");
-                getFileDifferences(true);
+               setTimeout(function(){ getFileDifferences();},500)
             }
         },
         error: function (xhr, status, error) {
@@ -386,8 +390,8 @@ function openModal(name = "", description = "", id = "", mode = 'create') {
         modal.addClass('show');
         return false;
     }
-    modal.find('.modal-header h2').text('Rename Collection');
-    modal.find('.modal-footer #add-collection').text('Rename');
+    modal.find('.modal-header h2').text('Edit Collection');
+    modal.find('.modal-footer #add-collection').text('Save');
     modal.addClass('show');
 }
 
@@ -470,6 +474,7 @@ function copyCollectionsToDatabases(clonedItem) {
                 toastr.error('Error on updating file.');
                 return;
             }
+            expandCollapseAllAccordions($("#documents-collection"), mode = 'collapse');
             const collecion = response.collection;
             clonedItem.attr('data-id', collecion.id)
                 .attr('data-is-cloud-collecion', 0)
@@ -481,7 +486,10 @@ function copyCollectionsToDatabases(clonedItem) {
                 clonedItem.find(`.accordion-content .file-item[data-file-id="${collectionItem.file_id}"]`).attr('data-details-id', collectionItem.id);
             });
             clonedItem.find('.submenu').slideUp();
-            $("#documents-collection").find(".collection-card-body").append(clonedItem);
+            clonedItem.find('.accordion-header').addClass('show-accordion');
+            clonedItem.find('.accordion-content').css('display', 'block');
+            clonedItem.find('.collapse-btn').find('i').removeClass('fa-angle-down').addClass('fa-angle-up');
+            $("#documents-collection").find(".collection-card-body").prepend(clonedItem);
             // Re-initialize the sortable
             initSortable();
             toastr.success('The file information copied successfully');
@@ -544,6 +552,10 @@ function initSortable() {
             });
 
             if (!hasDuplicates) {
+                data['org_id'] = $('#orgID').val();
+                data['storage_type'] = $('#storage_type').val();
+                data['collection_name'] = $(this).closest(".accordion-item").find(".accordion-header").data("collection");
+
                 createLocalItems(data, droppedItem);
                 return;
 
@@ -587,6 +599,7 @@ function createLocalItems(data, droppedItem) {
                 droppedItem.find('.list-action').html(`<i class="fa fa-trash-o file-delete cursor-pointer"></i>`);
                 droppedItem.addClass('local-files');
                 updateUnPublishedStatus(droppedItem.closest('.accordion-item'));
+                checkPublishStatus(droppedItem.closest('.accordion-item'));
                 toastr.success('File information stored successfully.');
                 setTimeout(function () { getFileDifferences(); }, 500); // Call getFileDifferences();
             }
@@ -680,9 +693,9 @@ function getFileDifferences(clearFileSelection = false) {
 
         if (localFile.length > 0) {
             let cloudFile = $('#cloud-storage .accordion-content .file-item[data-file-id="' + cloudFileId + '"]');
+            cloudFile.addClass('file-selected');
             let localFileDate = localFile.attr("data-last-modified");
             let cloudFileDate = $(this).attr("data-last-modified");
-
             // Compare the file dates
             if (cloudFileDate != localFileDate) {
                 cloudFile.attr('title', 'This file seems outdated in local collection. Please sync by clicking the sync icon.');
@@ -956,10 +969,11 @@ function validateCollectionName() {
     }
 
     // Rule 7: Must be different when renaming
-    if ($('#action-mode').val() === 'update' && $("#previous-name").val().trim() === collectionName) {
-        helpText.text('Provide a new name for renaming.');
-        return false;
-    }
+    // Rule 7: Allow collection name same as the previous one
+    // if ($('#action-mode').val() === 'update' && $("#previous-name").val().trim() === collectionName) {
+    //     helpText.text('Provide a new name for renaming.');
+    //     return false;
+    // }
 
     // Rule 8: Description must be fewer than 1,000 characters
     if (description.length > 1000) {
@@ -1412,6 +1426,15 @@ $(document).on("click", ".publish-collection", function (event) {
     });
 });
 
+function checkPublishStatus($container) {
+    let fileCount = $container.find('.file-item').length;
+    if(fileCount === 0){
+        $container.find('.submenu').find('.publish').removeClass('publish-collection').addClass('btn-disabled').attr('disabled', 'disabled');
+    }else{
+        $container.find('.submenu').find('.publish').removeClass('btn-disabled').addClass('publish-collection').removeAttr('disabled');
+    }
+}
+
 function createLocalAccordionItem(data) {
     //  let toolTipText = '';
     let classNotPublished = '';
@@ -1431,10 +1454,24 @@ function createLocalAccordionItem(data) {
         classNotPublished = 'not-published';
         disableClass = 'btn-disabled';
     }
+
+    let disablePublish = 'disabled';
+    let disablePublishClass = 'btn-disabled'
+    if (data.collection_data.length > 0) {
+        disablePublish = "";
+        disablePublishClass = "publish-collection";
+    }
+
+    // $contextMenu = `<ul>
+    //     <li><button class="btn-context-menu rename-collection">Rename</button></li>
+    //     <li><button class="btn-context-menu edit-collection-note">Edit Collection Note</button></li>
+    //     <li><button class="btn-context-menu publish-collection">Publish</button></li>
+    //     <li><button ${disableCopy} class="btn-context-menu copy-collection ${disableClass}">Copy</button></li>
+    //     <li><button class="btn-context-menu delete-collection">Delete</button></li>
+    // </ul>`;
     $contextMenu = `<ul>
-        <li><button class="btn-context-menu rename-collection">Rename</button></li>
-        <li><button class="btn-context-menu edit-collection-note">Edit Collection Note</button></li>
-        <li><button class="btn-context-menu publish-collection">Publish</button></li>
+        <li><button class="btn-context-menu rename-collection">Edit</button></li>
+        <li><button ${disablePublish} class="btn-context-menu publish ${disablePublishClass}">Publish</button></li>
         <li><button ${disableCopy} class="btn-context-menu copy-collection ${disableClass}">Copy</button></li>
         <li><button class="btn-context-menu delete-collection">Delete</button></li>
     </ul>`;
@@ -1808,10 +1845,10 @@ function toggleAccordion() {
             icon.removeClass('fa-angle-up').addClass('fa-angle-down');
             content.slideUp(600);
         }
+
         clearClouldFileSelection();
-        if (collectionType === 'documents-collection') {
-            setTimeout(function () { getFileDifferences(); }, 100);
-        }
+        setTimeout(function () { getFileDifferences(); }, 100);
+
     });
 }
 

@@ -48,6 +48,15 @@ class CollectionController extends Controller
         } else {
             // If no existing collection, create a new one
             $collection = Collection::create($validatedData);
+
+            $this->logAudit(
+                actionName: 'CREATE_COLLECTION',
+                oldData: null,
+                newData: null,
+                action_description: "Created the collection '$collection->collection_name' with the org id $collection->organization_id and the storage type '$collection->storage_type'",
+                actionType: 'CREATE'
+            );
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Collection created successfully',
@@ -130,17 +139,20 @@ class CollectionController extends Controller
         // Fetch the collections with the required conditions
         $local_collections = Collection::where('storage_type', $request->input('storage_type'))
             ->where('organization_id', $request->input('orgID'))
-            ->with('collectionData')
-            ->orderBy('collection_name', 'asc') // Then order results
+            ->with(['collectionData' => function ($query) {
+                $query->orderBy('file_name', 'asc');
+            }])
+            ->orderBy('collection_name', 'asc')
             ->get();
 
         // Wrap the collection in the resource
         $collectionResource = CollectionResource::collection($local_collections);
+
         // Return a JSON response with status and data
         return response()->json([
             'status' => 'success',
             'message' => 'Collections retrieved successfully',
-            'data' => $collectionResource, // Return the resource for structured response
+            'data' => $collectionResource,
         ]);
     }
 
@@ -153,6 +165,15 @@ class CollectionController extends Controller
         CollectionData::destroy($request->id);
 
         Collection::where('id', $collection->collection_id)->update(['is_synced' => 0]);
+
+        $this->logAudit(
+            actionName: 'DELETE_FILE',
+            oldData: null,
+            newData: null,
+            action_description: "Deleted the file " . $collection->file_name . " from the collection " . $request->collectionName,
+            actionType: 'DELETE'
+        );
+
         return response()->json([
             'status' => 'success', // or 'error' based on the scenario
             'message' => 'File Deleted successfully',
@@ -195,6 +216,15 @@ class CollectionController extends Controller
             'bucket_sp_site_name' => $request->bucket_name
         ]);
         Collection::where('id', $request->collection_id)->update(['is_synced' => 0]);
+
+        $this->logAudit(
+            actionName: 'CREATE_FILE',
+            oldData: null,
+            newData: null,
+            action_description: "Created the file " . $request->file_name . " on the collection " . $request->collection_name,
+            actionType: 'CREATE'
+        );
+
         return response()->json(['status' => 'success', 'data' => $localItem]);
     }
 
@@ -219,6 +249,20 @@ class CollectionController extends Controller
         if ($updated) {
             // Fetch the updated state of the collection
             $newData = Collection::find($request->collection_id);
+            $collection_data = CollectionData::where('collection_id', $request->collection_id)->pluck('file_name');
+
+            $oldCollectionName = $oldDataArray['collection_name'];
+            $updatedCollectionName = $newData->collection_name;
+            $collectionDataFiles = $collection_data->implode(',');
+
+            $this->logAudit(
+                actionName: 'RENAME_COLLECTION',
+                oldData: null,
+                newData: null,
+                action_description: "Renamed the collection '$oldCollectionName' to '$updatedCollectionName' with the org id $newData->organization_id, with the files '$collectionDataFiles'",
+                actionType: 'RENAME'
+            );
+
             return response()->json([
                 'status' => 'success',
                 'message' => "Collection renamed successfully.",
@@ -277,5 +321,28 @@ class CollectionController extends Controller
             'message' => 'Collection created successfully!',
             'collection' => $collection,
         ], 201);
+    }
+
+
+    function convertArrayToString(array $data, string $collectionName, int $orgId, string $storageType, bool $isRenamed, $publishedCollectionName): string
+    {
+        $output = $isRenamed ? "Renamed the collection '$publishedCollectionName' to '$collectionName' " : "Pubished collection '$collectionName'  ";
+        $output .=  "with the org id $orgId, ";
+        $storageMapping = [
+            "S3" => ["fileIndex" => "data_folders_in_s3", "bucketKey" => "bucket_name"],
+            "SharePoint" => ["fileIndex" => "folders_or_files_in_sharepoint", "bucketKey" => "sharepoint_site"],
+            "MFiles" => ["fileIndex" => "folders_or_files_in_vault", "bucketKey" => "vault"]
+        ];
+
+        $selectedStorage = $storageMapping[$storageType] ?? ["fileIndex" => "data_folders_in_s3", "bucketKey" => "bucket_name"];
+        $fileIndex = $selectedStorage["fileIndex"];
+
+        $result = [];
+        foreach ($data as $bucket) {
+            $bucketName = $bucket[$selectedStorage["bucketKey"]];
+            $files = implode(", ", $bucket[$fileIndex]);
+            $result[] = "with the bucket '$bucketName' with the files '$files'";
+        }
+        return $output . implode(' and ', $result);
     }
 }
