@@ -5,8 +5,8 @@
  *  Function      : Provide functions for finding solutions in the chatbot
  *  Developer     : Gabriel Carrillo
  *  Company       : Kamazooie Development Corporation
- *  Version       : 3.08  
- *  Updated       : 21 August 2024
+ *  Version       : 3.096  
+ *  Updated       : 20 March 2025
 
 SOLUTION BUTTON FORMAT
 Prefix fact * relation * option* parent option * level
@@ -1791,19 +1791,19 @@ class InferenceHelper
       $canRateValue      = 107;
     
       // 1. Get relation type filters
-
-      $step = 5 ;    // step 5: filters for intermediate results /////  
+      $rtgId       = 8;     // can access protected data
+      $step        = 5 ;    // step 5: filters for intermediate results /////  
                      // 64 is a type of
                      // 85 is the noun form of
-      $lStep = 9;    // 105 can be served at. Special Lex processing
-      $lRelTypeId = 0;
+      $lStep       = 9;    // 105 can be served at. Special Lex processing
+      $lRelTypeId  = 0;
 
       // special lex processing for lex controller
       if ($isLex == 1) {
           $lRelTypeId = $oRelationTypeFilter->retrieveByStep($lStep);
       }
 
-      $rsFilter0 = $oRelationTypeFilter->getByStep($step);
+      $rsFilter0 = $oRelationTypeFilter->getByStep($step);     
 
       // 2. get problems for this userid
    
@@ -1860,8 +1860,9 @@ class InferenceHelper
                       $srRating = 0;
                       $srHasExtendedData = 0;
                       $srRTermId = $rightTermSynonymId;
-                      $rsIntermediateRelation = $oRelation->getByRightTerm($rightTermSynonymId); 
-        
+                      //$rsIntermediateRelation = $oRelation->getByRightTerm($rightTermSynonymId); 
+                      $rsIntermediateRelation = $oRelation->getByOrgRightTerm($rightTermSynonymId, $orgid, $rtgId); 
+
                       foreach($rsIntermediateRelation as $rsIR) {                // L5
                           $srRelationId     = $rsIR['relationId'];
                           $srRTypeId        = $rsIR['relationTypeId'];
@@ -1946,7 +1947,8 @@ class InferenceHelper
                   $srLTermId = 0;
                   $srRTermId = 0 ;
                   $wCount = 0;
-                  $rsIntermediateRelation = $oRelation->getByRightTerm($rightTermSynonymId); 
+                  //$rsIntermediateRelation = $oRelation->getByRightTerm($rightTermSynonymId); 
+                  $rsIntermediateRelation = $oRelation->getByOrgRightTerm($rightTermSynonymId, $orgid, $rtgId);
     
                   foreach($rsIntermediateRelation as $rsIR) {
                       $srRelationId  = $rsIR['relationId'];

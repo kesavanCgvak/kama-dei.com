@@ -186,9 +186,10 @@ Route::group(['prefix' => '/logs'], function(){
 	//----------------------------------------------------------------------------------------------
 });
 
+
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\CollectionController;
-
+use App\Http\Controllers\AuditLogController;
 
 Route::get('/drives', [ApiController::class, 'index'])->name('drives');
 Route::get('/get-system-source-types', [ApiController::class, 'getSystemSourceTypes'])->name('get-system-source-types');
@@ -221,8 +222,5 @@ Route::prefix('collections')->group(function () {
     Route::put('/{id}', [CollectionController::class, 'update']);      // Update a specific collection
     // Delete a specific collection
 });
-
-use App\Http\Controllers\AuditLogController;
-
 
 Route::get('/audit-logs/data', [AuditLogController::class, 'getData']);

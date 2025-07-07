@@ -38,7 +38,10 @@ class LogsController extends \App\Http\Controllers\Controller{
 					
 					$feedback = \App\Feedback::where('message_id', $item->msg_id)->first();
 					if($feedback==null){ $item->feedback==''; }
-					else{ $item->feedback = $feedback->feedback; }
+					else{ 
+						$item->feedback = $feedback->feedback;
+						$item->comment  = $feedback->comment;
+					}
 					return $item;
 				});
 	
@@ -365,7 +368,7 @@ ini_set('memory_limit', '4096M');
 				];
 			}
 			
-		}catch(\Trowable $ex){ return ['result'=>1, 'msg'=>$ex->getMessage()]; }
+		}catch(\Throwable $ex){ return ['result'=>1, 'msg'=>$ex->getMessage()]; }
 	}
 	//--------------------------------------------------------
     public function sendMylog(Request $req){
@@ -512,7 +515,7 @@ ini_set('memory_limit', '4096M');
 			//------------------------------------------------
 			return ['result'=>0, 'data'=>$retVal];
 			//------------------------------------------------
-		}catch(\Trowable $ex){ return ['result'=>1, 'msg'=>['exception'=>[$ex->getMessage()]]]; }
+		}catch(\Throwable $ex){ return ['result'=>1, 'msg'=>['exception'=>[$ex->getMessage()]]]; }
 	}
 	//--------------------------------------------------------
 }

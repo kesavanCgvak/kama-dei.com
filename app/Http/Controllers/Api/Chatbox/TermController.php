@@ -17,6 +17,7 @@ class TermController extends \App\Http\Controllers\Controller{
 	//---------------------------------------
 	//---------------------------------------
 	public function termCheck(Request $request){
+//\Log::info("TermController::termCheck");
 		//-----------------------------------
 		if(!$request->has('userid')){ return \Response::json([ 'message' => 'user [userid] not defined'], 400); }
 		if(!$request->has('orgid' )){ return \Response::json([ 'message' => 'organization ID [orgid] not defined'], 400); }

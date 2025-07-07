@@ -12,7 +12,6 @@ class Feedback extends Model {
 	protected $primaryKey = "msg_id";
 	public    $timestamps = false;
 	//---------------------------------------------------------------
-	protected $encryptable = [
-	];
+	protected $encryptable = [];
 	//---------------------------------------------------------------
 }

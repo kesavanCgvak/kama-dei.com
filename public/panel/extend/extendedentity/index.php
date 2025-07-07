@@ -1,5 +1,53 @@
+<?php
+$userKey  = "-";
+$userKeyR = \App\UserKey::find(session()->get('userID'));
+if($userKeyR!==null){ $userKey = $userKeyR->userKey; }
+?>
 <style>
-
+	#resultPreview [data-title]:after {
+		content: attr(data-title);
+		/*
+		color: #111;
+		background: #fff;
+		padding: 1px 5px 2px 5px;
+		bottom: 0.6em;
+		left: 100%;
+		*/
+		white-space: nowrap;
+		box-shadow: 1px 1px 3px #222222;
+		opacity: 0;
+		/*border: 1px solid #111111;*/
+		z-index: 99999;
+		visibility: hidden;
+		position: absolute;
+	}
+	#resultPreview [data-title]:hover {
+		/*position: absolute;*/
+	}
+	#resultPreview a{ position: relative; }
+	#resultPreview [data-title]:hover::after{
+		white-space: pre;
+		z-index: 99999;
+		padding: 8px 20px;
+		background-color:lightblue;
+		color: blue;
+		border: 1px solid blue;
+		border-radius: 8px;
+		position: absolute;
+		left: 0px;
+		/*
+		bottom: 12px;
+		*/
+		display: block;
+		z-index: 99999;
+/*
+	}
+	#resultPreview [data-title]:hover::after{
+*/
+		opacity: 1.0;
+		transition: all 0.5s ease 0.5s;
+		visibility: visible;
+	}
     #searchWhere,.where-group{
         display: inline-block;
         line-height: 10px;
@@ -178,22 +226,29 @@
 		{ vertical-align: middle; }
 	*/
 	.draftItemAll{
-		width: calc(100% - 80px);
+		width: calc(100% - 0px);
 		margin-right: 5px;
 	}
 	.draftItemBorder{
-		border: 1px solid #eee;
-		padding: 1rem .5rem;
+		border: 0px solid #eee;
+		padding: .5rem;
+		padding-bottom: 0;
 	}
 	.draftItemSearch{
+		width: 100%;
+		/*padding: 2.5px 5px;*/
 	}
 	.draftItem{ margin-bottom: 15px; }
 	.draftItem>label{ display: block; }
 	
 	#searchBTN{ height:33.6px; }
-	#urlText{ width: calc(100% - 55px); display: inline-block; margin-left: 5px; }
-	#inquiry, #result{
-		height: 120px; max-height: 120px; min-height: 120px;
+	#urlText{ width: calc(100% - 0px); display: inline-block; margin: auto; }
+	#inquiry{
+		height: 90px; max-height: 90px; min-height: 90px;
+		width: 100%; min-width: 100%; max-width: 100%; 
+	}
+	#result{
+		height: 154px; max-height: 154px; min-height: 154px;
 		width: 100%; min-width: 100%; max-width: 100%; 
 	}
 	#notes{
@@ -214,30 +269,7 @@
 	}
 	
 	#showPrevBtn, #showEditBtn{ width:70px; padding:3px 5px; font-size: 90%; font-weight: 300; }
-	#resultPreview>p{ height:120px; overflow: auto; padding:10px 5px 2px; border:1px solid #eee; border-radius:3px;text-align:justify; }
-	#resultPreview [data-title]:hover:after {
-		opacity: 1;
-		transition: all 0.1s ease 0.5s;
-		visibility: visible;
-	}
-	#resultPreview [data-title]:after {
-		content: attr(data-title);
-		color: #111;
-		background: #fff;
-		position: absolute;
-		padding: 1px 5px 2px 5px;
-		bottom: 0.6em;
-		left: 100%;
-		white-space: nowrap;
-		box-shadow: 1px 1px 3px #222222;
-		opacity: 0;
-		border: 1px solid #111111;
-		z-index: 99999;
-		visibility: hidden;
-	}
-	#resultPreview [data-title] {
-		position: relative;
-	}
+	#resultPreview>p{ height:154px; overflow: auto; padding:10px 5px 2px; border:1px solid #eee; border-radius:3px;text-align:justify; }
 	#lang_entity_div button{ font-size: 80%; padding: 3px 6px; }
 	#review_by{ 
 		/*width:calc(100% - 180px) !important;*/
@@ -274,6 +306,15 @@
 	#notesModal .bootstrap-table th:nth-child(4),
 	#notesModal .bootstrap-table td:nth-child(4){ width: 0px !important; display: none; }
 	#clear_review_by{ border-radius: 4px !important; }
+	
+	
+	.draft_DS_LLM_CLL{
+		display: flex;
+		border: 1px solid #ccc;
+		border-radius: 5px;
+		height: 210px;
+		margin-bottom: 5px;
+	}
 </style>
 <link rel="stylesheet" href="//code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
 
@@ -297,7 +338,7 @@
 <!--采用模块化方式-->
 <script  src="/public/layui/layui.js"></script>
 <script  src="/public/js/jquery.js"></script>
-<script src="/public/js/app.js"></script>
+<script  src="/public/js/app.js"></script>
 
 <div id="draftModal" class="modal fade" role="dialog">
 	<div class="modal-dialog modal-lg" style="max-width:750px;">
@@ -307,7 +348,7 @@
 				<h4 class="modal-title" style="color: #fff;">Draft Assistant</h4>
 			</div>
 			
-			<div class="modal-body" style="display: flex">
+			<div class="modal-body" style="display:flex; padding-bottom: 0">
 
 				<div class="draftItemAll">
 					<div class="draftItemBorder" style="margin-bottom:5px;">
@@ -330,45 +371,69 @@
 							</div>
 						</div>
 
-						<div style="">
-							<h4><b>Data Source</b></h4>
-							<div class="draftItem" style="display:flex; flex-wrap:wrap;border:1px solid #ccc;border-radius:5px;">
-								<div style="width: 25%; min-width: 100px;padding:5px; border-right:1px solid #ccc;">
-									<div>
-										<input type="radio" id="internet" name="radioItems" value=""/>
-										<label class="radioItems" for="internet">Internet</label>
-									</div>
-									<div>
-										<input type="radio" id="url" name="radioItems"/>
-										<label class="radioItems" for="url">URL</label>
-									</div>
-									<div>
-										<input type="radio" id="enterprise" name="radioItems"/>
-										<label class="radioItems" for="enterprise">Enterprise</label>
-									</div>
-									<div>
-										<input type="radio" id="kamaDEI" name="radioItems" disabled/>
-										<label class="radioItems disabled" for="kamaDEI">Kama-DEI</label>
-									</div>
-<!--
-									<div>
-										<input type="radio" id="sharepoint" name="radioItems" disabled/>
-										<label class="radioItems disabled" for="sharepoint">SharePoint</label>
-									</div>
--->
-								</div>
-								<div style="width: 75%; min-width: 100px;padding:5px;">
-									<div class="enterprise radioItemsElemans" style="display:none;height:120px;overflow:auto;">
-									</div>
-									<div class="url radioItemsElemans" style="display:none">
-										<input
-											class="form-control"
-											id="urlText"
-											maxlength="300"
-											placeholder="http://www.example.com/interestingpage"
-										/>
+						<div class="draft_DS_LLM_CLL" style="">
+							<div style="width: 20%; min-width: 100px; border-right:1px solid #cdcdcd;">
+								<h4 style="width: 100%; border-bottom: 1px solid #cdcdcd; padding:10px"><b>Data Source</b></h4>
+								<div class="draftItem" style="height:calc(100% - 75px); padding: 8px;">
+									<div style="width: 100%;">
+										<div>
+											<input type="radio" id="internet" name="radioItems" value=""/>
+											<label class="radioItems" for="internet">Internet</label>
+										</div>
+										<div>
+											<input type="radio" id="url" name="radioItems"/>
+											<label class="radioItems" for="url">URL</label>
+										</div>
+										<div>
+											<input type="radio" id="enterprise" name="radioItems"/>
+											<label class="radioItems" for="enterprise">Enterprise</label>
+										</div>
+										<div style="display: none">
+											<input type="radio" id="kamaDEI" name="radioItems" disabled/>
+											<label class="radioItems disabled" for="kamaDEI">Kama-DEI</label>
+										</div>
+	<!--
+										<div>
+											<input type="radio" id="sharepoint" name="radioItems" disabled/>
+											<label class="radioItems disabled" for="sharepoint">SharePoint</label>
+										</div>
+	-->
 									</div>
 								</div>
+							</div>
+							<div style="width: 45%; min-width: 100px; border-right:1px solid #cdcdcd;">
+								<h4 style="width: 100%; border-bottom: 1px solid #cdcdcd; padding: 10px"><b>LLM Models</b></h4>
+								<div style="height:calc(100% - 35px);">
+									<div style="width:100%; min-width: 100px;padding:8px; height: 100%;">
+										<div class="enterpriseLLM radioItemsElemans" style="display:none;height:100%;overflow:auto;">
+										</div>
+									</div>
+								</div>
+							</div>
+							<div style="width: 35%">
+								<h4 style="width: 100%; border-bottom: 1px solid #cdcdcd; padding: 10px">
+									<b id="collectionsTTL">&nbsp;</b>
+								</h4>
+								<div style="height:calc(100% - 35px);">
+									<div style="width:100%; min-width: 100px;padding:8px; height:100%">
+										<div class="enterprise radioItemsElemans" style="display:none;height:100%;overflow:auto;"></div>
+										<div class="url radioItemsElemans" style="display:none">
+											<input
+												class="form-control"
+												id="urlText"
+												maxlength="300"
+												placeholder="http://www.example.com/interestingpage"
+											/>
+										</div>
+										
+									</div>
+								</div>
+							</div>
+						
+						</div>
+						<div style="width:100%; display:block; text-align:center;">
+							<div class="draftItemSearch" style="">
+								<button class="btn btn-info btnSearch" style="width:120px;" id="searchBTN">Search</button>
 							</div>
 						</div>
 
@@ -387,7 +452,7 @@
 								<button id="prev"
 							</div>
 -->
-							<div style="width: 100%; text-align: right; margin-bottom:-18px;">
+							<div style="width: 100%; text-align: right; margin-bottom:-20px; display:none">
 								<div class="btn-group" role="group" aria-label="Basic example">
 									<button type="button" id="showEditBtn" class="btn btn-info">Code</button>
 									<button type="button" id="showPrevBtn" class="btn btn-default">Preview</button>
@@ -423,12 +488,9 @@
 					</div>
 				</div>
 				
-				<div class="draftItemSearch">
-					<button class="btn btn-info btnSearch" style="min-width:77px; margin-top:31px;" id="searchBTN">Search</button>
-				</div>
 			</div>
 
-			<div class="modal-footer" style="display: flex; flex: 1; flex-wrap: wrap; padding: 5px 10px 8px;">
+			<div class="modal-footer" style="display:flex; flex:1; flex-wrap:wrap; padding:5px 10px 8px; border-top:none;">
 <!--
 				<div style="width: 33%; text-align: left">
 					<button style="width:80px;" type="button" id="copyDraft" class="btn btn-success">Copy</button>
@@ -503,47 +565,79 @@
 			let id = $(this).attr("id");
 			$(".radioItemsElemans").hide();
 			$("."+id+".radioItemsElemans").show();
+			$("#collectionsTTL").html("&nbsp;");
 		
-			if(id=="url"){ $("#urlText").focus(); }
-			
-			if(id=="enterprise"){
+			if(id=="url"){
+				$("#collectionsTTL").text("URL");
+				$("#urlText").focus();
+			}
+
+			if(
+				id=="url" ||
+				id=="internet" ||
+				id=="enterprise"
+			){
 				$(".enterprise.radioItemsElemans>div").remove();
-/*
+				$(".enterpriseLLM.radioItemsElemans>div").remove();
+				
+				$(".enterpriseLLM.radioItemsElemans").show();
+
 				$.ajax({
-					url: 'https://staging_py.kama-dei.com/list_collections_of_org/v1',
-					method: 'POST',
-					
-					timeout: 0,
-					processData: false,
-					mimeType: "multipart/form-data",
-					contentType: false,
-					
-					dataType: "json",
-					cache: false,
-					traditional: true, 
-					crossDomain: true,
-					'Access-Control-Allow-Origin': '*',
-					headers: {
-						'Access-Control-Allow-Origin': '*',
-						"Content-Type": "application/json"
+					url: '<?=env('extendedentity_draft_get_system_llm_models', '')?>',
+					method: "POST",
+					headers:{
+						apikey: "123"
 					},
-					data: {org: enterpriseOrgID},
-					beforeSend: function(xhr) { 
-						xhr.setRequestHeader('Access-Control-Allow-Origin', '*'); 
-					},
+					//processData: false,
+					//contentType: false,
+					data: {userkey:"<?=$userKey;?>"},
 					success: function(res){
-console.log(res);
+						if(res.length==0){
+							$(".enterpriseLLM.radioItemsElemans").append(
+								'<div>'+
+									'<b>You have no LLM Models set up yet.</b>'+
+								'</div>'
+							);
+						}
+						for(let i in res){
+							let llmM = res[i];
+							let llmModels = "<div>";
+							llmModels += '<b style="display:block;margin:10px 0 4px 0;">'+i+'</b>';
+							llmModels += '<ul style="padding-left:10px">';
+							for(let j in llmM){
+								let llm = llmM[j];
+								llmModels += '<li>';
+								llmModels += '<input type="radio" id="'+llm+'" name="LLM_Models" class="LLM_Models" value="'+i+'"/>';
+								llmModels += '<label class="radioItems" for="'+llm+'" style="text-transform:capitalize;margin-left:5px">';
+								llmModels += llm;
+								llmModels += '</label>';
+								llmModels += '</li>';
+							}
+							llmModels += '</ul>';
+							llmModels += '</div>';
+							$(".enterpriseLLM.radioItemsElemans").append( llmModels );
+						}
 					},
 					error: function(xhr){
-console.log(xhr);
+						let errText = "";
+						try{ errText = "Error: "+xhr.state(); }
+						catch(ex){}
+						if(errText==""){ errText = xhr.statusText; }
+						$(".enterpriseLLM.radioItemsElemans").append(
+							'<div style="color:red">'+
+								'<i>'+xhr.status+'</i>'+
+								'<b style="margin-left:10px">'+errText+'</b>'+
+							'</div>'
+						);
 					}
 				});
-*/
-/**/
+				
+				if(id!="enterprise"){ return; }
+				$("#collectionsTTL").text("Collections");
+
 				$.post(
 					'<?=env('extendedentity_draft_list_collections', '')?>',
-					//"https://staging_py.kama-dei.com/list_collections_of_org/v1",
-					{org: enterpriseOrgID},
+					{org: enterpriseOrgID, userkey:"<?=$userKey;?>"},
 					function(res){
 						if(res.length==0){
 							$(".enterprise.radioItemsElemans").append(
@@ -565,17 +659,62 @@ console.log(xhr);
 						}
 					}
 				).fail(function(xhr){
-console.log(xhr)
+					let errText = "";
+					let errCode = "";
+					
+					try{ errText = "Error: "+xhr.responseJSON.detail.message; }catch(ex){}
+					
+					if(errText==""){
+						try{ errText = "Error: "+xhr.state(); }catch(ex){}
+						errCode = xhr.status;
+					}
+					if(errText==""){
+						errText = xhr.statusText;
+						errCode = xhr.status;
+					}
 					$(".enterprise.radioItemsElemans").append(
 						'<div style="color:red">'+
-							'<i>'+xhr.status+'</i>'+
-							'<b style="margin-left:10px">'+xhr.statusText+'</b>'+
+							'<i>'+errCode+'</i>'+
+							'<b style="margin-left:10px">'+errText+'</b>'+
 						'</div>'
 					);
 				});
-/**/
 			}
-
 		});
 	});
+	//----------------------------------------------
+	function setShowTitle(){
+		$(".asdLink").on({
+			mouseenter: function (ev) {
+/*
+				let that = this;
+				setTimeout(1500,function(){
+					console.log("tooltip width:"+$(that).width());
+				});
+				console.log("tooltip outerWidth:"+$("#resultPreview [data-title]").outerWidth(true));
+//				console.log("tooltip T:"+$("#resultPreview [data-title]").offsetWidth());
+				
+				console.log("tooltip right:"+$("#resultPreview [data-title]").position().right);
+				console.log("div T:"+$("#resultPreview").width());
+				console.log($(this).offset().top);
+				console.log($("#resultPreview [data-title]").height(true));
+				console.log($("#resultPreview [data-title]").outerHeight(true));
+				console.log("------------------------");
+				console.log("tooltip T:"+$("#resultPreview [data-title]").offset().top);
+				console.log("tooltip B:"+$("#resultPreview [data-title]").offset().bottom);
+				console.log("------------------------");
+				console.log("div T:"+$("#resultPreview").offset().top);
+				console.log("div B:"+$("#resultPreview").offset().bottom);
+//#resultPreview [data-title]:hover::after				
+				if($("#resultPreview [data-title]").offset().bottom>$("#resultPreview").offset().bottom){
+					let top = $("#resultPreview [data-title]").offset().top + $("#resultPreview [data-title]").outerHeight()+5;
+					$("#resultPreview [data-title]").css("bottom", top+"px");
+						
+				}
+*/
+			},
+			mouseleave: function (event) {
+			}
+		});		
+	}
 </script>

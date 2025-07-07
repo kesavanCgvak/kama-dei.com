@@ -22,12 +22,19 @@ class ApiController extends Controller
         return view('directory');
     }
 
+    private function getUserKey()
+    {
+        $userKey = \App\UserKey::where('user_id', session()->get('userID'))->first();
+        //return $userKey->getAttribute('userKey');
+        return '9c28108c9583cd11e5de14350496566e';
+    }
+
     public function manageCollection()
     {
         $headers = [
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-            'apikey' => env('API_KEY'),
+            'userkey' => $this->getUserKey(),
         ];
 
         $body = [
@@ -53,7 +60,7 @@ class ApiController extends Controller
         $headers = [
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-            'apikey' => env('API_KEY'),
+            'userkey' => $this->getUserKey(),
         ];
 
         $body = [
@@ -79,7 +86,7 @@ class ApiController extends Controller
         $headers = [
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-            'apikey' => env('API_KEY'),
+            'userkey' => $this->getUserKey(),
         ];
 
         $body = [
@@ -104,7 +111,7 @@ class ApiController extends Controller
         $headers = [
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-            'apikey' => env('API_KEY'),
+            'userkey' => $this->getUserKey(),
         ];
 
         $body = [
@@ -147,7 +154,7 @@ class ApiController extends Controller
         $headers = [
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-            'apikey' => env('API_KEY'),
+            'userkey' => $this->getUserKey(),
         ];
 
         $body = [
@@ -239,7 +246,7 @@ class ApiController extends Controller
             $headers = [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-                'apikey' => env('API_KEY'),
+                'userkey' => $this->getUserKey(),
             ];
             $container = $this->getCountainerParamaters($request);
             // Prepare request body
@@ -293,7 +300,7 @@ class ApiController extends Controller
                 ];
             }
             // Sort the root folder files by name
-            usort($filesByFolder['root'], function($a, $b) {
+            usort($filesByFolder['root'], function ($a, $b) {
                 return strcmp($a['file']['name'], $b['file']['name']);
             });
             // Prepare final response
@@ -324,7 +331,7 @@ class ApiController extends Controller
         $headers = [
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-            'apikey' => env('API_KEY'),
+            'userkey' => $this->getUserKey(),
         ];
 
         $body = [
@@ -355,7 +362,7 @@ class ApiController extends Controller
             $headers = [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-                'apikey' => env('API_KEY'),
+                'userkey' => $this->getUserKey(),
             ];
 
             $end_point = '/list_collections_of_org/v1';
@@ -386,7 +393,7 @@ class ApiController extends Controller
                 $headers = [
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
-                    'apikey' => env('API_KEY'),
+                    'userkey' => $this->getUserKey(),
                 ];
                 $body = [
                     'org' => $request->org_id,
@@ -410,7 +417,7 @@ class ApiController extends Controller
             $headers = [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-                'apikey' => env('API_KEY'),
+                'userkey' => $this->getUserKey(),
             ];
 
             $end_point = '/enterprise_create_collection_from_source/v1';
@@ -505,7 +512,7 @@ class ApiController extends Controller
         $headers = [
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-            'apikey' => env('API_KEY'),
+            'userkey' => $this->getUserKey(),
         ];
         $body = [
             'org' => $request->org_id,
@@ -546,7 +553,7 @@ class ApiController extends Controller
         $headers = [
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-            'apikey' => env('API_KEY'),
+            'userkey' => $this->getUserKey(),
         ];
 
         $end_point = '/get_system_source_types/v1';
@@ -559,8 +566,8 @@ class ApiController extends Controller
             return response()->json(['data' => [], 'state' => 'success'], $response->status());
         } elseif ($response->successful() && $response->status() == 200) {
             $buckets = $response->json();
-            if(!empty($buckets)) {
-                usort($buckets, function($a, $b) {
+            if (!empty($buckets)) {
+                usort($buckets, function ($a, $b) {
                     return strcmp($a['value'], $b['value']);
                 });
             }

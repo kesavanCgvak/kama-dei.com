@@ -15,6 +15,7 @@ use App\Controllers;
 
 //use App\Http\Resources\User as UserResource;
 
+//-------------------------------------------
 class OrganizationController extends \App\Http\Controllers\Controller{
 	//---------------------------------------
 	public function allOrganization(){
@@ -185,6 +186,9 @@ class OrganizationController extends \App\Http\Controllers\Controller{
 					}
 					$org->feedback = trim($request->input('feedback'));
 				}
+				if($request->has('multi_model_gen_AI')){
+					$org->multi_model_gen_AI = trim($request->input('multi_model_gen_AI'));
+				}
 
 				//$org->OverTime         = $OverTime;
 				//$org->NeedRegister     = trim($request->input('NeedRegister'));
@@ -220,6 +224,20 @@ class OrganizationController extends \App\Http\Controllers\Controller{
 							}
 						}else{ \App\OrganizationLanguage::insert(['org_id'=>$org->organizationId, 'language'=>'en']); }
 					}
+					if($request->has('modelGenAI')){
+						\App\OrganizationModel::where('org_id', $org->organizationId)->delete();
+						if($org->multi_model_gen_AI==1){ 
+							foreach($request->input('modelGenAI') as $tmp){
+								\App\OrganizationModel::insert(['org_id'=>$org->organizationId, 'model_gen_ai'=>$tmp]);
+							}
+						}
+					}
+					if($org->multi_model_gen_AI==0){
+						\App\PortalModel::whereRaw('portal_id in (select id from portal where organization_id=?)',[$org->organizationId])
+							->delete();
+						\App\Portal::where('organization_id', $org->organizationId)->update(['multi_model_gen_AI'=>0]);
+					}
+					
 					if($org->hasLiveAgent==0){
 						\App\Portal::where('organization_id', $org->organizationId)->update(['hasLiveAgent'=>0]);
 						\App\LiveAgentMapBots::where('ownerId', $org->organizationId)->update(['publish_status'=>'Unpublished']);
@@ -247,21 +265,21 @@ class OrganizationController extends \App\Http\Controllers\Controller{
 			//$org->OverTime         = $OverTime;
 			//$org->NeedRegister     = trim($request->input('NeedRegister'));
 
-			$org->Descripiton     = trim($request->input('Descripiton'));
-			$org->EmailTheme      = trim($request->input('EmailTheme'));
-			$org->EmailBody       = trim($request->input('EmailBody'));
-			$org->AutoEmail       = trim($request->input('AutoEmail'));
-			$org->AutoOnOff       = trim($request->input('AutoOnOff'));
-			$org->Footer          = trim($request->input('Footer'));
-			$org->Billable        = trim($request->input('Billable'));
-			$org->RPA             = trim($request->input('RPA'));
-			$org->MultiLanguage   = trim($request->input('MultiLanguage'));
-			$org->MessageOfTheDay = trim($request->input('MessageOfTheDay'));
-			$org->KaaS3PB         = trim($request->input('KaaS3PB'));
-			$org->hasLiveAgent    = trim($request->input('hasLiveAgent'));
-			$org->RAG             = trim($request->input('RAG'));
-			$org->mfa             = trim($request->input('mfa'));
-			$org->feedback        = trim($request->input('feedback'));
+			$org->Descripiton        = trim($request->input('Descripiton'));
+			$org->EmailTheme         = trim($request->input('EmailTheme'));
+			$org->EmailBody          = trim($request->input('EmailBody'));
+			$org->AutoEmail          = trim($request->input('AutoEmail'));
+			$org->AutoOnOff          = trim($request->input('AutoOnOff'));
+			$org->Footer             = trim($request->input('Footer'));
+			$org->Billable           = trim($request->input('Billable'));
+			$org->RPA                = trim($request->input('RPA'));
+			$org->MultiLanguage      = trim($request->input('MultiLanguage'));
+			$org->MessageOfTheDay    = trim($request->input('MessageOfTheDay'));
+			$org->KaaS3PB            = trim($request->input('KaaS3PB'));
+			$org->hasLiveAgent       = trim($request->input('hasLiveAgent'));
+			$org->mfa                = trim($request->input('mfa'));
+			$org->feedback           = trim($request->input('feedback'));
+			$org->multi_model_gen_AI = trim($request->input('multi_model_gen_AI'));
 			
 			$org->last             = date("Y-m-d H:i:s");
 			
@@ -275,7 +293,14 @@ class OrganizationController extends \App\Http\Controllers\Controller{
 							\App\OrganizationLanguage::insert(['org_id'=>$org->organizationId, 'language'=>$tmp]);
 						}
 					}else{ \App\OrganizationLanguage::insert(['org_id'=>$org->organizationId, 'language'=>'en']); }
-					
+				}
+				if($request->has('modelGenAI')){
+					\App\OrganizationModel::where('org_id', $org->organizationId)->delete();
+					if($org->multi_model_gen_AI==1){ 
+						foreach($request->input('modelGenAI') as $tmp){
+							\App\OrganizationModel::insert(['org_id'=>$org->organizationId, 'model_gen_ai'=>$tmp]);
+						}
+					}
 				}
 				$personalityId = trim($request->input('personalityId'));
 				$orgPersonality = new OrganizationPersonality;
@@ -304,6 +329,12 @@ class OrganizationController extends \App\Http\Controllers\Controller{
 					RelationType::where('ownerId', '=', $id)->count()!=0 
 				){ return ['result'=>1, 'msg'=>"This Organization is used in at least one relation or term or ..., it can not be deleted."]; }
 
+				\App\OrganizationModel::where('org_id', $id)->delete();
+				
+				\App\PortalModel::whereRaw('portal_id in ( select id from portal where organization_id=? )', [$id])->delete();
+				\App\PortalCollection::whereRaw('portal_id in ( select id from portal where organization_id=? )', [$id])->delete();
+				\App\Portal::where('organization_id', $id)->delete();
+				
 				OrganizationPersonality::where('organizationId', $id)->delete();
 				\App\OrganizationLanguage::where('org_id', $id)->delete();
 				$tmp = $org->delete($id);
@@ -424,4 +455,33 @@ $file->getMimeType();
 		return ['result'=>0, 'msg'=>'', 'data'=>$languages];
 	}
 	//---------------------------------------
+	public function getModelGenAI($org_id){
+		//-----------------------------------
+		try{
+//			if($org_id==0){ return ['result'=>0, 'msg'=>"", "data"=>[]]; }
+			//-------------------------------
+//			$org = \App\Organization::find($org_id);
+//			if($org==null){ throw new \Exception("Invalid Organization"); }
+			//-------------------------------
+			$items = \App\OrganizationModel::where('org_id', $org_id)
+				->select("model_gen_ai")
+				->get()
+				->map(function($row) use($org_id){
+					$row->isInUse = \App\PortalModel::where('model_gen_ai', $row->model_gen_ai)
+						->whereRaw("portal_id in (select id from portal where organization_id=?)",[$org_id])
+						->count();
+					return $row;
+				});
+			$retVal = [];
+			if(!$items->isEmpty()){
+				foreach($items as $itm){ $retVal[]=['value'=>$itm->model_gen_ai , "inUse"=>$itm->isInUse]; }
+			}
+			return ['result'=>0, 'msg'=>"", "data"=>$retVal];
+		}catch(\Throwable $ex){
+			return ['result'=>1, 'msg'=>$ex->getMessage()];
+		}
+		//-----------------------------------
+	}
+	//---------------------------------------
 }
+//-------------------------------------------

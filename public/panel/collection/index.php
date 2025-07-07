@@ -12,6 +12,8 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <link rel="stylesheet" href="<?php echo $base_url; ?>public/assets/css/collection.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.4/jquery-confirm.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.4/jquery-confirm.min.js"></script>
 <div id="csrf-token-container">
     <input type="hidden" id="csrf-token" value="<?= $csrfToken; ?>">
 </div>
@@ -24,13 +26,17 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
 </div>
 
 <div class="panel">
+        <?php $disabledSelect = "disabled"; ?>
     <div class="panel-body">
         <div class="row" id="collection-wrapper">
             <div class="col-md-6 col-sm-12 d-flex align-items-center">
                 <div class="col-md-3"><label>Select Organization</label></div>
                 <div class="col-md-9">
                     <select class="form-control" id="orgID">
-                        <?php if ($orgID == 0): ?>
+                        <?php if ($orgID == 0):
+                            $disabledSelect = "disabled";
+                            ?>
+
                             <option value="" data-feedback='1'>-Select-</option>
                             <?php
                             $orgs = \App\Organization::orderBy("organizationShortName", 'asc')->get();
@@ -45,8 +51,8 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
                             }
                             ?>
                         <?php else: ?>
-                            <option value="" data-feedback='1'>-Select-</option>
                             <?php
+                             $disabledSelect = "";
                             $org = \App\Organization::orderBy("organizationShortName", 'asc')->find($orgID);                            ?>
                             <option value="<?= $org->organizationId; ?>" data-feedback='<?= $org->feedback; ?>'>
                                 <?= $org->organizationShortName; ?>
@@ -61,7 +67,7 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
             <div class="col-md-6 col-sm-12 d-flex align-items-center">
                 <div class="col-md-3"><label>Select Storage Type</label></div>
                 <div class="col-md-9">
-                    <select id="storage_type" disabled name="storage_type" class="form-control">
+                    <select id="storage_type" <?php echo $disabledSelect; ?> name="storage_type" class="form-control">
                         <option value="">Select Type</option>
                     </select>
                 </div>
@@ -184,4 +190,21 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
     </div>
 </div>
 
+<div class="modal fade in" tabindex="-1" role="dialog" id="confirmModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="border-radius:5px 0">
+                <h2>Confirmation</h2>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="confirmCancel">Cancel</button>
+                <button class="btn btn-primary" id="confirmYes">Yes</button>
+                <div class="clearfix"></div>
+            </div>
+        </div>
+    </div>
+</div>
 <script src="<?php echo $base_url; ?>public/assets/js/manage-collection.js?v12" type="text/javascript"></script>

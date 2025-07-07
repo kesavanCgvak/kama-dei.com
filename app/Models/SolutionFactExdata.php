@@ -98,7 +98,7 @@ class SolutionFactExdata extends Model
      {
 
            if ( strlen($sfedChatIntro) > 1000) {
-              $sfedChatIntro = substr($sfedChatintro,0,1000);
+              $sfedChatIntro = substr($sfedChatIntro,0,1000);
            }
            if ( strlen($sfedAttributeName) > 128) {
               $sfedAttributeName = substr($sfedAttributeName,0,128);

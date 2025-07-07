@@ -747,7 +747,7 @@ var columns = [
 	{ name: 'knowledgeRecordName', display: 'Knowledge Record', sortable: true, editable: false },
 	{ name: 'tempVar', display: 'tempVar', hidden: true, editable: true },
 
-	{ name: 'optionalText', display: 'Optional text', hidden: false, editable: false, sortable: false },
+	{ name: 'optionalText', display: 'Optional text', hidden: false, editable: false, sortable: true },
 
 	{ name: 'relationIsReserved', display: 'Reserved', sortable: true, reserved: true },
 	{ name: 'ownerId', display: 'Owner', hidden: true, onlyFor:0 },

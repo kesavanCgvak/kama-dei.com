@@ -30,9 +30,19 @@
 	$levelID  = $session->get('levelID' );
 	$userName = $session->get('userName');
 
+	$showCollections = 1;
+	$orgKaaS3PB      = 1;
 	if($orgID!=0){
-		$orgKaaS3PB = \App\Organization::find($orgID)['KaaS3PB'];
-		if($orgKaaS3PB==null){ $orgKaaS3PB=0; }
+		$orgData = \App\Organization::find($orgID);
+		if($orgData==null){
+			$orgKaaS3PB      = 0;
+			$showCollections = 0;
+		}else{
+			$orgKaaS3PB      = $orgData['KaaS3PB'];
+			$showCollections = $orgData['multi_model_gen_AI'];
+		}
+		//$orgKaaS3PB = \App\Organization::find($orgID)['KaaS3PB'];
+		//if($orgKaaS3PB==null){ $orgKaaS3PB=0; }
 	}else{ $orgKaaS3PB=1; }
 ?>
 <head>
@@ -104,7 +114,8 @@
 						<li class="menu-item <?=(($REQUEST_URI=='/dashboard')?'selected' :'')?>">
 							<a href="javascript:gotoMenu('/dashboard')"><i class="fa fa-dashboard" aria-hidden="true"></i><span>Dashboard</span></a>
 						</li>
-						<li class="menu-item <?=(($REQUEST_URI=='/collection')?'selected' :'')?>">
+						<?php /* if($showCollections==1):?>
+						<li class="menu-item <?=(($REQUEST_URI=='/panel/collection')?'selected' :'')?>">
 							<a href="javascript:gotoMenu('/collection')"><i class="fa fa-bitbucket" aria-hidden="true"></i>
                             </i><span>Collections</span></a>
 						</li>
@@ -112,6 +123,7 @@
 							<a href="javascript:gotoMenu('/collection/logs')"><i class="fa fa-file-text-o" aria-hidden="true"></i>
                             </i><span>Collection Logs</span></a>
 						</li>
+						<?php endif; */ ?>
 						<?php
 							$tmpPages = new \App\SitePages();
 							$pageIcon = 'fa fa-angle-double-down';
@@ -122,6 +134,7 @@
 								$pageCaption = 'Dashboard';
 								$pageIcon = 'fa fa-dashboard';
 							}
+/*
 							if($REQUEST_URI == '/panel/collection') {
 								$pageCaption = 'Collections';
 								$pageIcon = 'fa fa-bitbucket';
@@ -130,6 +143,7 @@
 								$pageCaption = 'Collection Logs';
 								$pageIcon = 'fa fa-file-text-o';
 							}
+*/
 							if($REQUEST_URI == '/panel/settings') {
 								$pageCaption = 'Settings';
 								$pageIcon = 'fa fa-cog';
@@ -165,6 +179,11 @@
 							$rootMenus = $tmpPages->allMenus($orgID, $levelID);
 							if($rootMenus!=false){
 								foreach($rootMenus as $menu){
+									if(
+										($menu->pageUrl=='/panel/collection' || $menu->pageUrl=='/panel/collection/logs' )
+										&&
+										$showCollections==0
+									){ continue; }
 									$tmpPages->showRowMenu($menu, $REQUEST_URI, $orgID, 0, $levelID);
 								}
 							}

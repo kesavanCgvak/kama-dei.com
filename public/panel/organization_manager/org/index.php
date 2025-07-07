@@ -1,3 +1,8 @@
+<?php
+$userKey  = "-";
+$userKeyR = \App\UserKey::find(session()->get('userID'));
+if($userKeyR!==null){ $userKey = $userKeyR->userKey; }
+?>
 <style>
 .modal-backdrop {
     visibility: hidden !important;
@@ -134,12 +139,12 @@
 	#orgFlags th:nth-child(3){ width:60% !important; }
 	
 	#orgFlags td{ padding: 8px 2px; text-align:left !important; border-bottom: none; }
-	#orgFlags td:nth-child(1){ border:1px solid #eee; border-left:none; }
+	#orgFlags td:nth-child(1){ border:1px solid #eee; border-left:none; padding-left: 10px; }
 	#orgFlags td:nth-child(2){ border:1px solid #eee; border-left:none; text-align:center !important; vertical-align:middle; }
 	#orgFlags td:nth-child(3){ border:1px solid #eee; border-left:none; }
 	.orgFlags.col-MultiLanguage{ height: 51px; }
 	
-	#editItem > form, #addItem > form{max-height:650px; overflow:auto; }
+	#editItem > form, #addItem > form{max-height:96vh; overflow:auto; }
 </style>
 <!-- ---------------------------------------------------------------------------------------- -->
 <!-- ---------------------------------------------------------------------------------------- -->
@@ -148,9 +153,11 @@
 	var apiURL  = "<?=env('API_URL');?>";
 	var orgID   = "<?=$orgID;?>";
 	var levelID = "<?=$levelID;?>";
+	var userKey = "<?=$userKey;?>";
 	var defaultPersonaId = 0;
 	var table;
 	var MAIL_FROM_ADDRESS = '<?=env('MAIL_FROM_ADDRESS', '');?>';
+	var LLM_MODELS_URL    = '<?=env('extendedentity_draft_get_system_llm_models', '');?>';
 	//-----------------------------------------------------------
 	function copyEmail2Clipboard(obj){
 		var $temp = $("<input>");
@@ -213,7 +220,7 @@
 				<label>Organization Description</label>
 				<p class="form-control" style="height:auto;" disabled><?=$orgData->Descripiton;?></p>
 			</div>
-			<div style="width:100%; height:360px;">
+			<div style="width:100%; margin-bottom:10px; /*height:400px;*/">
 				<label>Value Added Services</label>
 				<table id="orgFlags">
 					<thead>
@@ -248,14 +255,26 @@
 							<td></td>
 						</tr>
 						<tr>
-							<td>RAG</td>
-							<td><?=(($orgData->RAG==1) ?'<b>On</b>' :'Off');?></td>
-							<td></td>
-						</tr>
-						<tr>
 							<td>Multi Language</td>
 							<td><?=(($orgData->MultiLanguage==1) ?'<b>On</b>' :'Off');?></td>
-							<td></td>
+							<td>
+								<?php
+								if($orgData->MultiLanguage==1){
+									$orgLangs = \App\OrganizationLanguage::where('organization_language.org_id', $orgID)
+										->leftJoin("language", "organization_language.language", "=", "language.code")
+										->select("language.name")
+										->orderBy("language.languageId")
+										->get();
+									if(!$orgLangs->isEmpty()){
+										echo "<ul style='font-size:110%; font-weight:bold;'>";
+										foreach($orgLangs as $orgLang){
+											echo "<li>{$orgLang->name}</li>";
+										}
+										echo "</ul>";
+									}
+								}
+								?>
+							</td>
 						</tr>
 						<tr>
 							<td>Multi-Factor Authentication</td>
@@ -266,6 +285,27 @@
 							<td>Feedback</td>
 							<td><?=(($orgData->feedback==1) ?'<b>On</b>' :'Off');?></td>
 							<td></td>
+						</tr>
+						<tr>
+							<td>Multi-Model Gen AI</td>
+							<td><?=(($orgData->multi_model_gen_AI==1) ?'<b>On</b>' :'Off');?></td>
+							<td>
+								<?php
+								if($orgData->multi_model_gen_AI==1){
+									$orgModelGenAI = \App\OrganizationModel::where('org_id', $orgID)
+										->select("model_gen_ai")
+										->orderBy("model_gen_ai")
+										->get();
+									if(!$orgModelGenAI->isEmpty()){
+										echo "<ul style='font-size:110%; font-weight:bold;'>";
+										foreach($orgModelGenAI as $genAI){
+											echo "<li>{$genAI->model_gen_ai}</li>";
+										}
+										echo "</ul>";
+									}
+								}
+								?>
+							</td>
 						</tr>
 					</tbody>
 				</table>

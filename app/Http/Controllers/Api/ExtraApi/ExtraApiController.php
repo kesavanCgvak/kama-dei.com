@@ -18,7 +18,6 @@ class ExtraApiController extends \App\Http\Controllers\Controller{
 						'term'        => 'required',
 						'relation'    => 'required',
 						'org_id'      => 'required',
-						'org_id_2'    => 'required',
 						'personality' => 'required',
 						'link_url'    => 'required'
 					],
@@ -33,9 +32,7 @@ class ExtraApiController extends \App\Http\Controllers\Controller{
 			$relations = json_decode($data['relation'], true);
 			if($relations==null){ throw new \Exception("Invalid relation data"); }
 			//-------------------------------
-			$data['org_id_2'] = $data['org_id'];
-			if(\App\Organization::where('organizationId', $data['org_id'  ])->count()==0){ throw new \Exception("Invalid organization id"); }
-			if(\App\Organization::where('organizationId', $data['org_id_2'])->count()==0){ throw new \Exception("Invalid organization id[2]"); }
+			if(\App\Organization::where('organizationId', $data['org_id'])->count()==0){ throw new \Exception("Invalid organization id"); }
 			//-------------------------------
 			$hasLeft = 0;
 			if(isset($relations['left'])){
@@ -75,19 +72,15 @@ class ExtraApiController extends \App\Http\Controllers\Controller{
 			//-------------------------------
 			if(($hasLeft+$hasRight)==0){ throw new \Exception("Undefined relation data"); }
 			//-------------------------------
-			if( $data['term_id']!=0 && \App\Term::where('termId', $data['term_id'])->count()==0 ){ $data['term_id']=0; }
-			//-------------------------------
 			if($data['term_id']==0){
-				$res = self::createTerm(0,$data['term'],$data['org_id'],$data['org_id_2'],$data['personality'],$relations,$data['link_url']);
+				$res = self::createTerm(0, $data['term'], $data['org_id'], $data['personality'],$relations, $data['link_url']);
 				if($res['result']==0){ $term_id=$res['term_id']; }
 				return $res;
 			}else{
 				if(\App\Term::where('termId', $data['term_id'])->count()==0){ throw new \Exception("Invalid term id"); }
 				$term_id = $data['term_id'];
 				self::clearTerm($data['term_id'], 1);
-				return self::createTerm(
-					$data['term_id'],$data['term'],$data['org_id'],$data['org_id_2'],$data['personality'],$relations,$data['link_url']
-				);
+				return self::createTerm($data['term_id'], $data['term'], $data['org_id'], $data['personality'], $relations, $data['link_url']);
 			}
 			//-------------------------------
 		}catch(\Throwable $ex){
@@ -97,14 +90,14 @@ class ExtraApiController extends \App\Http\Controllers\Controller{
 		//-----------------------------------
 	}
 	//---------------------------------------
-	private function createTerm($termId, $term, $org_id, $org_id_2, $personality,  $relations, $linkURL){
+	private function createTerm($termId, $term, $org_id, $personality,  $relations, $linkURL){
 		//-----------------------------------
 		if($termId==0){
 			$term_id = \App\Term::insertGetId([
 				"termName"       => $term,
 				'termIsReserved' => 0,
-				'ownership'      => 1,
-				'ownerId'        => $org_id_2,
+				'ownership'      => 2,
+				'ownerId'        => $org_id,
 				'dateCreated'    => date("Y-m-d H:i:s"),
 				'lastUserId'     => 0
 			]);
@@ -116,14 +109,14 @@ class ExtraApiController extends \App\Http\Controllers\Controller{
 		if(isset($relations['left'])){
 			foreach($relations['left'] as $left){
 				if(!is_array($left)){ $left = json_decode($left, true); }
-				self::createRelations($term_id, $term, $left, $org_id, $org_id_2, $personality, $linkURL, 'left');
+				self::createRelations($term_id, $term, $left, $org_id, $personality, $linkURL, 'left');
 			}
 		}
 		//-----------------------------------
 		if(isset($relations['right'])){
 			foreach($relations['right'] as $right){
 				if(!is_array($right)){ $right = json_decode($right, true); }
-				self::createRelations($term_id, $term, $right, $org_id, $org_id_2, $personality, $linkURL, 'right');
+				self::createRelations($term_id, $term, $right, $org_id, $personality, $linkURL, 'right');
 			}
 		}
 		//-----------------------------------
@@ -192,7 +185,7 @@ class ExtraApiController extends \App\Http\Controllers\Controller{
 		}
 	}
 	//---------------------------------------
-	private function createRelations($term_id, $termName, $items, $org_id, $org_id_2, $personality, $linkURL, $leftRight){
+	private function createRelations($term_id, $termName, $items, $org_id, $personality, $linkURL, $leftRight){
 		if($items['term']==0){
 			$itemTerm = \App\Term::where('termName', $items['name'])->where(function($q) use($org_id){
 						return $q->whereNull('ownerId')->orWhereIn('ownerId', [0,$org_id]);
@@ -201,7 +194,7 @@ class ExtraApiController extends \App\Http\Controllers\Controller{
 				$items['term'] = \App\Term::insertGetId([
 					"termName"       => $items['name'],
 					'termIsReserved' => 0,
-					'ownership'      => 1,
+					'ownership'      => 2,
 					'ownerId'        => $org_id,
 					'dateCreated'    => date("Y-m-d H:i:s"),
 					'lastUserId'     => 0
@@ -216,16 +209,16 @@ class ExtraApiController extends \App\Http\Controllers\Controller{
 			'relationTypeId'     => $items['relationType'],
 			'relationOperand'    => '',
 			'relationIsReserved' => 0,
-			'ownership'          => 1,
-			'ownerId'            => $org_id_2,
+			'ownership'          => 2,
+			'ownerId'            => $org_id,
 			'dateCreated'        => date("Y-m-d H:i:s"),
 			'lastUserId'         => 0
 		]);
 		$personalityRelationId = \App\PersonalityRelation::insertGetId([
 			"personalityId" => $personality,
 			"relationId"    => $relationId,
-			"ownership"     => 1,
-			"ownerId"       => $org_id_2,
+			"ownership"     => 2,
+			"ownerId"       => $org_id,
 			"dateCreated"   => date("Y-m-d H:i:s"),
 			"lastUserId"    => 0
 		]);
@@ -241,7 +234,7 @@ class ExtraApiController extends \App\Http\Controllers\Controller{
 						$rating['term_id'] = \App\Term::insertGetId([
 							"termName"       => $rating['name'],
 							'termIsReserved' => 0,
-							'ownership'      => 1,
+							'ownership'      => 2,
 							'ownerId'        => $org_id,
 							'dateCreated'    => date("Y-m-d H:i:s"),
 							'lastUserId'     => 0
@@ -252,8 +245,8 @@ class ExtraApiController extends \App\Http\Controllers\Controller{
 					"personalityRelationId" => $personalityRelationId,
 					"personRelationTermId"  => $rating['term_id'],
 					"scalarValue"           => $rating['value'  ],
-					"ownership"             => 1,
-					"ownerId"               => $org_id_2,
+					"ownership"             => 2,
+					"ownerId"               => $org_id,
 					"dateCreated"           => date("Y-m-d H:i:s"),
 					"lastUserId"            => 0
 				]);
@@ -264,8 +257,8 @@ class ExtraApiController extends \App\Http\Controllers\Controller{
 			"extendedEntityName" => $items['entity'],
 			"extendedSubTypeId"  => 37,
 			"lastUserId"         => 0,
-			"ownerId"            => $org_id_2,
-			"ownership"          => 1,
+			"ownerId"            => $org_id,
+			"ownership"          => 2,
 			"dateCreated"        => date("Y-m-d H:i:s"),
 			"dateUpdated"        => date("Y-m-d H:i:s")
 		]);
@@ -274,8 +267,8 @@ class ExtraApiController extends \App\Http\Controllers\Controller{
 			"valueString"         => $linkURL,
 			"extendedEntityId"    => $extendedEntityId,
 			"extendedAttributeId" => 68,
-			"ownerId"             => $org_id_2,
-			"ownership"           => 1,
+			"ownerId"             => $org_id,
+			"ownership"           => 2,
 			"lastUserId"          => 0,
 			"dateCreated"         => date("Y-m-d H:i:s"),
 			"dateUpdated"         => date("Y-m-d H:i:s")
@@ -285,8 +278,8 @@ class ExtraApiController extends \App\Http\Controllers\Controller{
 			"entityId"    => $extendedEntityId,
 			"parentTable" => 2,
 			"parentId"    => $relationId,
-			"ownerId"     => $org_id_2,
-			"ownership"   => 1,
+			"ownerId"     => $org_id,
+			"ownership"   => 2,
 			"created_at"  => date("Y-m-d H:i:s"),
 			"updated_at"  => date("Y-m-d H:i:s"),
 			"orderid"     => \App\Models\Extend\Extended_link::where('entityId',$extendedEntityId)
@@ -296,50 +289,6 @@ class ExtraApiController extends \App\Http\Controllers\Controller{
 								->count()+1
 		]);
 
-	}
-	//---------------------------------------
-	public function getApiKey(Request $req){
-		$term_id = 0;
-		//-----------------------------------
-		try{
-			//-------------------------------
-			$validator = \Validator::make(
-					$req->all(),
-					[
-						'org'    => 'required',
-						'user'   => 'required',
-						'portal' => 'required'
-					],
-					[]
-			);
-			if($validator->fails()){
-				$errors = $validator->errors();
-				throw new \Exception($errors->first());
-			}
-			$data = $req->all();
-			//-------------------------------
-			$apiKey = \App\ApiKeyManager::where('userID', $data['user'])
-				->where('orgID', $data['org'])
-				->where('portal_code', $data['portal'])
-				->where('api_key_valid_for_ever', 1)
-				->orderBy('registerOn', 'desc')
-				->select("api_key")
-				->first();
-			//-------------------------------
-			if($apiKey==null){
-				$apiKey = \App\ApiKeyManager::where('userID', $data['user'])
-					->where('orgID', $data['org'])
-					->where('portal_code', $data['portal'])
-					->orderBy('api_key_expire', 'desc')
-					->select("api_key")
-					->first();
-				if($apiKey==null){ throw new \Exception("apikey not found"); }
-			}
-			return ['result'=>0, 'msg'=>"OK", 'apikey'=>$apiKey->api_key];
-		}catch(\Throwable $ex){
-			return ['result'=>1, 'msg'=>$ex->getMessage()];
-		}
-		//-----------------------------------
 	}
 	//---------------------------------------
 }

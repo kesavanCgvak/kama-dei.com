@@ -1,6 +1,14 @@
+<?php
+$userKey  = "-";
+$userKeyR = \App\UserKey::find(session()->get('userID'));
+if($userKeyR!==null){ $userKey = $userKeyR->userKey; }
+?>
 <style>
+	.modal-backdrop {
+		visibility: hidden !important;
+	}
 	#editItem > form, #addItem > form{
-		max-height: 634px;
+		max-height: 96vh;
 		overflow: auto;
 	}
 	.col-name.form-group{
@@ -165,17 +173,21 @@
 		width: 110px;
 	}
 	<?php endif; ?>
-	#portalFlags{ width: 100%; border: 1px solid #ddd; }
 	
+	#portalFlags{ width: 100%; border: 1px solid #ddd; }
 	#portalFlags th{ text-align: center; padding: 10px 0; font-size:13px !important; background: #eee; border-bottom: 1px solid #ddd; }
 	#portalFlags th:nth-child(1){ width:30% !important; border-right: 1px solid #bbb; }
-	#portalFlags th:nth-child(2){ width:10% !important; max-width:40px !important; border-right:1px solid #bbb; }
-	#portalFlags th:nth-child(3){ width:60% !important; }
+	#portalFlags th:nth-child(2){ width:120px !important; border-right:1px solid #bbb; }
+	#portalFlags th:nth-child(3){ width:calc(70% - 120px) !important; display: table-cell !important; }
 	
 	#portalFlags td{ padding: 8px 2px; text-align:left !important; border-bottom: none; }
-	#portalFlags td:nth-child(1){ border:1px solid #eee; border-left:none; }
-	#portalFlags td:nth-child(2){ border:1px solid #eee; border-left:none; text-align:center !important; vertical-align:middle; }
-	#portalFlags td:nth-child(3){ border:1px solid #eee; border-left:none; font-size:13px !important;}
+	#portalFlags td:nth-child(1){ width:30% !important; border:1px solid #eee; border-left:none; }
+	#portalFlags td:nth-child(2){ width:120px !important;
+		border:1px solid #eee; border-left:none; text-align:center !important; vertical-align:middle; 
+	}
+	#portalFlags td:nth-child(3){ width:calc(70% - 120px) !important;
+		border:1px solid #eee; border-left:none; font-size:13px !important; display: table-cell !important; 
+	}
 </style>
 <?php
 
@@ -194,10 +206,13 @@ if($orgID!=0)
 	var apiURL  = "<?=env('API_URL');?>";
 	var orgID   = "<?=$orgID;?>";
 	var userId  = "<?=\Session::get('userID');?>";
+	var userKey = "<?=$userKey;?>";
 	var table;	
-	var kaaSColumnHidden = <?=$kaaSColumnHidden; ?>;
-	var portalOwnersList = "-1";
+	var kaaSColumnHidden      = <?=$kaaSColumnHidden; ?>;
+	var portalOwnersList      = "-1";
 	var webPageIntegrationURL = '<?=env("webpage_integration_url",'');?>';
+	var LLM_MODELS_URL        = '<?=env('extendedentity_draft_get_system_llm_models', '');?>';
+	var LIST_COLLECTIONS      = '<?=env('extendedentity_draft_list_collections', '');?>';
 </script>
 
 <!-- ---------------------------------------------------------------------------------------- -->

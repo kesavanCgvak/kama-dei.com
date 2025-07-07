@@ -17,7 +17,10 @@ class Portal extends DataTable{
 		$('body').on('click', '.liveagent-item', (e) => { this.liveAgentLink(e) });
 		
 
-		$("body").on("change", "#organization_id", function(){ that.getPersonality(); });
+		$("body").on("change", "#organization_id", function(){
+			that.getPersonality();
+			that.setModelGenAIURL_Items($("#organization_id").val());
+		});
 		if(orgID!=0){
 			var icon1 = $('<a></a>').attr({
 				href: '#',
@@ -214,6 +217,57 @@ class Portal extends DataTable{
 				$("#thumbsup, #comment").bootstrapToggle("disable");
 			}
 		});
+		this.createMultiModelGenAiIsBusy = false;
+		this.createCollectionBusy = false;
+		this.lastPortalID = 0;
+		this.collectionIsloaded = false;
+		$('body').on('change', '#multi_model_gen_AI', (e) => {
+			let toggle_btn_genAI = $('input[name="multi_model_gen_AI"]').parent();
+			$('.col-multi_model_gen_AI .inputs').hide();
+			$('.col-multi_model_gen_AI button.btnShowModal').hide();
+			if(!toggle_btn_genAI.hasClass('off')){
+				$('.col-multi_model_gen_AI .inputs').show();
+				$('.col-multi_model_gen_AI button.btnShowModal').show();
+			}
+			if(that.collectionIsloaded){ that.callCollectionSetting('change', $("#multi_model_gen_AI").prop('checked')); }
+			return;
+		});
+		
+		$('body').on('click', 'button.checkboxModelGenAI', function(){
+			let checked = $(this).find("input.checkboxModelGenAI");
+			$("button.checkboxModelGenAI").removeClass("btn-info").removeClass("active").addClass('btn-default');
+			$("button.checkboxModelGenAI>i").removeClass("fa-check-circle-o").addClass("fa-circle-o");
+			if($(checked).prop('checked')){
+				$(this).removeClass("btn-info").removeClass("active").addClass('btn-default');
+				$(this).find("i").removeClass("fa-check-circle-o").addClass("fa-circle-o");
+				$(checked).prop('checked', false);
+			}else{
+				$(this).removeClass("btn-default").addClass('btn-info active');
+				$(this).find("i").removeClass("fa-circle-o").addClass("fa-check-circle-o");
+				$(checked).prop('checked', true);
+			}
+		});
+		
+		$('body').on('click', 'button.collectionBtnItems', function(){
+			let checked = $(this).find("input.collectionItems");
+			let type    = $(checked).attr('type');
+
+			if(type=='radio'){
+				$("button.collectionBtnItems").removeClass("btn-info").removeClass("active").addClass('btn-default');
+				$("button.collectionBtnItems>i").removeClass("fa-check-circle-o").addClass("fa-circle-o");
+			}
+			if(type=='checkbox'){}
+
+			if($(checked).prop('checked')){
+				$(this).removeClass("btn-info").removeClass("active").addClass('btn-default');
+				$(this).find("i").removeClass("fa-check-circle-o").addClass("fa-circle-o");
+				$(checked).prop('checked', false);
+			}else{
+				$(this).removeClass("btn-default").addClass('btn-info active');
+				$(this).find("i").removeClass("fa-circle-o").addClass("fa-check-circle-o");
+				$(checked).prop('checked', true);
+			}
+		});
 	}
 	//------------------------------------------------------------
 	rowActions(value, row, index, field){
@@ -339,7 +393,7 @@ class Portal extends DataTable{
 					$("#portal_number option[value='a']").remove();
 				}
 				$('#hasLiveAgent').bootstrapToggle('off');
-				if(data.hasLiveAgent==1){//bhr
+				if(data.hasLiveAgent==1){
 					//$('.col-hasLiveAgent').show();
 					$('#hasLiveAgent').bootstrapToggle('enable');
 					if(this.baseItem.hasLiveAgent==1){ $('#hasLiveAgent').bootstrapToggle('on'); }
@@ -475,7 +529,9 @@ class Portal extends DataTable{
 			case 'OnOff':
 			case 'KaaS3PB':
 			case 'feedback':
-			case 'hasLiveAgent':{
+			case 'hasLiveAgent':
+			case 'multi_model_gen_AI':
+				{
 				input = $('<tr>')
 							.attr({class: "portalFlags col-" + col })
 							.append( $('<td>').text(label) )
@@ -585,16 +641,137 @@ class Portal extends DataTable{
 		return true;
 	}
 	addConfirmHandler(e){
-		if(this.confirmHandler()){ super.addConfirmHandler(e); }
+		//if(this.confirmHandler()){ super.addConfirmHandler(e); }
+		let that = this;
+		let table = this.table;
+		let data = {
+			orgID: this.orgID,
+			userID: this.userID,
+			model_gen_ai_items: []
+		};
+		//------------------------------------------------
+		for(let x in this.columns.names){
+			if(this.columns.data[x].passData !== false){
+				let name = this.columns.names[x];
+				let value = this.editItem[name];
+				if(name == 'ownerId' && value == null){ value = '0'; }
+				data[name] = value;
+			}
+		}
+		//------------------------------------------------
+		if(data.multi_model_gen_AI==1){
+			$('input[class="checkboxModelGenAI"]').each(function(){
+				if($(this).prop('checked')){ data.model_gen_ai_items.push($(this).val()); }
+			});
+		}
+		if(data.multi_model_gen_AI==1 && data.model_gen_ai_items.length==0){
+			showError("Multi-Model Gen AI requires one model or more to be selected.");
+			return;
+		}
+		//------------------------------------------------
+		$('input[class="collectionItems"]').each(function(){
+			if($(this).prop('checked')){ data.collections.push($(this).val()); }
+		});
+		if(data.collections.length==0){
+			showError("Collections requires one collection or more to be selected.");
+			return;
+		}
+		//------------------------------------------------
+		$.ajax({
+			url: this.addURL,
+			type: 'put',
+			headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'application/json'
+			},
+			data: JSON.stringify(data),
+			beforeSend: function(){ $("#editItem #insertItem").prop('disabled', true); },
+			success: function(res){
+				if(res.result == 0){
+					$("#editItem").fadeOut(function(){ $("#editItem #insertItem").prop('disabled', false); });
+					showSuccess('Added successfully.');
+					$(table).bootstrapTable('refresh');
+				}else{
+					showError(res.msg);
+					$("#editItem #insertItem").prop('disabled', false);
+				}
+			},
+			error: function(e){
+				showError('Server error');
+				$("#editItem #insertItem").prop('disabled', false);
+			}
+		});
+		//------------------------------------------------
 	}
 	editConfirmHandler(e){
-		if(this.confirmHandler()){ super.editConfirmHandler(e); }
+		//if(this.confirmHandler()){ super.editConfirmHandler(e); }
+		let that = this;
+		let table = this.table;
+		let data = {
+			orgID: this.orgID,
+			userID: this.userID,
+			model_gen_ai_items: [],
+			collections: []
+		};
+		//------------------------------------------------
+		for(let x in this.columns.names){
+			if(this.columns.data[x].passData !== false){
+				let name = this.columns.names[x];
+				let value = this.editItem[name];
+				if(name == 'ownerId' && value == null){ value = '0'; }
+				data[name] = value;
+			}
+		}
+		//------------------------------------------------
+		if(data.multi_model_gen_AI==1){
+			$('input[class="checkboxModelGenAI"]').each(function(){
+				if($(this).prop('checked')){ data.model_gen_ai_items.push($(this).val()); }
+			});
+		}
+		if(data.multi_model_gen_AI==1 && data.model_gen_ai_items.length==0){
+			showError("Multi-Model Gen AI requires one model or more to be selected.");
+			return;
+		}
+		//------------------------------------------------
+		$('input[class="collectionItems"]').each(function(){
+			if($(this).prop('checked')){ data.collections.push($(this).val()); }
+		});
+		if(data.collections.length==0){
+			showError("Collections requires one collection or more to be selected.");
+			return;
+		}
+		//------------------------------------------------
+		$.ajax({
+			url: this.editURL,
+			type: 'put',
+			headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'application/json'
+			},
+			data: JSON.stringify(data),
+			beforeSend: function(){ $("#editItem #insertItem").prop('disabled', true); },
+			success: function(res){
+				if(res.result == 0){
+					$("#editItem").fadeOut(function(){ $("#editItem #insertItem").prop('disabled', false); });
+					showSuccess('Added successfully.');
+					$(table).bootstrapTable('refresh');
+				}else{
+					showError(res.msg);
+					$("#editItem #insertItem").prop('disabled', false);
+				}
+			},
+			error: function(e){
+				showError('Server error');
+				$("#editItem #insertItem").prop('disabled', false);
+			}
+		});
+		//------------------------------------------------
 	}
 	//------------------------------------------------------------
 	showAddDialogHandler(){
 		super.showAddDialogHandler();
-		$('#OnOff, #KaaS3PB, #hasLiveAgent, #MoD_, #feedback').bootstrapToggle('enable');
-		$('#OnOff, #KaaS3PB, #hasLiveAgent, #MoD_, #feedback').bootstrapToggle('off');
+		$('#OnOff, #KaaS3PB, #hasLiveAgent, #MoD_, #feedback, #multi_model_gen_AI').bootstrapToggle('enable');
+		$('#OnOff, #KaaS3PB, #hasLiveAgent, #MoD_, #feedback, #multi_model_gen_AI').bootstrapToggle('off');
 		// $("#code").val("").change();
 		$("#ntfctn_mssg_cstmztn, #rqst_mssg_cstmztn").prop("disabled", false);
 
@@ -617,10 +794,15 @@ class Portal extends DataTable{
 
 		$("#brBfeedback").remove();
 		$(".col-feedback").before("<br style='line-height:0; margin-top:-15px' id='brBfeedback'/>");
+
 		$("#feedback").prop("checked", false).change();
 		$("#thumbsup").prop("checked", false).change();
 		$("#comment" ).prop("checked", false).change();
 		$('#feedback').bootstrapToggle('enable');
+
+		$("#multi_model_gen_AI").prop("checked", false).change();
+		this.createMultiModelGenAI(0,0);
+		this.createCollection(0,0);
 
 		
 		if($("#portalFlags").length==0){
@@ -725,6 +907,10 @@ class Portal extends DataTable{
 			$("<label>Value Added Services</label>").insertBefore( $("table#portalFlags") );
 		}
 
+		$("#multi_model_gen_AI").prop("checked", false).change();
+		if(this.baseItem.multi_model_gen_AI==1){ $("#multi_model_gen_AI").prop("checked", true).change(); }
+		this.createMultiModelGenAI(this.editItem['id'],this.editItem['multi_model_gen_AI']);
+		this.createCollection(this.editItem['id'],this.editItem['multi_model_gen_AI']);
 	}
 	//------------------------------------------------------------
 	get getURL() {
@@ -740,6 +926,382 @@ class Portal extends DataTable{
 			this.columns.searchColumn + '/' + this.search ;
 	}
 	//------------------------------------------------------------
+	get modelGenAIURL() { return this.apiURL+'/get/model_gen_ai/'; }
+	createMultiModelGenAI(id, value){
+		if(this.createMultiModelGenAiIsBusy){ return; }
+		this.createMultiModelGenAiIsBusy = true;
+		this.lastPortalID = id;
+		let that = this;
+		$('.col-multi_model_gen_AI .inputs').remove();
+		$.ajax({
+			url: LLM_MODELS_URL,
+			method:'POST',
+			headers:{ apikey: "123" },
+			//processData: false,
+			//contentType: false,
+			data: {userkey:userKey},
+			//complete: function(){ that.createMultiModelGenAiIsBusy=false; },
+			error: (xhr)=>{ showError("Model Gen AI Error: "+xhr.statusText); },
+			success:function(result){
+				//---------------------------------------------------------------------
+				let inputsDiv = $('<div>').attr({ class:"inputs", style:"margin-top:10px" });
+				let openModal = $("<button>active Model Gen AI</button>")
+					.attr({
+						type:"button",
+						class:"btn btn-info btnShowModal",
+						style: "margin:0 2.5px",
+						'data-toggle':"modal",
+						'data-target':"#myModelGenAI"
+					});
+				//---------------------------------------------------------------------
+				let myModelGenAI = $('<div>').attr({ id:"myModelGenAI", class:"modal fade", role:"dialog", style:"z-index:1060 !important" });
+				let modalDialog  = $('<div>').attr({class:"modal-dialog", style:"z-index:1061 !important"});
+				let modalContent = $('<div>').attr({class:"modal-content", style:"z-index:1062 !important"});
+				let modalHeader  = $('<div>')
+									.attr({class:"modal-header"})
+									.append('<h4 class="modal-title">Model Gen AI</h4>');
+				let modalFooter = $('<div>')
+									.attr({class:"modal-footer"})
+									.append('<button type="button" class="btn btn-default" data-dismiss="modal">Back</button>');
+
+				let modalBody = $('<div>')
+									.attr({class:"modal-body"})
+									.append('<b>Select One Model:</b>');
+				let showMLButton = 0;
+				//---------------------------------------------------------------------
+				let indx   = 0;
+				let hdIndx = 0;
+				for(let i in result){
+					//if(indx!=0){ $(modalBody).append("<b class='modelTitel "+hdIndx+"' style='display:none; margin-top:20px'>"+i+"</b>"); }
+					//else{ $(modalBody).append("<b class='modelTitel "+hdIndx+"' style='display:none'>"+i+"</b>"); }
+					$(modalBody).append("<b class='modelTitel "+hdIndx+"' style='display:none; margin-top:20px'>"+i+"</b>");
+					for(let j in result[i]){
+						let attr = {
+							class : "checkboxModelGenAI",
+							id    : "modelGenAI"+indx,
+							//name  : "modelGenAI_"+indx,
+							name  : "modelGenAI_Radio",
+							type  : "radio",
+							value : result[i][j],
+							style : "display:none; width:0;",
+							//style : "width:0;",
+							"data-hdindx": hdIndx,
+							autocomplete : "off",
+						};
+						let input = $("<input>").attr(attr);
+						
+						//attr = {disabled:"disabled"};
+						attr = {disabled:true};
+						attr.class = "btn btn-default checkboxModelGenAI";
+						attr.style = "width:48%; text-align:left; margin:5px 1% 5px 1%; display:none";
+						//attr.style = "width:48%; text-align:left; margin:5px 1% 5px 1%; ";
+						let iItem = "<i class='fa fa-circle-o' style='margin-right:10px'></i>";
+						let button = $("<button>")
+										.attr(attr)
+										.append($(input))
+										.append(iItem)
+										.append(result[i][j]);
+						$(modalBody).append(button);
+						
+						indx++;
+					}
+					hdIndx++;
+				}
+				//---------------------------------------------------------------------
+				$(modalContent)
+						.append($(modalHeader))
+						.append($(modalBody))
+						.append($(modalFooter));
+
+				$(modalDialog).append($(modalContent));
+				$(myModelGenAI).append($(modalDialog));
+				//---------------------------------------------------------------------
+				if($(".col-multi_model_gen_AI td:nth-child(3) .btnShowModal").length==0){
+					$(".col-multi_model_gen_AI td:nth-child(3)")
+						.css("text-align", "center !important")
+						.prepend($(openModal));
+					if(that.editItem['multi_model_gen_AI']==0 || id==0){ $(".col-multi_model_gen_AI td .btnShowModal").hide(); }
+				}
+				$(inputsDiv).append($(myModelGenAI));
+				$('.col-multi_model_gen_AI').append( $(inputsDiv) );
+				$('.col-multi_model_gen_AI .inputs').hide();
+				if(value==1){ $('.col-multi_model_gen_AI .inputs').show(); }
+				//---------------------------------------------------------------------
+				//$(".checkboxModelGenAI").hide();return;
+				//---------------------------------------------------------------------
+				if(id!=0){
+					let is_active = 0;
+					$('#multi_model_gen_AI').bootstrapToggle('disable');
+					//$("#multi_model_gen_AI").prop("checked", false).change();
+					$.get(that.modelGenAIURL+id)
+						.done((res)=>{
+							if(res.result==1){ showError("Model Gen AI Error: "+res.msg); }
+							else{
+								//-----------------------------------------------------
+								is_active = res.data.is_active;
+								//-----------------------------------------------------
+								$("input.checkboxModelGenAI[type=radio]").each((index,item)=>{
+									//$(item).prop("checked", true);
+									$(item).removeAttr("checked");
+									$(item).parent().attr("class", "btn btn-default checkboxModelGenAI");
+									$(item).parent().find("i").attr("class", "fa fa-circle-o");
+
+									for(let ii in res.data.portal){
+										if($(item).val()==res.data.portal[ii]){
+											$(item).attr("checked", "checked");
+											$(item).parent().attr("class", "btn btn-info checkboxModelGenAI active");
+											$(item).parent().find("i").attr("class", "fa fa-check-circle-o");
+										}
+									}
+
+									for(let ii in res.data.organization){
+										if($(item).val()==res.data.organization[ii]){
+											let hdIndx = $(item).data('hdindx');
+											$(item).parent().prop("disabled", false);
+											$(item).parent().show();
+											$(item).parent().parent().find('b.modelTitel.'+hdIndx).css('display', 'block');
+										}
+									}
+								})
+							}
+							if(is_active==0){
+								$('#multi_model_gen_AI').bootstrapToggle('enable');
+								$("#multi_model_gen_AI").prop("checked", false).change();
+								$('#multi_model_gen_AI').bootstrapToggle('off').bootstrapToggle('disable');
+							}else{
+								$('#multi_model_gen_AI').bootstrapToggle('enable');
+								if(res.data.portal.length!=0){
+									$("#multi_model_gen_AI").prop("checked", true).change();
+									//$('#multi_model_gen_AI').bootstrapToggle('off').bootstrapToggle('disable');
+								}
+							}
+						})
+						.fail((xhr)=>{
+							showError("Model Gen AI Error: "+xhr.statusText);
+						})
+						.always(()=>{
+							that.createMultiModelGenAiIsBusy=false;
+						});
+				}else{
+					that.setModelGenAIURL_Items($("#organization_id").val());
+				}
+			}
+		});
+		
+	}
+	//------------------------------------------------------------
+	get collectionURL() { return this.apiURL+'/get/collection/'; }
+	createCollection(id, value){
+		if(this.createCollectionBusy){ return; }
+		this.createCollectionBusy = true;
+		this.lastPortalID = id;
+		let that = this;
+		$('.col-multi_model_gen_AI .collections').remove();
+		$.ajax({
+			url: LIST_COLLECTIONS,
+			method:'POST',
+			headers:{ apikey: "123" },
+			//processData: false,
+			//contentType: false,
+			data: {userkey:userKey},
+			complete: function(){ that.createCollectionBusy=false; },
+			error: (xhr)=>{ showError("Collections List Error: "+xhr.statusText); },
+			success:function(result){
+				//---------------------------------------------------------------------
+				let collectionsDiv = $('<div>').attr({ class:"collections", style:"margin-top:10px" });
+				let openCollection = $("<button>Collections</button>")
+					.attr({
+						type:"button",
+						class:"btn btn-info btnShowCollections",
+						style:"margin:0 2.5px",
+						'data-toggle':"modal",
+						'data-target':"#myModelCollections"
+					});
+				//---------------------------------------------------------------------
+				let myModelCollections = $('<div>')
+											.attr({ id:"myModelCollections",class:"modal fade",role:"dialog",style:"z-index:1060 !important" });
+				let modalDialog  = $('<div>').attr({class:"modal-dialog", style:"z-index:1061 !important"});
+				let modalContent = $('<div>').attr({class:"modal-content", style:"z-index:1062 !important"});
+				let modalHeader  = $('<div>')
+									.attr({class:"modal-header"})
+									.append('<h4 class="modal-title">Collections</h4>');
+				let modalFooter = $('<div>')
+									.attr({class:"modal-footer"})
+									.append('<button type="button" class="btn btn-default" data-dismiss="modal">Back</button>');
+
+				let caption = ((value==1) ?"Select multiple collections" :"Select a collection");
+				let modalBody = $('<div>')
+									.attr({class:"modal-body"})
+									.append('<b id="collectionSelectTitle" style="display:block; margin-bottom:5px">'+caption+':</b>');
+				let showMLButton = 0;
+				//---------------------------------------------------------------------
+				let indx   = 0;
+				let hdIndx = 0;
+				for(let i in result[1]){
+					let coolection = result[1][i];
+					let attr = {
+						class : "collectionItems",
+						id    : "collection"+indx,
+						//name  : "modelGenAI_"+indx,
+						name  : ((value==1) ?"collectionCHK"+indx :"collectionRadio"),
+						type  : ((value==1) ?"checkbox" :"radio"),
+						value : coolection.collection_name,
+						style : "display:none; width:0;",
+						//style : "width:0;",
+						"data-hdindx": hdIndx,
+						autocomplete : "off",
+					};
+					let input = $("<input>").attr(attr);
+
+					//attr = {disabled:"disabled"};
+					attr = {disabled:false};
+					attr.class = "btn btn-default collectionBtnItems";
+					attr.style = "width:48%; text-align:left; margin:5px 1% 5px 1%;";
+					//attr.style = "width:48%; text-align:left; margin:5px 1% 5px 1%; ";
+					let iItem = "<i class='fa fa-circle-o' style='margin-right:10px'></i>";
+					let button = $("<button>")
+									.attr(attr)
+									.append($(input))
+									.append(iItem)
+									.append(coolection.collection_name);
+					$(modalBody).append(button);
+
+					indx++;
+					hdIndx++;
+				}
+				//---------------------------------------------------------------------
+				$(modalContent)
+						.append($(modalHeader))
+						.append($(modalBody))
+						.append($(modalFooter));
+
+				$(modalDialog).append($(modalContent));
+				$(myModelCollections).append($(modalDialog));
+				//---------------------------------------------------------------------
+				if($(".col-multi_model_gen_AI td:nth-child(3) .btnShowCollections").length==0){
+					//$(".col-multi_model_gen_AI td:last-child")
+					$(".col-multi_model_gen_AI td:nth-child(3)")
+						.css("text-align", "center !important")
+						.append($(openCollection));
+					
+				}
+				$(collectionsDiv).append($(myModelCollections));
+				$('.col-multi_model_gen_AI').append( $(collectionsDiv) );
+				//---------------------------------------------------------------------
+				that.callCollectionSetting('set 1', value);
+				//---------------------------------------------------------------------
+				if($("#multi_model_gen_AI").prop("disabled")){ $(".btnShowCollections").hide(); }
+				else{}
+				//---------------------------------------------------------------------
+			}
+		});
+		
+	}
+	
+	callCollectionSetting(a, ck){
+		let id = $("#organization_id").val();
+		//let ck = $("#multi_model_gen_AI").prop('checked');
+		if(ck){
+			$("#collectionSelectTitle").text("Select multiple collections");
+			let indx=0;
+			$(".collectionItems").each(function(){
+				$(this)
+					.prop("checked", false)
+					.attr("name", "collectionCHK"+indx)
+					.attr("type", "checkbox")
+					.change();
+				indx++;
+			});
+		}else{
+			$("#collectionSelectTitle").text("Select a collection");
+			$(".collectionItems")
+				.prop("checked", false)
+				.attr("name", "collectionRadio")
+				.attr("type", "radio")
+				.change();
+		}
+		$("button.collectionBtnItems").removeClass("btn-info").removeClass("active").addClass('btn-default');
+		$("button.collectionBtnItems>i").removeClass("fa-check-circle-o").addClass("fa-circle-o");
+		
+		if($("#multi_model_gen_AI").prop("disabled")){ $(".btnShowCollections").hide(); }
+		else{ $(".btnShowCollections").show(); }
+		
+		if(id!=0 && id!=""){
+			let that = this;
+			that.collectionIsloaded = false;
+			$.get(that.collectionURL+that.lastPortalID)
+				.done((res)=>{
+					if(res.result==1){ showError("Collection Error: "+res.msg); }
+					else{
+						//-----------------------------------------------------
+						$("input.collectionItems").each((index,item)=>{
+							$(item).removeAttr("checked");
+							$(item).parent().attr("class", "btn btn-default collectionBtnItems");
+							$(item).parent().find("i").attr("class", "fa fa-circle-o");
+
+							for(let ii in res.data){
+								if($(item).val()==res.data[ii]){
+									$(item).attr("checked", "checked");
+									$(item).prop("checked", true);
+									$(item).parent().attr("class", "btn btn-info collectionBtnItems active");
+									$(item).parent().find("i").attr("class", "fa fa-check-circle-o");
+								}
+							}
+						})
+						that.collectionIsloaded = true;
+					}
+				})
+				.fail((xhr)=>{
+					showError("Collection Error: "+xhr.statusText);
+				})
+				.always(()=>{
+					//that.createCollectionBusy=false;
+				});
+		}else{
+			this.collectionIsloaded = true;
+			$(".btnShowCollections").hide();
+		}
+	}
+	//------------------------------------------------------------
+	get modelGenAIURL_ORG() { return this.apiURL+'/get/model_gen_ai_org/'; }
+	setModelGenAIURL_Items(org_id){
+		let that = this;
+		if(org_id==""){ org_id=0; }
+		$.get(that.modelGenAIURL_ORG+org_id)
+			.done((res)=>{
+				if(res.result==1){ showError("Model Gen AI Error: "+res.msg); }
+				else{
+					$('b.modelTitel').css('display', 'none');
+					$("input.checkboxModelGenAI[type=radio]").each((index,item)=>{
+						$(item).removeAttr("checked");
+						$(item).parent().attr("class", "btn btn-default checkboxModelGenAI");
+						$(item).parent().find("i").attr("class", "fa fa-circle-o");
+						$(item).parent().hide();
+
+						for(let ii in res.data){
+							if($(item).val()==res.data[ii].value){
+								let indx = $(item).data('hdindx');
+								$(item).parent().prop("disabled", false);
+								$(item).parent().show();
+								$(item).parent().parent().find('b.modelTitel.'+indx).css('display', 'block');
+							}
+						}
+					})
+				}
+				$('#multi_model_gen_AI').bootstrapToggle('enable');
+				$("#multi_model_gen_AI").prop("checked", false).change();
+				if(res.data.length==0){
+					$('#multi_model_gen_AI').bootstrapToggle('off').bootstrapToggle('disable');
+				}
+			})
+			.fail((xhr)=>{
+				showError("Model Gen AI Error: "+xhr.statusText);
+			})
+			.always(()=>{
+				that.createMultiModelGenAiIsBusy=false;
+			});
+		
+	}
 }
 //----------------------------------------------------------------
 var portalColumns = new Columns([
@@ -792,7 +1354,8 @@ var portalColumns = new Columns([
 		//{ name: 'feedback', display:"Feedback", hidden:true },
 		{ name: 'thumbsup', display:"Thumbsup", hidden:true },
 		{ name: 'comment' , display:"Comment" , hidden:true },
-	]);
+		{ name:'multi_model_gen_AI', display:'Multi-Model Gen AI', hidden:true , editable:true , sortable:false, search:false },
+]);
 var data = {
 	columns: portalColumns,
 	apiURL: apiURL + '/api/dashboard/portal'

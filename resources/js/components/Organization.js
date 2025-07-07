@@ -10,6 +10,7 @@ class Organization extends DataTable {
 		this.upload = false;
 		let that=this;
 		this.createMyltiLanguageIsBusy = false;
+		this.createMultiModelGenAiIsBusy = false;
 		$('body').on('change', '#organizationLogo-upload', function () {
 			that.upload = false;
 			if(this.files.length==1){
@@ -36,7 +37,7 @@ class Organization extends DataTable {
 		this.showOrgFlags = false;
 		$('body').on('click', '.edit-item', (e) => { 
 			$("body .autoEmailPanel").hide();
-			$("body .col-organizationShortName, body .col-personalityId, body .col-Descripiton, body .col-Billable, body .col-RPA, body .col-MultiLanguage, .col-KaaS3PB, .col-hasLiveAgent, .col-MessageOfTheDay, .col-RAG, .col-mfa, .col-feedback")
+			$("body .col-organizationShortName, body .col-personalityId, body .col-Descripiton, body .col-Billable, body .col-RPA, body .col-MultiLanguage, .col-KaaS3PB, .col-hasLiveAgent, .col-MessageOfTheDa, .col-mfa, .col-feedback, .col-multi_model_gen_AI")
 				.show();
 			$("#organizationShortName").attr('disabled', false);
 			$(".action-form input[type='submit']").css('margin-top', "5px");
@@ -48,7 +49,7 @@ class Organization extends DataTable {
 		});
 		
 		$('body').on('click', '.email-item', (e) => {
-			$("body .col-organizationShortName, body .col-personalityId, body .col-Descripiton, body .col-Billable, body .col-RPA, body .col-MultiLanguage, .col-KaaS3PB, .col-hasLiveAgent, .col-MessageOfTheDay, .col-RAG, .col-mfa, .col-feedback")
+			$("body .col-organizationShortName, body .col-personalityId, body .col-Descripiton, body .col-Billable, body .col-RPA, body .col-MultiLanguage, .col-KaaS3PB, .col-hasLiveAgent, .col-MessageOfTheDay, .col-mfa, .col-feedback, .col-multi_model_gen_AI")
 				.hide();
 			$("body .col-organizationShortName").show();
 			$("#organizationShortName").attr('disabled', true);
@@ -68,6 +69,16 @@ class Organization extends DataTable {
 			}
 			return;
 		});
+		$('body').on('change', '#multi_model_gen_AI', (e) => {
+			let toggle_btn_genAI = $('input[name="multi_model_gen_AI"]').parent();
+			$('.col-multi_model_gen_AI .inputs').hide();
+			$('.col-multi_model_gen_AI button').hide();
+			if(!toggle_btn_genAI.hasClass('off')){
+				$('.col-multi_model_gen_AI .inputs').show();
+				$('.col-multi_model_gen_AI button').show();
+			}
+			return;
+		});
 //MessageOfTheDay
 		$('body').on('click', 'button.checkboxMultiLanguage', function(){
 			let checked = $(this).find("input.checkboxMultiLanguage")
@@ -77,6 +88,22 @@ class Organization extends DataTable {
 				$(checked).prop('checked', false);
 			}else{
 				$(this).removeClass("btn-default").addClass('btn-primary active');
+				$(this).find("i").removeClass("fa-circle-o").addClass("fa-check-circle-o");
+				$(checked).prop('checked', true);
+			}
+		});
+		$('body').on('click', 'button.checkboxModelGenAI', function(){
+			if($(this).hasClass("inUse")){
+				showError("This model is currently being used by a portal, it has to be ON.");
+				return;
+			}
+			let checked = $(this).find("input.checkboxModelGenAI");
+			if($(checked).prop('checked')){
+				$(this).removeClass("btn-info").removeClass("active").addClass('btn-default');
+				$(this).find("i").removeClass("fa-check-circle-o").addClass("fa-circle-o");
+				$(checked).prop('checked', false);
+			}else{
+				$(this).removeClass("btn-default").addClass('btn-info active');
 				$(this).find("i").removeClass("fa-circle-o").addClass("fa-check-circle-o");
 				$(checked).prop('checked', true);
 			}
@@ -107,6 +134,10 @@ class Organization extends DataTable {
 	get langsURL() { return this.apiURL+'/get/language/'; }
 	createMyltiLanguage(id, value){
 		if(this.createMyltiLanguageIsBusy){ return; }
+//console.log("----------------")
+//console.log(this.createMyltiLanguageIsBusy)
+//console.log(this.editItem['MultiLanguage'])
+//console.log("id:"+id+" | value:"+value)
 		this.createMyltiLanguageIsBusy = true;
 		let that = this;
 		$('.col-MultiLanguage .inputs').remove();
@@ -131,7 +162,7 @@ class Organization extends DataTable {
 									.append('<h4 class="modal-title">Languages</h4>');
 				let modalFooter = $('<div>')
 									.attr({class:"modal-footer"})
-									.append('<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>');
+									.append('<button type="button" class="btn btn-default" data-dismiss="modal">Back</button>');
 
 				let modalBody = $('<div>').attr({class:"modal-body"});
 //									.append('<p>Some text in the modal.</p>');
@@ -181,10 +212,16 @@ class Organization extends DataTable {
 
 				$(modalDialog).append($(modalContent));
 				$(myLangs).append($(modalDialog));
+				
+//console.log("showMLButton:"+showMLButton)
+//console.log($(".col-MultiLanguage td:last-child button").length)
+//console.log(this.editItem['MultiLanguage'])
+//console.log(that.editItem['MultiLanguage'])
 
 				if($(".col-MultiLanguage td:last-child button").length==0){
 					$(".col-MultiLanguage td:last-child").append($(openModal)).css("text-align", "center !important");
-					if(showMLButton==1 || id==0){ $(".col-MultiLanguage td:last-child button").hide(); }
+					//if(showMLButton==1 || id==0){ $(".col-MultiLanguage td:last-child button").hide(); }
+					if(that.editItem['MultiLanguage']==0 || id==0){ $(".col-MultiLanguage td:last-child button").hide(); }
 				}
 				$(inputsDiv).append($(myLangs));
 
@@ -198,6 +235,132 @@ class Organization extends DataTable {
 		
 	}
 	//----------------------------------------------------
+	get modelGenAIURL() { return this.apiURL+'/get/model_gen_ai/'; }
+	createMultiModelGenAI(id, value){
+		if(this.createMultiModelGenAiIsBusy){ return; }
+		this.createMultiModelGenAiIsBusy = true;
+		let that = this;
+		$('.col-multi_model_gen_AI .inputs').remove();
+		$.ajax({
+			url: LLM_MODELS_URL,
+			method:'POST',
+			headers:{ apikey: "123" },
+			//processData: false,
+			//contentType: false,
+			data: {userkey:userKey},
+			//complete: function(){ that.createMultiModelGenAiIsBusy=false; },
+			error: (xhr)=>{
+				showError("Model Gen AI Error: "+xhr.statusText);
+			},
+			success:function(result){
+				//---------------------------------------------------------------------
+				let inputsDiv = $('<div>').attr({ class:"inputs", style:"margin-top:10px" });
+				let openModal = $("<button>active Model Gen AI</button>").attr({
+					type:"button",
+					class:"btn btn-info",
+					'data-toggle':"modal",
+					'data-target':"#myModelGenAI"
+				});
+				//---------------------------------------------------------------------
+				let myModelGenAI = $('<div>').attr({ id:"myModelGenAI", class:"modal fade", role:"dialog", style:"z-index:1060 !important" });
+				let modalDialog  = $('<div>').attr({class:"modal-dialog", style:"z-index:1061 !important"});
+				let modalContent = $('<div>').attr({class:"modal-content", style:"z-index:1062 !important"});
+				let modalHeader  = $('<div>')
+									.attr({class:"modal-header"})
+									.append('<h4 class="modal-title">Model Gen AI</h4>');
+				let modalFooter = $('<div>')
+									.attr({class:"modal-footer"})
+									.append('<button type="button" class="btn btn-default" data-dismiss="modal">Back</button>');
+
+				let modalBody = $('<div>')
+									.attr({class:"modal-body"})
+									.append('<b>Select multiple models:</b>');
+				let showMLButton = 0;
+				//---------------------------------------------------------------------
+				let indx = 0;
+				for(let i in result){
+					//if(indx!=0){ $(modalBody).append("<b style='display:block; margin-top:20px'>"+i+"</b>"); }
+					//else{ $(modalBody).append("<b style='display:block'>"+i+"</b>"); }
+					$(modalBody).append("<b style='display:block; margin-top:20px'>"+i+"</b>");
+					for(let j in result[i]){
+						let attr = {
+							class : "checkboxModelGenAI",
+							id    : "modelGenAI"+indx,
+							name  : "modelGenAI_"+indx,
+							type  : "checkbox",
+							value : result[i][j],
+							style : "display:none; width:0;",
+							autocomplete : "off",
+						};
+						let input = $("<input>").attr(attr);
+						
+						attr = {};
+						attr.class = "btn btn-default checkboxModelGenAI";
+						attr.style = "width: 48%; text-align:left; margin: 1px 1% 5px 1%";
+						let iItem = "<i class='fa fa-circle-o' style='margin-right:10px'></i>";
+						let button = $("<button>")
+										.attr(attr)
+										.append($(input))
+										.append(iItem)
+										.append(result[i][j]);
+						$(modalBody).append(button);
+						
+						indx++;
+					}
+				}
+				//---------------------------------------------------------------------
+				$(modalContent)
+						.append($(modalHeader))
+						.append($(modalBody))
+						.append($(modalFooter));
+
+				$(modalDialog).append($(modalContent));
+				$(myModelGenAI).append($(modalDialog));
+				//---------------------------------------------------------------------
+				if($(".col-multi_model_gen_AI td:last-child button").length==0){
+					$(".col-multi_model_gen_AI td:last-child").append($(openModal)).css("text-align", "center !important");
+					if(that.editItem['multi_model_gen_AI']==0 || id==0){ $(".col-multi_model_gen_AI td:last-child button").hide(); }
+				}
+				$(inputsDiv).append($(myModelGenAI));
+				$('.col-multi_model_gen_AI').append( $(inputsDiv) );
+				$('.col-multi_model_gen_AI .inputs').hide();
+				if(value==1){ $('.col-multi_model_gen_AI .inputs').show(); }
+				//---------------------------------------------------------------------
+				
+				//---------------------------------------------------------------------
+				$.get(that.modelGenAIURL+id)
+					.done((res)=>{
+						if(res.result==1){ showError("Model Gen AI Error: "+res.msg); }
+						else{
+							$("input.checkboxModelGenAI[type=checkbox]").each((index,item)=>{
+								//$(item).prop("checked", true);
+								$(item).removeAttr("checked");
+								$(item).parent().attr("class", "btn btn-default checkboxModelGenAI");
+								$(item).parent().find("i").attr("class", "fa fa-circle-o");
+								  
+								for(let ii in res.data){
+									if($(item).val()==res.data[ii].value){
+										$(item).attr("checked", "checked");
+										$(item).parent()
+											.attr("class", "btn btn-info checkboxModelGenAI active "+((res.data[ii].inUse==0) ?"" :"inUse"));
+										$(item).parent().find("i").attr("class", "fa fa-check-circle-o");
+									}
+								}
+							})
+						}
+					})
+					.fail((xhr)=>{
+						showError("Model Gen AI Error: "+xhr.statusText);
+					})
+					.always(()=>{
+						that.createMultiModelGenAiIsBusy=false;
+					});
+			}
+		});
+		
+	}
+	//----------------------------------------------------
+
 	rowActions(value, row, index, field) {
 		//------------------------------------------------
 		var icons = this.actionIcons;
@@ -498,9 +661,9 @@ class Organization extends DataTable {
 			case 'hasLiveAgent':
 			case 'MultiLanguage':
 			case 'MessageOfTheDay':
-			case 'RAG':
 			case 'mfa':
 			case 'feedback':
+			case 'multi_model_gen_AI':
 				{
 				input = $('<tr>')
 							.attr({class: "orgFlags col-" + col })
@@ -543,20 +706,20 @@ class Organization extends DataTable {
 		$(".send_chat_format").removeClass('active');
 		$(".send_chat_format [value='csv']").addClass('active');
 		
-		$('#AutoOnOff'      ).bootstrapToggle('off');
-		$('#Billable'       ).bootstrapToggle('off');
-		$('#RPA'            ).bootstrapToggle('off');
-		$('#MultiLanguage'  ).bootstrapToggle('off');
-		$('#MessageOfTheDay').bootstrapToggle('off');
-		$('#KaaS3PB'        ).bootstrapToggle('off');
-		$('#hasLiveAgent'   ).bootstrapToggle('off');
-		$('#RAG'            ).bootstrapToggle('off');
-		$('#mfa'            ).bootstrapToggle('off');
-		$('#feedback'       ).bootstrapToggle('off');
+		$('#AutoOnOff'         ).bootstrapToggle('off');
+		$('#Billable'          ).bootstrapToggle('off');
+		$('#RPA'               ).bootstrapToggle('off');
+		$('#MultiLanguage'     ).bootstrapToggle('off');
+		$('#MessageOfTheDay'   ).bootstrapToggle('off');
+		$('#KaaS3PB'           ).bootstrapToggle('off');
+		$('#hasLiveAgent'      ).bootstrapToggle('off');
+		$('#mfa'               ).bootstrapToggle('off');
+		$('#feedback'          ).bootstrapToggle('off');
+		$('#multi_model_gen_AI').bootstrapToggle('off');
 		
 
 		$("body .autoEmailPanel").hide();
-		$("body .col-organizationShortName, body .col-personalityId, body .col-Descripiton, body .col-Billable, body .col-RPA, body .col-MultiLanguage, .col-KaaS3PB, .col-hasLiveAgent, .col-MessageOfTheDay, .col-RAG, .col-mfa, .col-feedback")
+		$("body .col-organizationShortName, body .col-personalityId, body .col-Descripiton, body .col-Billable, body .col-RPA, body .col-MultiLanguage, .col-KaaS3PB, .col-hasLiveAgent, .col-MessageOfTheDay, .col-mfa, .col-feedback, .col-multi_model_gen_AI")
 			.show();
 		$("#organizationShortName").attr('disabled', false);
 		$(".action-form input[type='submit']").css('margin-top', "5px");
@@ -586,13 +749,13 @@ class Organization extends DataTable {
 				'#MessageOfTheDay,'+
 				'#KaaS3PB,'+
 				'#hasLiveAgent,'+
-				'#RAG,'+
 				'#mfa,'+
-				'#feedback'
+				'#feedback,'+
+				'#multi_model_gen_AI'
 			).bootstrapToggle('disable');
 		}
 		this.createMyltiLanguage(0, 0);
-		
+		this.createMultiModelGenAI(0, 0);
 		if($("#orgFlags").length==0){
 			$("<table>")
 				.attr({id: "orgFlags"})
@@ -634,9 +797,9 @@ class Organization extends DataTable {
 		$('#MessageOfTheDay').bootstrapToggle('off');
 		$('#KaaS3PB'        ).bootstrapToggle('off');
 		$('#hasLiveAgent'   ).bootstrapToggle('off');
-		$('#RAG'            ).bootstrapToggle('off');
 		$('#mfa'            ).bootstrapToggle('off');
 		$('#feedback'       ).bootstrapToggle('off');
+		$('#multi_model_gen_AI'    ).bootstrapToggle('off');
 		
 		if($("#AutoOnOff"      ).val()==1){ $('#AutoOnOff'      ).bootstrapToggle('on'); }
 		if($("#Billable"       ).val()==1){ $('#Billable'       ).bootstrapToggle('on'); }
@@ -645,9 +808,9 @@ class Organization extends DataTable {
 		if($("#MessageOfTheDay").val()==1){ $('#MessageOfTheDay').bootstrapToggle('on'); }
 		if($("#KaaS3PB"        ).val()==1){ $('#KaaS3PB'        ).bootstrapToggle('on'); }
 		if($("#hasLiveAgent"   ).val()==1){ $('#hasLiveAgent'   ).bootstrapToggle('on'); }
-		if($("#RAG"            ).val()==1){ $('#RAG'            ).bootstrapToggle('on'); }
 		if($("#mfa"            ).val()==1){ $('#mfa'            ).bootstrapToggle('on'); }
 		if($("#feedback"       ).val()==1){ $('#feedback'       ).bootstrapToggle('on'); }
+		if($("#multi_model_gen_AI"    ).val()==1){ $('#multi_model_gen_AI'    ).bootstrapToggle('on'); }
 		
 		if(levelID!=1){
 			$(
@@ -674,13 +837,13 @@ class Organization extends DataTable {
 				'#MessageOfTheDay,'+
 				'#KaaS3PB,'+
 				'#hasLiveAgent,'+
-				'#RAG,'+
 				'#mfa,'+
-				'#feedback'
+				'#feedback,'+
+				'#multi_model_gen_AI'
 			).bootstrapToggle('disable');
 		}
 		this.createMyltiLanguage(this.editItem['organizationId'],this.editItem['MultiLanguage']);
-
+		this.createMultiModelGenAI(this.editItem['organizationId'],this.editItem['multi_model_gen_AI']);
 		if($("#orgFlags").length==0){
 			$("<table>")
 				.attr({id: "orgFlags"})
@@ -747,11 +910,9 @@ class Organization extends DataTable {
 		let data = {
 			orgID: this.orgID,
 			userID: this.userID,
-			language: []
+			language: [],
+			modelGenAI: []
 		};
-		$('input[class="checkboxMultiLanguage"]').each(function(){
-			if($(this).prop('checked')){ data.language.push($(this).val()); }
-		});
 		//------------------------------------------------
 		for(var x in this.columns.names){
 			if(this.columns.data[x].passData !== false) {
@@ -761,7 +922,20 @@ class Organization extends DataTable {
 				data[name] = value;
 			}
 		}
-
+		//------------------------------------------------
+		$('input[class="checkboxMultiLanguage"]').each(function(){
+			if($(this).prop('checked')){ data.language.push($(this).val()); }
+		});
+		//------------------------------------------------
+		if(data.multi_model_gen_AI==1){
+			$('input[class="checkboxModelGenAI"]').each(function(){
+				if($(this).prop('checked')){ data.modelGenAI.push($(this).val()); }
+			});
+			if(data.modelGenAI.length==0){
+				showError("Multi-Model Gen AI requires one model or more to be selected.");
+				return;
+			}
+		}
 		//------------------------------------------------
 		$.ajax({
 			url: this.editURL,
@@ -826,11 +1000,9 @@ class Organization extends DataTable {
 		let data = {
 			orgID: this.orgID,
 			userID: this.userID,
-			language: []
+			language: [],
+			modelGenAI: []
 		};
-		$('input[class="checkboxMultiLanguage"]').each(function(){
-			if($(this).prop('checked')){ data.language.push($(this).val()); }
-		});
 		//------------------------------------------------
 		for(let x in this.columns.names){
 			if(this.columns.data[x].passData !== false){
@@ -838,6 +1010,20 @@ class Organization extends DataTable {
 				let value = this.editItem[name];
 				if(name == 'ownerId' && value == null){ value = '0'; }
 				data[name] = value;
+			}
+		}
+		//------------------------------------------------
+		$('input[class="checkboxMultiLanguage"]').each(function(){
+			if($(this).prop('checked')){ data.language.push($(this).val()); }
+		});
+		//------------------------------------------------
+		if(data.multi_model_gen_AI==1){
+			$('input[class="checkboxModelGenAI"]').each(function(){
+				if($(this).prop('checked')){ data.modelGenAI.push($(this).val()); }
+			});
+			if(data.modelGenAI.length==0){
+				showError("Multi-Model Gen AI requires one model or more to be selected.");
+				return;
 			}
 		}
 		//------------------------------------------------
@@ -954,17 +1140,17 @@ var columns = [
 	
 //	{ name:'organizationLogo-upload', display:'', hidden:true , editable:false, sortable:false, search:false  },
 
-	{ name:'Billable'        , display:'Billable'                   , hidden:true , editable:true , sortable:false, search:false },
-	{ name:'RPA'             , display:'RPA'                        , hidden:true , editable:true , sortable:false, search:false },
-	{ name:'KaaS3PB'         , display:'KaaS 3PB'                   , hidden:true , editable:true , sortable:false, search:false },
-	{ name:'hasLiveAgent'    , display:'Has Live Agent'             , hidden:true , editable:true , sortable:false, search:false },
-	{ name:'MessageOfTheDay' , display:'Message of the Day'         , hidden:true , editable:true , sortable:false, search:false },
-	{ name:'RAG'             , display:'RAG'                        , hidden:true , editable:true , sortable:false, search:false },
-	{ name:'MultiLanguage'   , display:'Multi Language'             , hidden:true , editable:true , sortable:false, search:false },
-	{ name:'mfa'             , display:'Multi-Factor Authentication', hidden:true , editable:true , sortable:false, search:false },
-	{ name:'feedback'        , display:'Feedback'                   , hidden:true , editable:true , sortable:false, search:false },
-	{ name:'chat_logs_sent'  , display:'-', hidden:true, editable:true, sortable:false, search:false },
-	{ name:'send_chat_format', display:'Send chat in this format', hidden:true, editable:true, sortable:false, search:false },
+	{ name:'Billable'          , display:'Billable'                   , hidden:true , editable:true , sortable:false, search:false },
+	{ name:'RPA'               , display:'RPA'                        , hidden:true , editable:true , sortable:false, search:false },
+	{ name:'KaaS3PB'           , display:'KaaS 3PB'                   , hidden:true , editable:true , sortable:false, search:false },
+	{ name:'hasLiveAgent'      , display:'Has Live Agent'             , hidden:true , editable:true , sortable:false, search:false },
+	{ name:'MessageOfTheDay'   , display:'Message of the Day'         , hidden:true , editable:true , sortable:false, search:false },
+	{ name:'MultiLanguage'     , display:'Multi Language'             , hidden:true , editable:true , sortable:false, search:false },
+	{ name:'mfa'               , display:'Multi-Factor Authentication', hidden:true , editable:true , sortable:false, search:false },
+	{ name:'feedback'          , display:'Feedback'                   , hidden:true , editable:true , sortable:false, search:false },
+	{ name:'multi_model_gen_AI', display:'Multi-Model Gen AI'         , hidden:true , editable:true , sortable:false, search:false },
+	{ name:'chat_logs_sent'    , display:'-'                          , hidden:true , editable:true , sortable:false, search:false },
+	{ name:'send_chat_format'  , display:'Send chat in this format'   , hidden:true , editable:true , sortable:false, search:false },
 ];
 var organizationColumns = new Columns(columns);
 

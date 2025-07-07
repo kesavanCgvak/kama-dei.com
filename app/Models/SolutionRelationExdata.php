@@ -5,8 +5,8 @@
  *  Function      : Provide  functions for manipulating solution_relation_exdata table.
  *  Developer     : Gabriel Carrillo
  *  Company       : Kamazooie  Development Corporation
- *  Version       : 3.03
- *  Updated       : 28 December 2023  varible length validation
+ *  Version       : 3.08
+ *  Updated       : 15 octoberr 2024  varible length validation
  *---------------------------------------------------------------------------------*/
 
 
@@ -107,13 +107,13 @@ class SolutionRelationExdata extends Model
      {
 
            if ( strlen($sredChatIntro) > 1000) {
-              $sredChatIntro = substr($sredChatintro,0,1000);
+              $sredChatIntro = substr($sredChatIntro,0,1000);
            }
            if ( strlen($sredAttributeName) > 128) {
               $sredAttributeName = substr($sredAttributeName,0,128);
            }
-           if ( strlen($sredValueString) > 1000) {
-              $sredValueString = substr($sredValueString,0,1000);
+           if ( strlen($sredValueString) > 5000) {
+              $sredValueString = substr($sredValueString,0,5000);
            }
 
            $oSRExdata  = new SolutionRelationExdata();

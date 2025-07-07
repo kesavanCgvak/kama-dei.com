@@ -121,7 +121,15 @@ class FeedbackController extends \App\Http\Controllers\Controller{
 					"feedback.is_general",
 					"feedback.feedback as thumbs",
 					"feedback.archived",
+					"feedback.Generative_response",
+					"feedback.GR_Enduser_delivery",
+					"feedback.Rating_for_GR",
+					"feedback.Notes_for_GR",
+					"feedback.Model_used",
+					"feedback.Collection_used",
 					"kama_log.raw_msg",
+					"kama_log.msg",
+					"kama_log.sender",
 					"kama_usage.user_id as uid",
 					"kama_usage.org_id as oid",
 					"kama_usage.org_id as ownerId",
@@ -139,10 +147,11 @@ class FeedbackController extends \App\Http\Controllers\Controller{
 			if($ownerid!=0){ $rows = $rows->where('kama_usage.org_id', $ownerid); }
 			if($srch_val!=''){
 				$rows = $rows
-					->where('feedback.created_on'    , 'like', "%{$srch_val}%")
-					->orwhere('feedback.comment'     , 'like', "%{$srch_val}%")
-					->orwhere('kama_usage.memo'      , 'like', "%{$srch_val}%")
-					->orwhere('kama_usage.org_name'  , 'like', "%{$srch_val}%");
+					->where('feedback.created_on'           , 'like', "%{$srch_val}%")
+					->orwhere('feedback.comment'            , 'like', "%{$srch_val}%")
+					->orwhere('feedback.Generative_response', 'like', "%{$srch_val}%")
+					->orwhere('kama_usage.memo'             , 'like', "%{$srch_val}%")
+					->orwhere('kama_usage.org_name'         , 'like', "%{$srch_val}%");
 					//->orwhere('kamadeiep.portal.name', 'like', "%{$srch_val}%");
 					//->orwhereRaw("SUBSTR(kama_usage.apikey,1,6) like ?", ["%{$srch_val}%"]);
 			}
@@ -167,6 +176,9 @@ class FeedbackController extends \App\Http\Controllers\Controller{
 					else{ $row->org_name = $org->organizationShortName; }
 					
 					if(strlen($row->comment)>25){ $row->comment = substr($row->comment, 0, 25)."..."; }
+					if(strlen($row->Generative_response)>25){ $row->Generative_response = substr($row->Generative_response, 0, 25)."..."; }
+					
+					
 					
 					if($row->is_general==1){ $row->q_a_pair = "General"; }
 					else{
@@ -183,6 +195,19 @@ class FeedbackController extends \App\Http\Controllers\Controller{
 					$portal = \App\Portal::where("code", $code)->where("portal_number", $portal_number)->first();
 					if($portal==null){ $row->portalName = $portal_number.$code; }
 					else{ $row->portalName = $portal->name; }
+					
+					$inquiry = "";
+					try{
+						$tmpInqry = \Crypt::decryptString($row->raw_msg);
+//$row->Z0 = $tmpInqry;
+//$row->Z0 = json_decode(\Crypt::decryptString($row->msg), true);
+//$row->Z0 = \Crypt::decryptString($row->msg);
+						$tmpInqry = json_decode($tmpInqry, true);
+//$row->Zres = $tmpInqry;
+						$inquiry  = $tmpInqry['response']['utterance'];
+					}catch(\Throwable $ex){ $row->inquiryError = $ex->getMessage(); }
+					
+					$row->inquiry = $inquiry;
 					
 					return $row;
 				});

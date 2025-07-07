@@ -545,3 +545,53 @@ padding: 2px 18px;
 .organization-help-text {
     margin-top: 8px;
 }
+
+/* Force button container to flex layout */
+.jconfirm .jconfirm-box .jconfirm-buttons {
+  display: flex !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  gap: 10px; /* Optional: Adds spacing */
+}
+
+/* Force "No" to the left */
+.jconfirm .jconfirm-box .jconfirm-buttons button.btn-no {
+  order: 1 !important;
+  margin-right: auto !important;
+}
+
+/* Force "Yes" to the right */
+.jconfirm .jconfirm-box .jconfirm-buttons button.btn-yes {
+  order: 2 !important;
+  margin-left: auto !important;
+}
+
+.jconfirm .jconfirm-box .jconfirm-buttons {
+  flex-direction: row !important; /* Force horizontal layout */
+}
+.btn-no, .btn-yes {
+   text-transform: none !important;
+    width: 80px;
+}
+.btn-yes {
+
+    color: #fff;
+    background-color: #2177ac;
+    border-color: #1b628e;
+}
+.byn-yes:active, .btn-yes:focus, .btn-yes:hover {
+    color: #fff;
+    background-color: #2177ac;
+    border-color: #1b628e;
+}
+.btn-no {
+
+        color: #fff;
+    background-color: #c0383d;
+    border-color: #a43034;
+}
+.btn-no:active, .btn-no:focus, .btn-no:hover {
+    color: #fff;
+    background-color: #c0383d;
+    border-color: #a43034;
+}

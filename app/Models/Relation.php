@@ -5,8 +5,8 @@
  *  Function      : Provide  functions for manipulating relation table.
  *  Developer     : Gabriel Carrillo
  *  Company       : Kamazooie Development Corporation. KDC
- *  Version       : 3.0
- *  Updated       : 12 December 2023
+ *  Version       : 3.096
+ *  Updated       : 20 March 2025
  *---------------------------------------------------------------------------------*/
 
 
@@ -368,6 +368,44 @@ DB::table('users')
                     ->get(); 
      }
 
+
+    //--------------------------------------------------------------------
+    public function getByOrgRightTerm($rightTermId, $orgId, $rtgId, $limit=1000)
+     {
+
+          return $this->where( function($query) use($orgId,$rightTermId,$limit)  {
+                       $query->where( 'ownership', '=', 2 )            // private
+                             ->where('ownerId', '=', $orgId)
+                             ->where('rightTermId', '=', $rightTermId)
+                            ->skip(0)
+                            ->take($limit); 
+                     })->orWhere( function($query) use($orgId,$rightTermId,$limit)  {
+                       $query->where( 'ownership', '=', 1 )            // protected
+                             ->where('ownerId', '=', $orgId)           // same orgid
+                             ->where('rightTermId', '=', $rightTermId)
+                            ->skip(0)
+                            ->take($limit); 
+                     })->orWhere( function($query) use($orgId,$rightTermId,$rtgId,$limit)  {
+                       $query->leftJoin('organization_association as orgAssociation',
+                                   'orgAssociation.rightOrgId','=','relation.ownerId')
+                             ->leftJoin('organization_association as orgAssociation',
+                                   'orgAssociation.leftOrgId','=',$orgId)
+                             ->leftJoin('organization_association as orgAssociation',
+                                   'orgAssociation.relationTypeGroupId','=', $rtgId)
+                             ->where( 'ownership', '=', 1 )            // protected
+                             ->where('ownerId', '<>', $orgId)          // distinct orgid
+                             ->where('rightTermId', '=', $rightTermId)
+                             ->skip(0)
+                             ->take($limit);  
+                     })->orWhere( function($query) use($rightTermId,$limit)  {
+                       $query->where( 'ownership', '=', 0  )            // public
+                             ->where('rightTermId', '=', $rightTermId)
+                             ->skip(0)
+                             ->take($limit);  
+                     })
+                    ->get();    
+     }
+
     //--------------------------------------------------------------------
     public function retrieveByRightTerm($rightTermId)
      {
@@ -528,6 +566,80 @@ DB::table('users')
         return $aSyn;
      }
 
+
+   //--------------------------------------------------------------------
+    // get synonym for right term. Use bidireccional search (
+    // Right hand and left hand logic )
+    public function getOrgTermSynonym($RTAid, $canbesynonymtoRTId, $orgId=0,$rtgId=0)
+     {
+        $aSyn = array();
+        $synCount = 0;
+
+        // right hand logic 
+
+        $rs =   $this->where( function($query) use($RTAid, $canbesynonymtoRTId) {
+                       $query->where('ownership', '=', 0  )            // public
+                             ->where('relationTypeId', '=', $canbesynonymtoRTId)
+                             ->where('rightTermId', '=', $RTAid);
+                     })->orWhere( function($query) use($RTAid, $canbesynonymtoRTId, $orgId)  {
+                       $query->where('ownership', '=', 2 )            // private
+                             ->where('ownerId', '=', $orgId)
+                             ->where('relationTypeId', '=', $canbesynonymtoRTId)
+                             ->where('rightTermId', '=', $RTAid);
+                      })->orWhere( function($query) use($RTAid, $canbesynonymtoRTId, $orgId)  {
+                       $query->where('ownership', '=', 1 )            // protected
+                             ->where('ownerId', '=', $orgId)           // same orgid
+                             ->where('relationTypeId', '=', $canbesynonymtoRTId)
+                             ->where('rightTermId', '=', $RTAid);
+                     })->orWhere( function($query) use($RTAid, $canbesynonymtoRTId, $orgId, $rtgId)  {
+                       $query->leftJoin('organization_association as orgAssociaton',
+                                   'orgAssociation.rightOrgId','=','extended_eav.ownerId')
+                             ->leftJoin('organization_association as orgAssociaton',
+                                   'orgAssociation.leftOrgId','=',$orgId)
+                             ->leftJoin('organization_association as orgAssociaton',
+                                   'orgAssociation.relationTypeGroupId','=', $rtgId)
+                             ->where('ownership', '=', 1 )            // protected
+                             ->where('ownerId', '<>', $orgId)          // distinct orgid
+                             ->where('relationTypeId', '=', $canbesynonymtoRTId)
+                             ->where('rightTermId', '=', $RTAid);
+                     })
+                    ->get(); 
+
+        // left hand logic
+/*
+        $rs =  $this->where( function($query) use($RTAid, $canbesynonymtoRTId) {
+                       $query->where('ownership', '=', 0  )            // public
+                             ->where('relationTypeId', '=', $canbesynonymtoRTId)
+                             ->where('leftTermId', '=', $RTAid);
+                     })->orWhere( function($query) use($RTAid, $canbesynonymtoRTId, $orgId)  {
+                       $query->where('ownership', '=', 2 )            // private
+                             ->where('ownerId', '=', $orgId)
+                             ->where('relationTypeId', '=', $canbesynonymtoRTId)
+                             ->where('leftTermId', '=', $RTAid);
+                      })->orWhere( function($query) use($RTAid, $canbesynonymtoRTId, $orgId)  {
+                       $query->where('ownership', '=', 1 )            // protected
+                             ->where('ownerId', '=', $orgId)           // same orgid
+                             ->where('relationTypeId', '=', $canbesynonymtoRTId)
+                             ->where('leftTermId', '=', $RTAid);
+                     })->orWhere( function($query) use($RTAid, $canbesynonymtoRTId, $orgId, $rtgId)  {
+                       $query->leftJoin('organization_association as orgAssociaton',
+                                   'orgAssociation.rightOrgId','=','extended_eav.ownerId')
+                             ->leftJoin('organization_association as orgAssociaton',
+                                   'orgAssociation.leftOrgId','=',$orgId)
+                             ->leftJoin('organization_association as orgAssociaton',
+                                   'orgAssociation.relationTypeGroupId','=', $rtgId)
+                             ->where('ownership', '=', 1 )            // protected
+                             ->where('ownerId', '<>', $orgId)          // distinct orgid
+                             ->where('relationTypeId', '=', $canbesynonymtoRTId)
+                             ->where('leftTermId', '=', $RTAid);
+                     })
+                    ->get();
+
+
+*/
+
+        return $rs;
+     }
 
     //--------------------------------------------------------------------
     // get synonym for left term. Use bidireccional search (

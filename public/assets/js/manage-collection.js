@@ -15,6 +15,22 @@ $(function () {
     });
 });
 
+function CustomeConfirm(options) {
+    const defaults = {
+        title: false,
+        boxWidth: '300px',
+        useBootstrap: false,
+        onOpen: function () {
+            $('.jconfirm-buttons').css({
+                'display': 'flex',
+                'width': '100%',
+                'justify-content': 'space-between'
+            });
+        }
+    };
+    $.confirm($.extend({}, defaults, options));
+}
+
 function getSystemSourceTypes() {
     $.ajax({
         type: "GET",
@@ -245,15 +261,30 @@ $(document).on("click", ".delete-collection", function (event) {
     let org_id = $('#orgID').val();
     let storage_type = $('#storage_type').val();
     let collection_id = originalItem.attr('data-id');
-    let consfirmation = confirm('Are you sure you want to delete this collection?');
-    if (!consfirmation) {
-        return false;
-    }
-    if (is_cloud_collection == 1) {
-        deleteCloudCollection(collection_name, org_id, storage_type, collection_id);
-    }
-    originalItem.remove();
-    deleteLocalCollection(collection_id);
+    // let consfirmation = confirm('Are you sure you want to delete this collection?');
+    // if (!consfirmation) {
+    //     return false;
+    // }
+    CustomeConfirm({
+        content: 'Do you want to remove this file from the Collection?',
+        buttons: {
+            no: {
+                text: 'No', btnClass: 'btn-no', action: function () {
+                    return true; // Do nothing on "No"
+                }
+            },
+            yes: {
+                text: 'Yes', btnClass: 'btn-yes', action: function () {
+                    if (is_cloud_collection == 1) {
+                        deleteCloudCollection(collection_name, org_id, storage_type, collection_id);
+                    }
+                    originalItem.remove();
+                    deleteLocalCollection(collection_id);
+                }
+            }
+        }
+    });
+
 });
 
 
@@ -304,7 +335,7 @@ function deleteLocalCollection(collection_id) {
             if (response.status == 'success') {
                 hideLoader();
                 toastr.success(response.message || "Collection deleted successfully.");
-               setTimeout(function(){ getFileDifferences();},500)
+                setTimeout(function () { getFileDifferences(); }, 500)
             }
         },
         error: function (xhr, status, error) {
@@ -1176,8 +1207,8 @@ function setupToastr() {
         "positionClass": "toast-top-right",
         "preventDuplicates": true,
         "onclick": null,
-        "timeOut": "0", // Set to 0 for persistent toast
-        "extendedTimeOut": "0", // Set to 0 for persistent toast
+        "timeOut": "3000", // Set to 0 for persistent toast
+        "extendedTimeOut": "1000", // Set to 0 for persistent toast
         "showEasing": "swing",
         "hideEasing": "linear",
         "showMethod": "fadeIn",
@@ -1428,9 +1459,9 @@ $(document).on("click", ".publish-collection", function (event) {
 
 function checkPublishStatus($container) {
     let fileCount = $container.find('.file-item').length;
-    if(fileCount === 0){
+    if (fileCount === 0) {
         $container.find('.submenu').find('.publish').removeClass('publish-collection').addClass('btn-disabled').attr('disabled', 'disabled');
-    }else{
+    } else {
         $container.find('.submenu').find('.publish').removeClass('btn-disabled').addClass('publish-collection').removeAttr('disabled');
     }
 }
@@ -1704,7 +1735,7 @@ function initDragable() {
         stop: function (event, ui) {
             // Remove the highlight after dragging stops
             $(this).removeClass("dragging");
-             // Remove inline styles from the helper (clone)
+            // Remove inline styles from the helper (clone)
             ui.helper.removeAttr('style');
 
             $(".ui-sortable").removeClass("highlight-dropzone"); // Remove highlight from all drop areas

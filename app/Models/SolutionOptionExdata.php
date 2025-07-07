@@ -52,7 +52,7 @@ class SolutionOptionExdata extends Model
      {
 
            if ( strlen($soedChatIntro) > 1000) {
-              $soedChatIntro = substr($soedChatintro,0,1000);
+              $soedChatIntro = substr($soedChatIntro,0,1000);
            }
            if ( strlen($soedAttributeName) > 128) {
               $soedAttributeName = substr($soedAttributeName,0,128);

@@ -667,6 +667,8 @@ Route::group(['prefix' => 'dashboard/organization'], function() {
     header('Access-Control-Allow-Credentials: true');
     Route::get('/get/language'         , 'Api\Dashboard\Organization\OrganizationController@allLanguage');
     Route::get('/get/language/{org_id}', 'Api\Dashboard\Organization\OrganizationController@allLanguage');
+	
+	Route::get('/get/model_gen_ai/{org_id}', 'Api\Dashboard\Organization\OrganizationController@getModelGenAI');
 
 
 	Route::get('/all/{orgID}', 'Api\Dashboard\Organization\OrganizationController@listOrganization');
@@ -1317,6 +1319,10 @@ Route::group(['prefix' => 'dashboard/logs'], function() {
 });
 Route::post('/log/email', 'Api\Dashboard\Logs\LogsController@sendAutoEmails');
 Route::post('/log/mylog', 'Api\Dashboard\Logs\LogsController@sendMylog');
+
+Route::post('/log/set'            , 'Api\Dashboard\Logs\SetLogsController@setLog');
+//Route::post('/feedback/set'       , 'Api\Dashboard\Logs\SetLogsController@setFeedback');
+Route::any ('/log/get/{signin_id}', 'Api\Dashboard\Logs\SetLogsController@getLog');
 // ----------------------------------------------------------------------------------------
 // -- test --------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
@@ -1359,6 +1365,11 @@ Route::group(['prefix' => 'dashboard/portal'], function() {
 
 	Route::get('/feedback/{portal_id}', 'Api\Dashboard\Portal\PortalController@getFeedbackItems');
 	Route::put('/feedback/'           , 'Api\Dashboard\Portal\PortalController@setFeedbackItems');
+
+	Route::get('/get/model_gen_ai/{portal_id}', 'Api\Dashboard\Portal\PortalController@getModelGenAI');
+	Route::get('/get/model_gen_ai_org/{org_id}', 'Api\Dashboard\Organization\OrganizationController@getModelGenAI');
+
+	Route::get('/get/collection/{portal_id}', 'Api\Dashboard\Portal\PortalController@getCollections');
 });
 Route::get('/prelaunch/{portal}', 'Api\Dashboard\Portal\PortalController@checkPortal');
 // ----------------------------------------------------------------------------------------
@@ -1633,7 +1644,8 @@ Route::group(['prefix' => 'sysamin/monitorig'], function() {
 // -- feedback ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
 Route::group(['prefix' => 'feedback'], function() {
-	Route::post("/" , 'Api\Dashboard\Feedback\FeedbackController@feedback');
+//	Route::post("/" , 'Api\Dashboard\Feedback\FeedbackController@feedback');
+	Route::post('/' , 'Api\Dashboard\Logs\SetLogsController@setFeedback');	
 
 	Route::get('/org_all', 'Api\Dashboard\Feedback\FeedbackController@org_all'   );
 	Route::get(
@@ -1653,6 +1665,28 @@ Route::group(['prefix' => 'feedback'], function() {
 	Route::post('/archive/', 'Api\Dashboard\Feedback\FeedbackController@setArchive');
 });
 // ----------------------------------------------------------------------------------------
+// -- apikey ------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
+Route::group(['prefix' => 'apikey'], function() {
+	Route::post('/' , 'Api\Dashboard\ApiKey\ApiKeyController@check');	
+});
+// ----------------------------------------------------------------------------------------
+// -- userkey -----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
+Route::group(['prefix' => 'userkey'], function() {
+	Route::post('/'             , 'Api\Dashboard\ApiKey\UserKeyController@check');	
+	Route::post('/renew'        , 'Api\Dashboard\ApiKey\UserKeyController@renewApi');	
+	Route::post('/check'        , 'Api\Dashboard\ApiKey\UserKeyController@isValidApi');	
+	Route::post('/get/{user_id}', 'Api\Dashboard\ApiKey\UserKeyController@getApi');	
+});
+// ----------------------------------------------------------------------------------------
+// -- Credential information acquisition --------------------------------------------------
+// ----------------------------------------------------------------------------------------
+Route::group(['prefix' => 'credential_information'], function() {
+	Route::post('/acquisition', 'Api\Dashboard\Organization\CredentialInformationController@acquisition');	
+});
+
+// ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
 Route::post("set-menu/{id}", function($id){ return $id; });
@@ -1667,6 +1701,3 @@ Route::group(['prefix' => 'extra_api'], function() {
 	});	
 	Route::post("/get/apikey" , 'Api\ExtraApi\ExtraApiController@getApiKey');
 });
-// ----------------------------------------------------------------------------------------
-// ----------------------------------------------------------------------------------------
-// ----------------------------------------------------------------------------------------

@@ -40,7 +40,7 @@ class Term extends Model
 //				->with(['organization'])
 				->leftJoin('kamadeiep.organization_ep as org', 'term.ownerId', '=', 'org.organizationId')
 //				->leftJoin('kamadeikb.term_type', 'term.termTypeId', '=', 'term_type.id')
-				->where(function($q) use($orgID, $PUBLIC, $PRTCTD, $ownerId){
+				->where(function($q) use($orgID, $PUBLIC, $PRTCTD, $ownerId){ 
 					if($orgID==0 && $ownerId==-99){ return $q; }
 					else{
 						$tmpOrgIDs = OrgRelations::haveAccessTo($orgID);
@@ -69,8 +69,8 @@ class Term extends Model
 /**/
 					return $q
 						->where(
-							\DB::raw("if(term.ownership=0, 'Public', if(term.ownership=1, 'Protected', 'Private' ))") ,
-							'like',
+							\DB::raw("if(term.ownership=0, 'Public', if(term.ownership=1, 'Protected', 'Private' ))") , 
+							'like', 
 							"%{$value}%"
 						)
 						->orWhereRaw("term.termName like ?", ["%{$value}%"]);
@@ -79,19 +79,19 @@ class Term extends Model
 					return $q
 						->where(
 							\DB::raw("if(term.ownerId=0 or term.ownerId is null, '{$kamaDEI}', org.organizationShortName)"),
-							'like',
+							'like', 
 							"%{$value}%"
 						)
 						->orWhereRaw("term.termName like ?", ["%{$value}%"])
 //						->orWhereRaw("term_type.name like ?", ["%{$value}%"])
 						->orwhere(
-							\DB::raw("if(term.ownership=0, 'Public', if(term.ownership=1, 'Protected', 'Private' ))") ,
-							'like',
+							\DB::raw("if(term.ownership=0, 'Public', if(term.ownership=1, 'Protected', 'Private' ))") , 
+							'like', 
 							"%{$value}%"
 						);
 */
 				})
-				->where(function($q) use($orgID, $PUBLIC, $PRTCTD, $ownerId){
+				->where(function($q) use($orgID, $PUBLIC, $PRTCTD, $ownerId){ 
 					if($orgID==0 && $ownerId==-99){ return $q; }
 					else{
 						$tmpOrgIDs = OrgRelations::haveAccessTo($orgID);
@@ -121,7 +121,7 @@ class Term extends Model
 		return $this
 			->with(['organization'])
 			->where('termId', '=', $id)
-			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){
+			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){ 
 					if($orgID==0){ return $q; }
 					else{
 						$tmpOrgIDs = OrgRelations::haveAccessTo($orgID);
@@ -138,7 +138,7 @@ class Term extends Model
 		return $this
 			->with(['organization'])
 			->where('termName', '<', $termName)
-			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){
+			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){ 
 					if($orgID==0){ return $q; }
 					else{
 						$tmpOrgIDs = OrgRelations::haveAccessTo($orgID);
@@ -156,7 +156,7 @@ class Term extends Model
 		return $this
 			->with(['organization'])
 			->where('termName', '>', $termName)
-			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){
+			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){ 
 					if($orgID==0){ return $q; }
 					else{
 						$tmpOrgIDs = OrgRelations::haveAccessTo($orgID);
@@ -174,7 +174,7 @@ class Term extends Model
 		return $this
 			->with(['organization'])
 			->where('termName', '<=', $termName)
-			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){
+			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){ 
 					if($orgID==0){ return $q; }
 					else{
 						$tmpOrgIDs = OrgRelations::haveAccessTo($orgID);
@@ -193,7 +193,7 @@ class Term extends Model
 		return $this
 			->with(['organization'])
 			->where('termName', '>=', $termName)
-			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){
+			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){ 
 					if($orgID==0){ return $q; }
 					else{
 						$tmpOrgIDs = OrgRelations::haveAccessTo($orgID);
@@ -214,7 +214,7 @@ class Term extends Model
 		$tmp1 = $this
 			->with(['organization'])
 			->where('termName', '<', $termName)
-			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){
+			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){ 
 					if($orgID==0){ return $q; }
 					else{
 						$tmpOrgIDs = OrgRelations::haveAccessTo($orgID);
@@ -224,7 +224,7 @@ class Term extends Model
 								->orWhere('ownerId', $orgID);
 					}
 			})
-			->where(function($q) use($ownerId){
+			->where(function($q) use($ownerId){ 
 					switch($ownerId){
 						case -1: return $q;
 						case  0: return $q->where('ownerId', null);
@@ -243,7 +243,7 @@ class Term extends Model
 		$tmp2 = $this
 			->with(['organization'])
 			->where('termName', '=', $termName)
-			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){
+			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){ 
 					if($orgID==0){ return $q; }
 					else{
 						$tmpOrgIDs = OrgRelations::haveAccessTo($orgID);
@@ -253,7 +253,7 @@ class Term extends Model
 								->orWhere('ownerId', $orgID);
 					}
 			})
-			->where(function($q) use($ownerId){
+			->where(function($q) use($ownerId){ 
 					switch($ownerId){
 						case -1: return $q;
 						case  0: return $q->where('ownerId', null);
@@ -273,7 +273,7 @@ class Term extends Model
 		$tmp3 = $this
 			->with(['organization'])
 			->where('termName', '>', $termName)
-			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){
+			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){ 
 					if($orgID==0){ return $q; }
 					else{
 						$tmpOrgIDs = OrgRelations::haveAccessTo($orgID);
@@ -283,7 +283,7 @@ class Term extends Model
 								->orWhere('ownerId', $orgID);
 					}
 			})
-			->where(function($q) use($ownerId){
+			->where(function($q) use($ownerId){ 
 					switch($ownerId){
 						case -1: return $q;
 						case  0: return $q->where('ownerId', null);
@@ -318,7 +318,7 @@ class Term extends Model
 		if($data->isEmpty()){ return null; }
 		//----------------------------------------------------------------
 		$retVal = [];
-		foreach( $data as $key=>$tmp ){
+		foreach( $data as $key=>$tmp ){ 
 			if($tmp->ownerId==null){ $tmp->organizationShortName = env('BASE_ORGANIZATION'); }
 			else{ $tmp->organizationShortName = $tmp->organization->organizationShortName; }
 			$retVal[] = $tmp;
@@ -337,7 +337,7 @@ class Term extends Model
 		}
 		if($data->isEmpty()){ return null; }
 		$retVal = [];
-		foreach( $data as $key=>$tmp ){
+		foreach( $data as $key=>$tmp ){ 
 			if($tmp->ownerId==null){ $tmp->organizationShortName = env('BASE_ORGANIZATION'); }
 			else{ $tmp->organizationShortName = $tmp->organization->organizationShortName; }
 			$retVal[] = $tmp;
@@ -364,7 +364,7 @@ class Term extends Model
 		$PRTCTD = \Config::get('kama_dei.static.PROTECTED',1);
 		return $this
 			->with(['organization'])
-			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){
+			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){ 
 					if($orgID==0){ return $q; }
 					else{
 						$tmpOrgIDs = OrgRelations::haveAccessTo($orgID);
@@ -385,7 +385,7 @@ class Term extends Model
 		$PRTCTD = \Config::get('kama_dei.static.PROTECTED',1);
 		$data = $this
 			->leftJoin('kamadeiep.organization_ep', 'kamadeikb.term.ownerId', '=', 'kamadeiep.organization_ep.organizationId')
-			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){
+			->where(function($q) use($orgID, $PUBLIC, $PRTCTD){ 
 					if($orgID==0){ return $q; }
 					else{
 						$tmpOrgIDs = OrgRelations::haveAccessTo($orgID);
@@ -404,7 +404,7 @@ class Term extends Model
 			)
 			->orderBy("text", "asc")
 			->get()->toArray();
-
+		
 		$isTrue = false;
 		foreach($data as $tmp){ if($tmp['id']==$orgID){ $isTrue=true; } }
 		if($isTrue==false){
@@ -413,13 +413,13 @@ class Term extends Model
 				if($tmp!=null){
 					$val         = [];
 					$val['id']   = $orgID;
-					$val['text'] = $tmp->organizationShortName;
+					$val['text'] = $tmp->organizationShortName; 
 					$data[]      = $val;
 				}
 			}else{
 				$val       = [];
 				$val->id   = 0;
-				$val->text = env('BASE_ORGANIZATION');
+				$val->text = env('BASE_ORGANIZATION'); 
 				$data[]    = $val;
 			}
 		}
@@ -447,9 +447,9 @@ class Term extends Model
 			case -1: $tmp = $this->myTerms($orgID, $field, $value)->orderBy($sort, $order); break;
 			default: $tmp = $this->myTerms($orgID, $field, $value, $ownerId)->orderBy($sort, $order); break;
 		}
-
+		
 		if($showAllType==0){ $tmp = $tmp->where('IsSystemTermOnly', 0); }
-
+		
 		if($tmp==null){ return null; }
 		if($orgID!=$ownerId && $ownerId!=-1 && $orgID!=0){ $tmp = $tmp->where('term.ownership', '<>', $PRIVATE); }
 		if($shwglblSTT==1){ return $tmp; }

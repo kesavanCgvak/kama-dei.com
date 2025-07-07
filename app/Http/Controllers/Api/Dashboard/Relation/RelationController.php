@@ -56,9 +56,11 @@ class RelationController extends \App\Http\Controllers\Controller{
 		else{ return ['result'=>0, 'msg'=>'', 'total'=>$count, 'data'=>$data]; }
 	}
 	public function showPageSortedPost(Request $req){
-		$data = $req->all();
-		if(trim($data['search'])==''){ return $this->showPageSorted($data['orgID'], $data['sort'], $data['order'], $data['limit'], $data['page'], $data['ownerId']); }
-		return $this->showPageSortSearch($data['orgID'],$data['sort'],$data['order'],$data['limit'],$data['page'],'allFields',trim($data['search']),$data['ownerId']);
+		$dt = $req->all();
+		if(trim($dt['search'])=='')
+			{ return $this->showPageSorted($dt['orgID'], $dt['sort'], $dt['order'], $dt['limit'], $dt['page'], $dt['ownerId']); }
+		return 
+			$this->showPageSortSearch($dt['orgID'],$dt['sort'],$dt['order'],$dt['limit'],$dt['page'],'allFields',$dt['search'],$dt['ownerId']);
 	}
 	public function showPageSorted($orgID, $sort, $order, $perPage, $page, $ownerId=-1, $shwglblSTT=1 ){
 		//---------------------------------------
@@ -268,6 +270,10 @@ class RelationController extends \App\Http\Controllers\Controller{
 
 			case 'ownership'            : { return "ownerShipText";         }
 			case 'organizationshortname': { return "organizationShortName"; }
+				
+				
+			case "optionaltext"         : {return "optionalText"; }
+				
 			default:{ return ''; }
 		}
 	}

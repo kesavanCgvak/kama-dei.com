@@ -118,6 +118,24 @@ class ApiKeyManagerClass{
 		return \App\ApiKeyManager::where('api_key_expire', '>', $api_key_expire)->orwhere('api_key_valid_for_ever', 1)->count();
 	}
 	//-----------------------------------------
+	public static function isActiveApikey($api_key){
+		$api_key_expire = time();
+		$apikey = \App\ApiKeyManager::where('api_key', $api_key)->first();
+
+		if($apikey==null){ return 0; }//notFound
+		
+		if($apikey->api_key_valid_for_ever==1){ return 1; }//valid for ever
+
+		$from = substr($api_key ,0 ,1);
+		if( $from==4 || $from==3 || $from=='z' ){ return 1; }//special portal is valid
+		
+		$apikey_expire_in_min = env("apikey_expire_in_min", 10);
+		$api_key_expire = strtotime( "+{$apikey_expire_in_min} minutes" );
+		if($apikey->api_key_expire<$api_key_expire){ return 0; }//expired
+		
+		return 1;
+	}
+	//-----------------------------------------
 }
 //---------------------------------------------
 /*

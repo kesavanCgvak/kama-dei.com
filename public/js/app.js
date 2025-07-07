@@ -99999,7 +99999,7 @@ var columns = [{ name: 'checkBox', display: '', sortable: false, editable: false
 //  { name: 'relationTypeName', display: 'Relation Type', sortable: true, editable: false },
 { name: 'rightTermId', display: 'Right Term', hidden: true },
 //  { name: 'rightTermName', display: 'Right Term', sortable: true, editable: false },
-{ name: 'relationOperand', display: 'Operand', hidden: true, editable: false }, { name: 'knowledgeRecordName', display: 'Knowledge Record', sortable: true, editable: false }, { name: 'tempVar', display: 'tempVar', hidden: true, editable: true }, { name: 'optionalText', display: 'Optional text', hidden: false, editable: false, sortable: false }, { name: 'relationIsReserved', display: 'Reserved', sortable: true, reserved: true }, { name: 'ownerId', display: 'Owner', hidden: true, onlyFor: 0 }, { name: 'ownership', display: 'Ownership', default: '2', ownership: true, sortable: true }, { name: 'organizationShortName', display: 'Owner', sortable: true, editable: false }, { name: 'lastUserId', display: 'User', hidden: true, editable: false, default: '1' }, { name: 'dateCreated', display: 'Created', sortable: true, editable: false, date: true }, { name: 'extDataLink', display: 'Ext. Data Link', sortable: true, editable: false }, { name: 'linkingKR', display: 'KR-KR Link', sortable: true, editable: false }, { name: 'KRTermLink', display: 'KR-Term Link', sortable: true, editable: false }, { name: 'PKR', display: 'P.K.R', sortable: true, editable: false, hidden: false }, { name: 'languageCode1', display: '', sortable: false, editable: true, hidden: true }, { name: 'optionalText1', display: '', sortable: false, editable: true, hidden: true }, { name: 'shortText1', display: '', sortable: false, editable: true, hidden: true }, { name: 'validationText1', display: '', sortable: false, editable: true, hidden: true }];
+{ name: 'relationOperand', display: 'Operand', hidden: true, editable: false }, { name: 'knowledgeRecordName', display: 'Knowledge Record', sortable: true, editable: false }, { name: 'tempVar', display: 'tempVar', hidden: true, editable: true }, { name: 'optionalText', display: 'Optional text', hidden: false, editable: false, sortable: true }, { name: 'relationIsReserved', display: 'Reserved', sortable: true, reserved: true }, { name: 'ownerId', display: 'Owner', hidden: true, onlyFor: 0 }, { name: 'ownership', display: 'Ownership', default: '2', ownership: true, sortable: true }, { name: 'organizationShortName', display: 'Owner', sortable: true, editable: false }, { name: 'lastUserId', display: 'User', hidden: true, editable: false, default: '1' }, { name: 'dateCreated', display: 'Created', sortable: true, editable: false, date: true }, { name: 'extDataLink', display: 'Ext. Data Link', sortable: true, editable: false }, { name: 'linkingKR', display: 'KR-KR Link', sortable: true, editable: false }, { name: 'KRTermLink', display: 'KR-Term Link', sortable: true, editable: false }, { name: 'PKR', display: 'P.K.R', sortable: true, editable: false, hidden: false }, { name: 'languageCode1', display: '', sortable: false, editable: true, hidden: true }, { name: 'optionalText1', display: '', sortable: false, editable: true, hidden: true }, { name: 'shortText1', display: '', sortable: false, editable: true, hidden: true }, { name: 'validationText1', display: '', sortable: false, editable: true, hidden: true }];
 //----------------------------------------------------------------
 var relationColumns = new __WEBPACK_IMPORTED_MODULE_1__Columns__["a" /* default */](columns);
 //----------------------------------------------------------------
@@ -101946,6 +101946,7 @@ var Organization = function (_DataTable) {
 		_this.upload = false;
 		var that = _this;
 		_this.createMyltiLanguageIsBusy = false;
+		_this.createMultiModelGenAiIsBusy = false;
 		$('body').on('change', '#organizationLogo-upload', function () {
 			that.upload = false;
 			if (this.files.length == 1) {
@@ -101973,7 +101974,7 @@ var Organization = function (_DataTable) {
 		_this.showOrgFlags = false;
 		$('body').on('click', '.edit-item', function (e) {
 			$("body .autoEmailPanel").hide();
-			$("body .col-organizationShortName, body .col-personalityId, body .col-Descripiton, body .col-Billable, body .col-RPA, body .col-MultiLanguage, .col-KaaS3PB, .col-hasLiveAgent, .col-MessageOfTheDay, .col-RAG, .col-mfa, .col-feedback").show();
+			$("body .col-organizationShortName, body .col-personalityId, body .col-Descripiton, body .col-Billable, body .col-RPA, body .col-MultiLanguage, .col-KaaS3PB, .col-hasLiveAgent, .col-MessageOfTheDa, .col-mfa, .col-feedback, .col-multi_model_gen_AI").show();
 			$("#organizationShortName").attr('disabled', false);
 			$(".action-form input[type='submit']").css('margin-top', "5px");
 			_this.showOrgFlags = true;
@@ -101984,7 +101985,7 @@ var Organization = function (_DataTable) {
 		});
 
 		$('body').on('click', '.email-item', function (e) {
-			$("body .col-organizationShortName, body .col-personalityId, body .col-Descripiton, body .col-Billable, body .col-RPA, body .col-MultiLanguage, .col-KaaS3PB, .col-hasLiveAgent, .col-MessageOfTheDay, .col-RAG, .col-mfa, .col-feedback").hide();
+			$("body .col-organizationShortName, body .col-personalityId, body .col-Descripiton, body .col-Billable, body .col-RPA, body .col-MultiLanguage, .col-KaaS3PB, .col-hasLiveAgent, .col-MessageOfTheDay, .col-mfa, .col-feedback, .col-multi_model_gen_AI").hide();
 			$("body .col-organizationShortName").show();
 			$("#organizationShortName").attr('disabled', true);
 			$("body .autoEmailPanel").show();
@@ -102003,6 +102004,16 @@ var Organization = function (_DataTable) {
 			}
 			return;
 		});
+		$('body').on('change', '#multi_model_gen_AI', function (e) {
+			var toggle_btn_genAI = $('input[name="multi_model_gen_AI"]').parent();
+			$('.col-multi_model_gen_AI .inputs').hide();
+			$('.col-multi_model_gen_AI button').hide();
+			if (!toggle_btn_genAI.hasClass('off')) {
+				$('.col-multi_model_gen_AI .inputs').show();
+				$('.col-multi_model_gen_AI button').show();
+			}
+			return;
+		});
 		//MessageOfTheDay
 		$('body').on('click', 'button.checkboxMultiLanguage', function () {
 			var checked = $(this).find("input.checkboxMultiLanguage");
@@ -102012,6 +102023,22 @@ var Organization = function (_DataTable) {
 				$(checked).prop('checked', false);
 			} else {
 				$(this).removeClass("btn-default").addClass('btn-primary active');
+				$(this).find("i").removeClass("fa-circle-o").addClass("fa-check-circle-o");
+				$(checked).prop('checked', true);
+			}
+		});
+		$('body').on('click', 'button.checkboxModelGenAI', function () {
+			if ($(this).hasClass("inUse")) {
+				Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("This model is currently being used by a portal, it has to be ON.");
+				return;
+			}
+			var checked = $(this).find("input.checkboxModelGenAI");
+			if ($(checked).prop('checked')) {
+				$(this).removeClass("btn-info").removeClass("active").addClass('btn-default');
+				$(this).find("i").removeClass("fa-check-circle-o").addClass("fa-circle-o");
+				$(checked).prop('checked', false);
+			} else {
+				$(this).removeClass("btn-default").addClass('btn-info active');
 				$(this).find("i").removeClass("fa-circle-o").addClass("fa-check-circle-o");
 				$(checked).prop('checked', true);
 			}
@@ -102048,6 +102075,10 @@ var Organization = function (_DataTable) {
 			if (this.createMyltiLanguageIsBusy) {
 				return;
 			}
+			//console.log("----------------")
+			//console.log(this.createMyltiLanguageIsBusy)
+			//console.log(this.editItem['MultiLanguage'])
+			//console.log("id:"+id+" | value:"+value)
 			this.createMyltiLanguageIsBusy = true;
 			var that = this;
 			$('.col-MultiLanguage .inputs').remove();
@@ -102070,7 +102101,7 @@ var Organization = function (_DataTable) {
 					var modalDialog = $('<div>').attr({ class: "modal-dialog", style: "z-index:1061 !important" });
 					var modalContent = $('<div>').attr({ class: "modal-content", style: "z-index:1062 !important" });
 					var modalHeader = $('<div>').attr({ class: "modal-header" }).append('<h4 class="modal-title">Languages</h4>');
-					var modalFooter = $('<div>').attr({ class: "modal-footer" }).append('<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>');
+					var modalFooter = $('<div>').attr({ class: "modal-footer" }).append('<button type="button" class="btn btn-default" data-dismiss="modal">Back</button>');
 
 					var modalBody = $('<div>').attr({ class: "modal-body" });
 					//									.append('<p>Some text in the modal.</p>');
@@ -102118,9 +102149,15 @@ var Organization = function (_DataTable) {
 					$(modalDialog).append($(modalContent));
 					$(myLangs).append($(modalDialog));
 
+					//console.log("showMLButton:"+showMLButton)
+					//console.log($(".col-MultiLanguage td:last-child button").length)
+					//console.log(this.editItem['MultiLanguage'])
+					//console.log(that.editItem['MultiLanguage'])
+
 					if ($(".col-MultiLanguage td:last-child button").length == 0) {
 						$(".col-MultiLanguage td:last-child").append($(openModal)).css("text-align", "center !important");
-						if (showMLButton == 1 || id == 0) {
+						//if(showMLButton==1 || id==0){ $(".col-MultiLanguage td:last-child button").hide(); }
+						if (that.editItem['MultiLanguage'] == 0 || id == 0) {
 							$(".col-MultiLanguage td:last-child button").hide();
 						}
 					}
@@ -102133,6 +102170,122 @@ var Organization = function (_DataTable) {
 					if (value == 1) {
 						$('.col-MultiLanguage .inputs').show();
 					}
+				}
+			});
+		}
+		//----------------------------------------------------
+
+	}, {
+		key: 'createMultiModelGenAI',
+		value: function createMultiModelGenAI(id, value) {
+			if (this.createMultiModelGenAiIsBusy) {
+				return;
+			}
+			this.createMultiModelGenAiIsBusy = true;
+			var that = this;
+			$('.col-multi_model_gen_AI .inputs').remove();
+			$.ajax({
+				url: LLM_MODELS_URL,
+				method: 'POST',
+				headers: { apikey: "123" },
+				//processData: false,
+				//contentType: false,
+				data: { userkey: userKey },
+				//complete: function(){ that.createMultiModelGenAiIsBusy=false; },
+				error: function error(xhr) {
+					Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Model Gen AI Error: " + xhr.statusText);
+				},
+				success: function success(result) {
+					//---------------------------------------------------------------------
+					var inputsDiv = $('<div>').attr({ class: "inputs", style: "margin-top:10px" });
+					var openModal = $("<button>active Model Gen AI</button>").attr({
+						type: "button",
+						class: "btn btn-info",
+						'data-toggle': "modal",
+						'data-target': "#myModelGenAI"
+					});
+					//---------------------------------------------------------------------
+					var myModelGenAI = $('<div>').attr({ id: "myModelGenAI", class: "modal fade", role: "dialog", style: "z-index:1060 !important" });
+					var modalDialog = $('<div>').attr({ class: "modal-dialog", style: "z-index:1061 !important" });
+					var modalContent = $('<div>').attr({ class: "modal-content", style: "z-index:1062 !important" });
+					var modalHeader = $('<div>').attr({ class: "modal-header" }).append('<h4 class="modal-title">Model Gen AI</h4>');
+					var modalFooter = $('<div>').attr({ class: "modal-footer" }).append('<button type="button" class="btn btn-default" data-dismiss="modal">Back</button>');
+
+					var modalBody = $('<div>').attr({ class: "modal-body" }).append('<b>Select multiple models:</b>');
+					var showMLButton = 0;
+					//---------------------------------------------------------------------
+					var indx = 0;
+					for (var i in result) {
+						//if(indx!=0){ $(modalBody).append("<b style='display:block; margin-top:20px'>"+i+"</b>"); }
+						//else{ $(modalBody).append("<b style='display:block'>"+i+"</b>"); }
+						$(modalBody).append("<b style='display:block; margin-top:20px'>" + i + "</b>");
+						for (var j in result[i]) {
+							var attr = {
+								class: "checkboxModelGenAI",
+								id: "modelGenAI" + indx,
+								name: "modelGenAI_" + indx,
+								type: "checkbox",
+								value: result[i][j],
+								style: "display:none; width:0;",
+								autocomplete: "off"
+							};
+							var input = $("<input>").attr(attr);
+
+							attr = {};
+							attr.class = "btn btn-default checkboxModelGenAI";
+							attr.style = "width: 48%; text-align:left; margin: 1px 1% 5px 1%";
+							var iItem = "<i class='fa fa-circle-o' style='margin-right:10px'></i>";
+							var button = $("<button>").attr(attr).append($(input)).append(iItem).append(result[i][j]);
+							$(modalBody).append(button);
+
+							indx++;
+						}
+					}
+					//---------------------------------------------------------------------
+					$(modalContent).append($(modalHeader)).append($(modalBody)).append($(modalFooter));
+
+					$(modalDialog).append($(modalContent));
+					$(myModelGenAI).append($(modalDialog));
+					//---------------------------------------------------------------------
+					if ($(".col-multi_model_gen_AI td:last-child button").length == 0) {
+						$(".col-multi_model_gen_AI td:last-child").append($(openModal)).css("text-align", "center !important");
+						if (that.editItem['multi_model_gen_AI'] == 0 || id == 0) {
+							$(".col-multi_model_gen_AI td:last-child button").hide();
+						}
+					}
+					$(inputsDiv).append($(myModelGenAI));
+					$('.col-multi_model_gen_AI').append($(inputsDiv));
+					$('.col-multi_model_gen_AI .inputs').hide();
+					if (value == 1) {
+						$('.col-multi_model_gen_AI .inputs').show();
+					}
+					//---------------------------------------------------------------------
+
+					//---------------------------------------------------------------------
+					$.get(that.modelGenAIURL + id).done(function (res) {
+						if (res.result == 1) {
+							Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Model Gen AI Error: " + res.msg);
+						} else {
+							$("input.checkboxModelGenAI[type=checkbox]").each(function (index, item) {
+								//$(item).prop("checked", true);
+								$(item).removeAttr("checked");
+								$(item).parent().attr("class", "btn btn-default checkboxModelGenAI");
+								$(item).parent().find("i").attr("class", "fa fa-circle-o");
+
+								for (var ii in res.data) {
+									if ($(item).val() == res.data[ii].value) {
+										$(item).attr("checked", "checked");
+										$(item).parent().attr("class", "btn btn-info checkboxModelGenAI active " + (res.data[ii].inUse == 0 ? "" : "inUse"));
+										$(item).parent().find("i").attr("class", "fa fa-check-circle-o");
+									}
+								}
+							});
+						}
+					}).fail(function (xhr) {
+						Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Model Gen AI Error: " + xhr.statusText);
+					}).always(function () {
+						that.createMultiModelGenAiIsBusy = false;
+					});
 				}
 			});
 		}
@@ -102379,9 +102532,9 @@ var Organization = function (_DataTable) {
 				case 'hasLiveAgent':
 				case 'MultiLanguage':
 				case 'MessageOfTheDay':
-				case 'RAG':
 				case 'mfa':
 				case 'feedback':
+				case 'multi_model_gen_AI':
 					{
 						input = $('<tr>').attr({ class: "orgFlags col-" + col }).append($('<td>').text(label)).append($('<td>').append($('<input>').attr({
 							id: col,
@@ -102435,22 +102588,22 @@ var Organization = function (_DataTable) {
 			$('#MessageOfTheDay').bootstrapToggle('off');
 			$('#KaaS3PB').bootstrapToggle('off');
 			$('#hasLiveAgent').bootstrapToggle('off');
-			$('#RAG').bootstrapToggle('off');
 			$('#mfa').bootstrapToggle('off');
 			$('#feedback').bootstrapToggle('off');
+			$('#multi_model_gen_AI').bootstrapToggle('off');
 
 			$("body .autoEmailPanel").hide();
-			$("body .col-organizationShortName, body .col-personalityId, body .col-Descripiton, body .col-Billable, body .col-RPA, body .col-MultiLanguage, .col-KaaS3PB, .col-hasLiveAgent, .col-MessageOfTheDay, .col-RAG, .col-mfa, .col-feedback").show();
+			$("body .col-organizationShortName, body .col-personalityId, body .col-Descripiton, body .col-Billable, body .col-RPA, body .col-MultiLanguage, .col-KaaS3PB, .col-hasLiveAgent, .col-MessageOfTheDay, .col-mfa, .col-feedback, .col-multi_model_gen_AI").show();
 			$("#organizationShortName").attr('disabled', false);
 			$(".action-form input[type='submit']").css('margin-top', "5px");
 
 			if (levelID != 1) {
 				$("#organizationShortName," + "#personalityId," + "#Descripiton," + "#EmailTheme," + "#AutoEmail," + "#EmailBody," + "#Footer," + ".chat_logs_sent," + ".send_chat_format," + "#insertItem").prop('disabled', true);
 
-				$('#AutoOnOff,' + '#Billable,' + '#RPA,' + '#MultiLanguage,' + '#MessageOfTheDay,' + '#KaaS3PB,' + '#hasLiveAgent,' + '#RAG,' + '#mfa,' + '#feedback').bootstrapToggle('disable');
+				$('#AutoOnOff,' + '#Billable,' + '#RPA,' + '#MultiLanguage,' + '#MessageOfTheDay,' + '#KaaS3PB,' + '#hasLiveAgent,' + '#mfa,' + '#feedback,' + '#multi_model_gen_AI').bootstrapToggle('disable');
 			}
 			this.createMyltiLanguage(0, 0);
-
+			this.createMultiModelGenAI(0, 0);
 			if ($("#orgFlags").length == 0) {
 				$("<table>").attr({ id: "orgFlags" }).append("<thead><th>Service</th><th>Status</th><th>Details</th></thead><tbody></tbody>").insertBefore($("tr.col-Billable"));
 				$("tr.orgFlags").each(function () {
@@ -102494,9 +102647,9 @@ var Organization = function (_DataTable) {
 			$('#MessageOfTheDay').bootstrapToggle('off');
 			$('#KaaS3PB').bootstrapToggle('off');
 			$('#hasLiveAgent').bootstrapToggle('off');
-			$('#RAG').bootstrapToggle('off');
 			$('#mfa').bootstrapToggle('off');
 			$('#feedback').bootstrapToggle('off');
+			$('#multi_model_gen_AI').bootstrapToggle('off');
 
 			if ($("#AutoOnOff").val() == 1) {
 				$('#AutoOnOff').bootstrapToggle('on');
@@ -102519,23 +102672,23 @@ var Organization = function (_DataTable) {
 			if ($("#hasLiveAgent").val() == 1) {
 				$('#hasLiveAgent').bootstrapToggle('on');
 			}
-			if ($("#RAG").val() == 1) {
-				$('#RAG').bootstrapToggle('on');
-			}
 			if ($("#mfa").val() == 1) {
 				$('#mfa').bootstrapToggle('on');
 			}
 			if ($("#feedback").val() == 1) {
 				$('#feedback').bootstrapToggle('on');
 			}
+			if ($("#multi_model_gen_AI").val() == 1) {
+				$('#multi_model_gen_AI').bootstrapToggle('on');
+			}
 
 			if (levelID != 1) {
 				$("#organizationShortName," + "#personalityId," + "#Descripiton," + "#EmailTheme," + "#AutoEmail," + "#EmailBody," + "#Footer," + ".chat_logs_sent," + ".send_chat_format," + "#saveItem").prop('disabled', true);
 
-				$('#AutoOnOff,' + '#Billable,' + '#RPA,' + '#MultiLanguage,' + '#MessageOfTheDay,' + '#KaaS3PB,' + '#hasLiveAgent,' + '#RAG,' + '#mfa,' + '#feedback').bootstrapToggle('disable');
+				$('#AutoOnOff,' + '#Billable,' + '#RPA,' + '#MultiLanguage,' + '#MessageOfTheDay,' + '#KaaS3PB,' + '#hasLiveAgent,' + '#mfa,' + '#feedback,' + '#multi_model_gen_AI').bootstrapToggle('disable');
 			}
 			this.createMyltiLanguage(this.editItem['organizationId'], this.editItem['MultiLanguage']);
-
+			this.createMultiModelGenAI(this.editItem['organizationId'], this.editItem['multi_model_gen_AI']);
 			if ($("#orgFlags").length == 0) {
 				$("<table>").attr({ id: "orgFlags" }).append("<thead><th>Service</th><th>Status</th><th>Details</th></thead><tbody></tbody>").insertBefore($("tr.col-Billable"));
 
@@ -102609,13 +102762,9 @@ var Organization = function (_DataTable) {
 			var data = {
 				orgID: this.orgID,
 				userID: this.userID,
-				language: []
+				language: [],
+				modelGenAI: []
 			};
-			$('input[class="checkboxMultiLanguage"]').each(function () {
-				if ($(this).prop('checked')) {
-					data.language.push($(this).val());
-				}
-			});
 			//------------------------------------------------
 			for (var x in this.columns.names) {
 				if (this.columns.data[x].passData !== false) {
@@ -102627,7 +102776,24 @@ var Organization = function (_DataTable) {
 					data[name] = value;
 				}
 			}
-
+			//------------------------------------------------
+			$('input[class="checkboxMultiLanguage"]').each(function () {
+				if ($(this).prop('checked')) {
+					data.language.push($(this).val());
+				}
+			});
+			//------------------------------------------------
+			if (data.multi_model_gen_AI == 1) {
+				$('input[class="checkboxModelGenAI"]').each(function () {
+					if ($(this).prop('checked')) {
+						data.modelGenAI.push($(this).val());
+					}
+				});
+				if (data.modelGenAI.length == 0) {
+					Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Multi-Model Gen AI requires one model or more to be selected.");
+					return;
+				}
+			}
 			//------------------------------------------------
 			$.ajax({
 				url: this.editURL,
@@ -102705,13 +102871,9 @@ var Organization = function (_DataTable) {
 			var data = {
 				orgID: this.orgID,
 				userID: this.userID,
-				language: []
+				language: [],
+				modelGenAI: []
 			};
-			$('input[class="checkboxMultiLanguage"]').each(function () {
-				if ($(this).prop('checked')) {
-					data.language.push($(this).val());
-				}
-			});
 			//------------------------------------------------
 			for (var x in this.columns.names) {
 				if (this.columns.data[x].passData !== false) {
@@ -102721,6 +102883,24 @@ var Organization = function (_DataTable) {
 						value = '0';
 					}
 					data[name] = value;
+				}
+			}
+			//------------------------------------------------
+			$('input[class="checkboxMultiLanguage"]').each(function () {
+				if ($(this).prop('checked')) {
+					data.language.push($(this).val());
+				}
+			});
+			//------------------------------------------------
+			if (data.multi_model_gen_AI == 1) {
+				$('input[class="checkboxModelGenAI"]').each(function () {
+					if ($(this).prop('checked')) {
+						data.modelGenAI.push($(this).val());
+					}
+				});
+				if (data.modelGenAI.length == 0) {
+					Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Multi-Model Gen AI requires one model or more to be selected.");
+					return;
 				}
 			}
 			//------------------------------------------------
@@ -102827,6 +103007,11 @@ var Organization = function (_DataTable) {
 			return this.apiURL + '/get/language/';
 		}
 	}, {
+		key: 'modelGenAIURL',
+		get: function get() {
+			return this.apiURL + '/get/model_gen_ai/';
+		}
+	}, {
 		key: 'uploadURL',
 		get: function get() {
 			return this.apiURL + '/uploadlogo/';
@@ -102849,7 +103034,7 @@ var columns = [{ name: 'organizationId', display: 'ID', primary: true, sortable:
 
 //	{ name:'organizationLogo-upload', display:'', hidden:true , editable:false, sortable:false, search:false  },
 
-{ name: 'Billable', display: 'Billable', hidden: true, editable: true, sortable: false, search: false }, { name: 'RPA', display: 'RPA', hidden: true, editable: true, sortable: false, search: false }, { name: 'KaaS3PB', display: 'KaaS 3PB', hidden: true, editable: true, sortable: false, search: false }, { name: 'hasLiveAgent', display: 'Has Live Agent', hidden: true, editable: true, sortable: false, search: false }, { name: 'MessageOfTheDay', display: 'Message of the Day', hidden: true, editable: true, sortable: false, search: false }, { name: 'RAG', display: 'RAG', hidden: true, editable: true, sortable: false, search: false }, { name: 'MultiLanguage', display: 'Multi Language', hidden: true, editable: true, sortable: false, search: false }, { name: 'mfa', display: 'Multi-Factor Authentication', hidden: true, editable: true, sortable: false, search: false }, { name: 'feedback', display: 'Feedback', hidden: true, editable: true, sortable: false, search: false }, { name: 'chat_logs_sent', display: '-', hidden: true, editable: true, sortable: false, search: false }, { name: 'send_chat_format', display: 'Send chat in this format', hidden: true, editable: true, sortable: false, search: false }];
+{ name: 'Billable', display: 'Billable', hidden: true, editable: true, sortable: false, search: false }, { name: 'RPA', display: 'RPA', hidden: true, editable: true, sortable: false, search: false }, { name: 'KaaS3PB', display: 'KaaS 3PB', hidden: true, editable: true, sortable: false, search: false }, { name: 'hasLiveAgent', display: 'Has Live Agent', hidden: true, editable: true, sortable: false, search: false }, { name: 'MessageOfTheDay', display: 'Message of the Day', hidden: true, editable: true, sortable: false, search: false }, { name: 'MultiLanguage', display: 'Multi Language', hidden: true, editable: true, sortable: false, search: false }, { name: 'mfa', display: 'Multi-Factor Authentication', hidden: true, editable: true, sortable: false, search: false }, { name: 'feedback', display: 'Feedback', hidden: true, editable: true, sortable: false, search: false }, { name: 'multi_model_gen_AI', display: 'Multi-Model Gen AI', hidden: true, editable: true, sortable: false, search: false }, { name: 'chat_logs_sent', display: '-', hidden: true, editable: true, sortable: false, search: false }, { name: 'send_chat_format', display: 'Send chat in this format', hidden: true, editable: true, sortable: false, search: false }];
 var organizationColumns = new __WEBPACK_IMPORTED_MODULE_1__Columns__["a" /* default */](columns);
 
 var data = {
@@ -119911,11 +120096,12 @@ var ExtendedEntity = function (_DataTable) {
 			//		$("#internet, #enterprise, #kamaDEI, #sharepoint, #url, #certify").prop('checked', false);
 			$("#internet, #enterprise, #kamaDEI, #url, #certify").prop('checked', false);
 			$("#saveDraft, #copyDraft, #charMax").prop('disabled', true);
-			$(".enterprise.radioItemsElemans").html("").hide();
+			$(".enterprise.radioItemsElemans, .enterpriseLLM.radioItemsElemans").html("").hide();
 			$(".url.radioItemsElemans").hide();
 
 			//$("#prevEdit").prop('checked', false).change();
-			this.showPrevEditResult(0);
+			//this.showPrevEditResult(0);
+			this.showPrevEditResult(1);
 
 			$("#draftModal").modal({ backdrop: "static" }).on('shown.bs.modal', function (e) {
 				$("#inquiry").focus();
@@ -119973,29 +120159,89 @@ var ExtendedEntity = function (_DataTable) {
 
 			var radioItems = 0;
 			if ($("#internet").prop('checked')) {
-				radioItems = 1;
+				var owner = "";
+				var modelLLM = "";
+				$(".LLM_Models").each(function () {
+					if ($(this).prop('checked')) {
+						owner = $(this).val();
+						modelLLM = $(this).attr('id');
+					}
+				});
+				if (modelLLM == "") {
+					Object(__WEBPACK_IMPORTED_MODULE_0__extend_DataTable__["b" /* showError */])("LLM Model is required.");
+					$("#internet").focus();
+					return;
+				}
+				data.llm_model = JSON.stringify({ "owner": owner, "model": modelLLM });
 				searchType = "internet";
+				radioItems = 1;
 			}
 			if ($("#url").prop('checked')) {
-				data.site = $("#urlText").val().trim();
-				if (data.site == '') {
+				var _owner = "";
+				var _modelLLM = "";
+				$(".LLM_Models").each(function () {
+					if ($(this).prop('checked')) {
+						_owner = $(this).val();
+						_modelLLM = $(this).attr('id');
+					}
+				});
+				if (_modelLLM == "") {
+					Object(__WEBPACK_IMPORTED_MODULE_0__extend_DataTable__["b" /* showError */])("LLM Model is required.");
+					$("#url").focus();
+					return;
+				}
+				data.llm_model = JSON.stringify({ "owner": _owner, "model": _modelLLM });
+
+				var siteURL = $("#urlText").val().trim();
+				if (siteURL == '') {
 					Object(__WEBPACK_IMPORTED_MODULE_0__extend_DataTable__["b" /* showError */])("URL is empty");
 					$("#urlText").focus();
 					return;
+				} else {
+					var url_rgx = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
+					var urlRgx = new RegExp(url_rgx);
+					var isValidURL = siteURL.match(urlRgx);
+					if (!isValidURL) {
+						Object(__WEBPACK_IMPORTED_MODULE_0__extend_DataTable__["b" /* showError */])("Inavelid URL.");
+						$("#urlText").focus();
+						return;
+					}
 				}
+				data.site = siteURL;
 				searchType = "url";
 				radioItems = 1;
 			}
 			if ($("#enterprise").prop('checked')) {
+				var _owner2 = "";
+				var _modelLLM2 = "";
+				$(".LLM_Models").each(function () {
+					if ($(this).prop('checked')) {
+						_owner2 = $(this).val();
+						_modelLLM2 = $(this).attr('id');
+					}
+				});
+				if (_modelLLM2 == "") {
+					Object(__WEBPACK_IMPORTED_MODULE_0__extend_DataTable__["b" /* showError */])("LLM Model is required.");
+					$("#enterprise").focus();
+					return;
+				}
+				data.llm_model = JSON.stringify({ "owner": _owner2, "model": _modelLLM2 });
+
 				var collection_name = "";
 				$(".enterpriseCllctns").each(function () {
 					if ($(this).prop('checked')) {
 						collection_name = $(this).attr('id');
 					}
 				});
+				if (collection_name == "") {
+					Object(__WEBPACK_IMPORTED_MODULE_0__extend_DataTable__["b" /* showError */])("Collection is required.");
+					$("#enterprise").focus();
+					return;
+				}
 				urlSearch = draftSearchURL_enterprise;
 				data.org = enterpriseOrgID;
 				data.collection_name = collection_name;
+
 				searchType = "enterprise";
 				//data.filetype = "pdf";
 				radioItems = 1;
@@ -120020,7 +120266,8 @@ var ExtendedEntity = function (_DataTable) {
 					$("#resultResult").show();
 					$("#result").val('');
 					//$("#prevEdit").prop('checked', false).change();				
-					that.showPrevEditResult(0);
+					//that.showPrevEditResult(0);
+					that.showPrevEditResult(1);
 				},
 				complete: function complete() {
 					$("#inquiry, #searchBTN").prop('disabled', false);$("#searchBTN").html('Search');
@@ -120030,6 +120277,7 @@ var ExtendedEntity = function (_DataTable) {
 					$("#result").val(res.res).change();
 					resultDraftRES = res.res.trim();
 					resultDraftURL = res.urls_dict;
+					that.showPrevEditResult(1);
 				},
 				error: function error(e) {
 					if (e.status == 422) {
@@ -120047,13 +120295,54 @@ var ExtendedEntity = function (_DataTable) {
 		//--------------------------------------------------------------
 
 	}, {
+		key: 'createDataTitle',
+		value: function createDataTitle(obj) {
+			//----------------------------------------------------------
+			var retVal = {
+				url: "",
+				title: ""
+			};
+			var throwError = true;
+			//----------------------------------------------------------
+			if (typeof obj.sharedlink !== 'undefined' && typeof obj.file_name !== 'undefined' && typeof obj.page !== 'undefined') {
+				var showLink = obj.sharedlink.length >= 50 ? obj.sharedlink.substring(0, 47) + "..." : obj.sharedlink;
+				retVal.url = obj.sharedlink;
+				retVal.title = "" + "file name: " + obj.file_name.replaceAll("<b>", "").replaceAll("</b>", "") + "\n" + "page: " + obj.page; /*+
+                                                                                                                                 "\n"+
+                                                                                                                                 "link: "+showLink;*/
+				throwError = false;
+			}
+			//----------------------------------------------------------
+			if (typeof obj.url !== 'undefined' && typeof obj.name !== 'undefined') {
+				var _showLink = obj.url.length >= 50 ? obj.url.substring(0, 47) + "..." : obj.url;
+				retVal.url = obj.url;
+				retVal.title = "" +
+				//"name: "+
+				obj.name.replaceAll("<b>", "").replaceAll("</b>", ""); /*+
+                                                           "\n"+
+                                                           "link: "+showLink;*/
+
+				throwError = false;
+			}
+			//----------------------------------------------------------
+			if (throwError) {
+				throw new Error("Invalid Object");
+			}
+			return retVal;
+			//----------------------------------------------------------
+		}
+		//--------------------------------------------------------------
+
+	}, {
 		key: 'showPrevEditResult',
 		value: function showPrevEditResult(e) {
+			//e=1;
 			//		if($("#prevEdit").prop('checked')){
 			if (e == 1) {
 				$("#resultResult").hide();
 				$("#resultPreview").show();
 				var tmp = $("#result").val().trim();
+
 				var indxs = [];
 				for (var i in resultDraftURL) {
 					indxs.push({ index: i, pos: tmp.indexOf("[" + i + "]") });
@@ -120066,19 +120355,30 @@ var ExtendedEntity = function (_DataTable) {
 						pos = indxs[_i].pos;
 					}
 				}
-				for (var _i2 in resultDraftURL) {
-					if (_i2 == indx) {
-						tmp = tmp.replace("[" + _i2 + "]", '<br/><a target="_blank" href="' + resultDraftURL[_i2] + '" data-title="' + resultDraftURL[_i2] + '">[' + _i2 + ']</a>');
-					} else {
-						tmp = tmp.replace("[" + _i2 + "]", '<a target="_blank" href="' + resultDraftURL[_i2] + '" data-title="' + resultDraftURL[_i2] + '">[' + _i2 + ']</a>');
+				try {
+					for (var _i2 in resultDraftURL) {
+						if (_i2 == indx) {
+							var obj = this.createDataTitle(resultDraftURL[_i2]);
+							tmp = tmp.replaceAll("[" + _i2 + "]", '<br/><a class="asdLink" target="_blank" href="' + obj.url + '" data-title="' + obj.title + '">[' + _i2 + ']</a>');
+						} else {
+							var _obj = this.createDataTitle(resultDraftURL[_i2]);
+							tmp = tmp.replaceAll("[" + _i2 + "]", '<a class="asdLink" target="_blank" href="' + _obj.url + '" data-title="' + _obj.title + '">[' + _i2 + ']</a>');
+						}
 					}
+					/*
+     		tmp += '<a  target="_blank" href="https://kama.ai/resources/kama-dei-platform/" '+
+     				'data-title="https://kama.ai/resources/kama-dei-platform/">[1]</a>'+
+     				'<a  target="_blank" href="https://slashdot.org/software/p/kama-DEI/" '+
+     				'data-title="https://slashdot.org/software/p/kama-DEI/">[2]</a>';
+     */
+					$("#resultPreview p").html(tmp.trim() + "<br/><br/><br/><br/>");
+					$("#showEditBtn").removeClass('btn-info').addClass('btn-default');
+					$("#showPrevBtn").removeClass('btn-default').addClass('btn-info');
+					setShowTitle();
+				} catch (ex) {
+					Object(__WEBPACK_IMPORTED_MODULE_0__extend_DataTable__["b" /* showError */])("Invalid response");
+					console.log(ex);
 				}
-				/*
-    		tmp += '<a  target="_blank" href="https://kama.ai/resources/kama-dei-platform/" data-title="https://kama.ai/resources/kama-dei-platform/">[1]</a><a  target="_blank" href="https://slashdot.org/software/p/kama-DEI/" data-title="https://slashdot.org/software/p/kama-DEI/">[2]</a>';
-    */
-				$("#resultPreview p").html(tmp);
-				$("#showEditBtn").removeClass('btn-info').addClass('btn-default');
-				$("#showPrevBtn").removeClass('btn-default').addClass('btn-info');
 			} else {
 				$("#resultResult").show();
 				$("#resultPreview").hide();
@@ -120100,7 +120400,7 @@ var ExtendedEntity = function (_DataTable) {
 
 			//if($("#certify").prop('checked')==false){ return; }
 
-			var style = "<style>" + "[data-title]:hover:after{opacity:1;transition:all 0.1s ease 0.5s;visibility:visible;}" + "[data-title]:after{content:attr(data-title);color:#111;background:#fff;position:absolute;padding:1px 5px 2px 5px;bottom:0.6em;" + "left:100%;white-space:nowrap;box-shadow:1px 1px 3px #222222;opacity:0;border:1px solid #111111;z-index:99999;visibility:hidden;}" + "[data-title]{position:relative;}" + "</style>";
+			var style = "<style>" + "[data-title]:hover::after{opacity:1;transition:all 0.1s ease 0.5s;visibility:visible;white-space: pre;}" + "[data-title]:after{content:attr(data-title);color:#111;background:#fff;position:absolute;padding:1px 5px 2px 5px;bottom:0.6em;" + "left:100%;white-space:nowrap;box-shadow:1px 1px 3px #222222;opacity:0;border:1px solid #111111;z-index:99999;visibility:hidden;}" + "[data-title]{position:relative;}" + "</style>";
 
 			var tmp = $("#result").val().trim();
 
@@ -120118,9 +120418,11 @@ var ExtendedEntity = function (_DataTable) {
 			}
 			for (var _i4 in resultDraftURL) {
 				if (_i4 == indx) {
-					tmp = tmp.replace("[" + _i4 + "]", '<br/><a target="_blank" href="' + resultDraftURL[_i4] + '" data-title="' + resultDraftURL[_i4] + '">[' + _i4 + ']</a>');
+					var obj = this.createDataTitle(resultDraftURL[_i4]);
+					tmp = tmp.replaceAll("[" + _i4 + "]", '<br/><a target="_blank" href="' + obj.url + '" data-title="' + obj.title + '">[' + _i4 + ']</a>');
 				} else {
-					tmp = tmp.replace("[" + _i4 + "]", '<a target="_blank" href="' + resultDraftURL[_i4] + '" data-title="' + resultDraftURL[_i4] + '">[' + _i4 + ']</a>');
+					var _obj2 = this.createDataTitle(resultDraftURL[_i4]);
+					tmp = tmp.replaceAll("[" + _i4 + "]", '<a target="_blank" href="' + _obj2.url + '" data-title="' + _obj2.title + '">[' + _i4 + ']</a>');
 				}
 			}
 
@@ -140436,6 +140738,7 @@ var Portal = function (_DataTable) {
 
 		$("body").on("change", "#organization_id", function () {
 			that.getPersonality();
+			that.setModelGenAIURL_Items($("#organization_id").val());
 		});
 		if (orgID != 0) {
 			var icon1 = $('<a></a>').attr({
@@ -140559,6 +140862,59 @@ var Portal = function (_DataTable) {
 				$("#thumbsup").prop("checked", false).change();
 				$("#comment").prop("checked", false).change();
 				$("#thumbsup, #comment").bootstrapToggle("disable");
+			}
+		});
+		_this.createMultiModelGenAiIsBusy = false;
+		_this.createCollectionBusy = false;
+		_this.lastPortalID = 0;
+		_this.collectionIsloaded = false;
+		$('body').on('change', '#multi_model_gen_AI', function (e) {
+			var toggle_btn_genAI = $('input[name="multi_model_gen_AI"]').parent();
+			$('.col-multi_model_gen_AI .inputs').hide();
+			$('.col-multi_model_gen_AI button.btnShowModal').hide();
+			if (!toggle_btn_genAI.hasClass('off')) {
+				$('.col-multi_model_gen_AI .inputs').show();
+				$('.col-multi_model_gen_AI button.btnShowModal').show();
+			}
+			if (that.collectionIsloaded) {
+				that.callCollectionSetting('change', $("#multi_model_gen_AI").prop('checked'));
+			}
+			return;
+		});
+
+		$('body').on('click', 'button.checkboxModelGenAI', function () {
+			var checked = $(this).find("input.checkboxModelGenAI");
+			$("button.checkboxModelGenAI").removeClass("btn-info").removeClass("active").addClass('btn-default');
+			$("button.checkboxModelGenAI>i").removeClass("fa-check-circle-o").addClass("fa-circle-o");
+			if ($(checked).prop('checked')) {
+				$(this).removeClass("btn-info").removeClass("active").addClass('btn-default');
+				$(this).find("i").removeClass("fa-check-circle-o").addClass("fa-circle-o");
+				$(checked).prop('checked', false);
+			} else {
+				$(this).removeClass("btn-default").addClass('btn-info active');
+				$(this).find("i").removeClass("fa-circle-o").addClass("fa-check-circle-o");
+				$(checked).prop('checked', true);
+			}
+		});
+
+		$('body').on('click', 'button.collectionBtnItems', function () {
+			var checked = $(this).find("input.collectionItems");
+			var type = $(checked).attr('type');
+
+			if (type == 'radio') {
+				$("button.collectionBtnItems").removeClass("btn-info").removeClass("active").addClass('btn-default');
+				$("button.collectionBtnItems>i").removeClass("fa-check-circle-o").addClass("fa-circle-o");
+			}
+			if (type == 'checkbox') {}
+
+			if ($(checked).prop('checked')) {
+				$(this).removeClass("btn-info").removeClass("active").addClass('btn-default');
+				$(this).find("i").removeClass("fa-check-circle-o").addClass("fa-circle-o");
+				$(checked).prop('checked', false);
+			} else {
+				$(this).removeClass("btn-default").addClass('btn-info active');
+				$(this).find("i").removeClass("fa-circle-o").addClass("fa-check-circle-o");
+				$(checked).prop('checked', true);
 			}
 		});
 		return _this;
@@ -140721,7 +141077,6 @@ var Portal = function (_DataTable) {
 					}
 					$('#hasLiveAgent').bootstrapToggle('off');
 					if (data.hasLiveAgent == 1) {
-						//bhr
 						//$('.col-hasLiveAgent').show();
 						$('#hasLiveAgent').bootstrapToggle('enable');
 						if (_this2.baseItem.hasLiveAgent == 1) {
@@ -140847,6 +141202,7 @@ var Portal = function (_DataTable) {
 				case 'KaaS3PB':
 				case 'feedback':
 				case 'hasLiveAgent':
+				case 'multi_model_gen_AI':
 					{
 						input = $('<tr>').attr({ class: "portalFlags col-" + col }).append($('<td>').text(label)).append($('<td>').append($('<input>').attr({
 							id: col,
@@ -140960,16 +141316,153 @@ var Portal = function (_DataTable) {
 	}, {
 		key: 'addConfirmHandler',
 		value: function addConfirmHandler(e) {
-			if (this.confirmHandler()) {
-				_get(Portal.prototype.__proto__ || Object.getPrototypeOf(Portal.prototype), 'addConfirmHandler', this).call(this, e);
+			//if(this.confirmHandler()){ super.addConfirmHandler(e); }
+			var that = this;
+			var table = this.table;
+			var data = {
+				orgID: this.orgID,
+				userID: this.userID,
+				model_gen_ai_items: []
+			};
+			//------------------------------------------------
+			for (var x in this.columns.names) {
+				if (this.columns.data[x].passData !== false) {
+					var name = this.columns.names[x];
+					var value = this.editItem[name];
+					if (name == 'ownerId' && value == null) {
+						value = '0';
+					}
+					data[name] = value;
+				}
 			}
+			//------------------------------------------------
+			if (data.multi_model_gen_AI == 1) {
+				$('input[class="checkboxModelGenAI"]').each(function () {
+					if ($(this).prop('checked')) {
+						data.model_gen_ai_items.push($(this).val());
+					}
+				});
+			}
+			if (data.multi_model_gen_AI == 1 && data.model_gen_ai_items.length == 0) {
+				Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Multi-Model Gen AI requires one model or more to be selected.");
+				return;
+			}
+			//------------------------------------------------
+			$('input[class="collectionItems"]').each(function () {
+				if ($(this).prop('checked')) {
+					data.collections.push($(this).val());
+				}
+			});
+			if (data.collections.length == 0) {
+				Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Collections requires one collection or more to be selected.");
+				return;
+			}
+			//------------------------------------------------
+			$.ajax({
+				url: this.addURL,
+				type: 'put',
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json'
+				},
+				data: JSON.stringify(data),
+				beforeSend: function beforeSend() {
+					$("#editItem #insertItem").prop('disabled', true);
+				},
+				success: function success(res) {
+					if (res.result == 0) {
+						$("#editItem").fadeOut(function () {
+							$("#editItem #insertItem").prop('disabled', false);
+						});
+						Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["e" /* showSuccess */])('Added successfully.');
+						$(table).bootstrapTable('refresh');
+					} else {
+						Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])(res.msg);
+						$("#editItem #insertItem").prop('disabled', false);
+					}
+				},
+				error: function error(e) {
+					Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])('Server error');
+					$("#editItem #insertItem").prop('disabled', false);
+				}
+			});
+			//------------------------------------------------
 		}
 	}, {
 		key: 'editConfirmHandler',
 		value: function editConfirmHandler(e) {
-			if (this.confirmHandler()) {
-				_get(Portal.prototype.__proto__ || Object.getPrototypeOf(Portal.prototype), 'editConfirmHandler', this).call(this, e);
+			//if(this.confirmHandler()){ super.editConfirmHandler(e); }
+			var that = this;
+			var table = this.table;
+			var data = {
+				orgID: this.orgID,
+				userID: this.userID,
+				model_gen_ai_items: [],
+				collections: []
+			};
+			//------------------------------------------------
+			for (var x in this.columns.names) {
+				if (this.columns.data[x].passData !== false) {
+					var name = this.columns.names[x];
+					var value = this.editItem[name];
+					if (name == 'ownerId' && value == null) {
+						value = '0';
+					}
+					data[name] = value;
+				}
 			}
+			//------------------------------------------------
+			if (data.multi_model_gen_AI == 1) {
+				$('input[class="checkboxModelGenAI"]').each(function () {
+					if ($(this).prop('checked')) {
+						data.model_gen_ai_items.push($(this).val());
+					}
+				});
+			}
+			if (data.multi_model_gen_AI == 1 && data.model_gen_ai_items.length == 0) {
+				Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Multi-Model Gen AI requires one model or more to be selected.");
+				return;
+			}
+			//------------------------------------------------
+			$('input[class="collectionItems"]').each(function () {
+				if ($(this).prop('checked')) {
+					data.collections.push($(this).val());
+				}
+			});
+			if (data.collections.length == 0) {
+				Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Collections requires one collection or more to be selected.");
+				return;
+			}
+			//------------------------------------------------
+			$.ajax({
+				url: this.editURL,
+				type: 'put',
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json'
+				},
+				data: JSON.stringify(data),
+				beforeSend: function beforeSend() {
+					$("#editItem #insertItem").prop('disabled', true);
+				},
+				success: function success(res) {
+					if (res.result == 0) {
+						$("#editItem").fadeOut(function () {
+							$("#editItem #insertItem").prop('disabled', false);
+						});
+						Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["e" /* showSuccess */])('Added successfully.');
+						$(table).bootstrapTable('refresh');
+					} else {
+						Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])(res.msg);
+						$("#editItem #insertItem").prop('disabled', false);
+					}
+				},
+				error: function error(e) {
+					Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])('Server error');
+					$("#editItem #insertItem").prop('disabled', false);
+				}
+			});
+			//------------------------------------------------
 		}
 		//------------------------------------------------------------
 
@@ -140977,8 +141470,8 @@ var Portal = function (_DataTable) {
 		key: 'showAddDialogHandler',
 		value: function showAddDialogHandler() {
 			_get(Portal.prototype.__proto__ || Object.getPrototypeOf(Portal.prototype), 'showAddDialogHandler', this).call(this);
-			$('#OnOff, #KaaS3PB, #hasLiveAgent, #MoD_, #feedback').bootstrapToggle('enable');
-			$('#OnOff, #KaaS3PB, #hasLiveAgent, #MoD_, #feedback').bootstrapToggle('off');
+			$('#OnOff, #KaaS3PB, #hasLiveAgent, #MoD_, #feedback, #multi_model_gen_AI').bootstrapToggle('enable');
+			$('#OnOff, #KaaS3PB, #hasLiveAgent, #MoD_, #feedback, #multi_model_gen_AI').bootstrapToggle('off');
 			// $("#code").val("").change();
 			$("#ntfctn_mssg_cstmztn, #rqst_mssg_cstmztn").prop("disabled", false);
 
@@ -141005,10 +141498,15 @@ var Portal = function (_DataTable) {
 
 			$("#brBfeedback").remove();
 			$(".col-feedback").before("<br style='line-height:0; margin-top:-15px' id='brBfeedback'/>");
+
 			$("#feedback").prop("checked", false).change();
 			$("#thumbsup").prop("checked", false).change();
 			$("#comment").prop("checked", false).change();
 			$('#feedback').bootstrapToggle('enable');
+
+			$("#multi_model_gen_AI").prop("checked", false).change();
+			this.createMultiModelGenAI(0, 0);
+			this.createCollection(0, 0);
 
 			if ($("#portalFlags").length == 0) {
 				$("<table>").attr({ id: "portalFlags" }).append("<thead><th>Service</th><th>Status</th><th>Details</th></thead><tbody></tbody>").insertBefore($("tr.col-MoD_"));
@@ -141116,9 +141614,367 @@ var Portal = function (_DataTable) {
 
 				$("<label>Value Added Services</label>").insertBefore($("table#portalFlags"));
 			}
+
+			$("#multi_model_gen_AI").prop("checked", false).change();
+			if (this.baseItem.multi_model_gen_AI == 1) {
+				$("#multi_model_gen_AI").prop("checked", true).change();
+			}
+			this.createMultiModelGenAI(this.editItem['id'], this.editItem['multi_model_gen_AI']);
+			this.createCollection(this.editItem['id'], this.editItem['multi_model_gen_AI']);
 		}
 		//------------------------------------------------------------
 
+	}, {
+		key: 'createMultiModelGenAI',
+		value: function createMultiModelGenAI(id, value) {
+			if (this.createMultiModelGenAiIsBusy) {
+				return;
+			}
+			this.createMultiModelGenAiIsBusy = true;
+			this.lastPortalID = id;
+			var that = this;
+			$('.col-multi_model_gen_AI .inputs').remove();
+			$.ajax({
+				url: LLM_MODELS_URL,
+				method: 'POST',
+				headers: { apikey: "123" },
+				//processData: false,
+				//contentType: false,
+				data: { userkey: userKey },
+				//complete: function(){ that.createMultiModelGenAiIsBusy=false; },
+				error: function error(xhr) {
+					Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Model Gen AI Error: " + xhr.statusText);
+				},
+				success: function success(result) {
+					//---------------------------------------------------------------------
+					var inputsDiv = $('<div>').attr({ class: "inputs", style: "margin-top:10px" });
+					var openModal = $("<button>active Model Gen AI</button>").attr({
+						type: "button",
+						class: "btn btn-info btnShowModal",
+						style: "margin:0 2.5px",
+						'data-toggle': "modal",
+						'data-target': "#myModelGenAI"
+					});
+					//---------------------------------------------------------------------
+					var myModelGenAI = $('<div>').attr({ id: "myModelGenAI", class: "modal fade", role: "dialog", style: "z-index:1060 !important" });
+					var modalDialog = $('<div>').attr({ class: "modal-dialog", style: "z-index:1061 !important" });
+					var modalContent = $('<div>').attr({ class: "modal-content", style: "z-index:1062 !important" });
+					var modalHeader = $('<div>').attr({ class: "modal-header" }).append('<h4 class="modal-title">Model Gen AI</h4>');
+					var modalFooter = $('<div>').attr({ class: "modal-footer" }).append('<button type="button" class="btn btn-default" data-dismiss="modal">Back</button>');
+
+					var modalBody = $('<div>').attr({ class: "modal-body" }).append('<b>Select One Model:</b>');
+					var showMLButton = 0;
+					//---------------------------------------------------------------------
+					var indx = 0;
+					var hdIndx = 0;
+					for (var i in result) {
+						//if(indx!=0){ $(modalBody).append("<b class='modelTitel "+hdIndx+"' style='display:none; margin-top:20px'>"+i+"</b>"); }
+						//else{ $(modalBody).append("<b class='modelTitel "+hdIndx+"' style='display:none'>"+i+"</b>"); }
+						$(modalBody).append("<b class='modelTitel " + hdIndx + "' style='display:none; margin-top:20px'>" + i + "</b>");
+						for (var j in result[i]) {
+							var attr = {
+								class: "checkboxModelGenAI",
+								id: "modelGenAI" + indx,
+								//name  : "modelGenAI_"+indx,
+								name: "modelGenAI_Radio",
+								type: "radio",
+								value: result[i][j],
+								style: "display:none; width:0;",
+								//style : "width:0;",
+								"data-hdindx": hdIndx,
+								autocomplete: "off"
+							};
+							var input = $("<input>").attr(attr);
+
+							//attr = {disabled:"disabled"};
+							attr = { disabled: true };
+							attr.class = "btn btn-default checkboxModelGenAI";
+							attr.style = "width:48%; text-align:left; margin:5px 1% 5px 1%; display:none";
+							//attr.style = "width:48%; text-align:left; margin:5px 1% 5px 1%; ";
+							var iItem = "<i class='fa fa-circle-o' style='margin-right:10px'></i>";
+							var button = $("<button>").attr(attr).append($(input)).append(iItem).append(result[i][j]);
+							$(modalBody).append(button);
+
+							indx++;
+						}
+						hdIndx++;
+					}
+					//---------------------------------------------------------------------
+					$(modalContent).append($(modalHeader)).append($(modalBody)).append($(modalFooter));
+
+					$(modalDialog).append($(modalContent));
+					$(myModelGenAI).append($(modalDialog));
+					//---------------------------------------------------------------------
+					if ($(".col-multi_model_gen_AI td:nth-child(3) .btnShowModal").length == 0) {
+						$(".col-multi_model_gen_AI td:nth-child(3)").css("text-align", "center !important").prepend($(openModal));
+						if (that.editItem['multi_model_gen_AI'] == 0 || id == 0) {
+							$(".col-multi_model_gen_AI td .btnShowModal").hide();
+						}
+					}
+					$(inputsDiv).append($(myModelGenAI));
+					$('.col-multi_model_gen_AI').append($(inputsDiv));
+					$('.col-multi_model_gen_AI .inputs').hide();
+					if (value == 1) {
+						$('.col-multi_model_gen_AI .inputs').show();
+					}
+					//---------------------------------------------------------------------
+					//$(".checkboxModelGenAI").hide();return;
+					//---------------------------------------------------------------------
+					if (id != 0) {
+						var is_active = 0;
+						$('#multi_model_gen_AI').bootstrapToggle('disable');
+						//$("#multi_model_gen_AI").prop("checked", false).change();
+						$.get(that.modelGenAIURL + id).done(function (res) {
+							if (res.result == 1) {
+								Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Model Gen AI Error: " + res.msg);
+							} else {
+								//-----------------------------------------------------
+								is_active = res.data.is_active;
+								//-----------------------------------------------------
+								$("input.checkboxModelGenAI[type=radio]").each(function (index, item) {
+									//$(item).prop("checked", true);
+									$(item).removeAttr("checked");
+									$(item).parent().attr("class", "btn btn-default checkboxModelGenAI");
+									$(item).parent().find("i").attr("class", "fa fa-circle-o");
+
+									for (var ii in res.data.portal) {
+										if ($(item).val() == res.data.portal[ii]) {
+											$(item).attr("checked", "checked");
+											$(item).parent().attr("class", "btn btn-info checkboxModelGenAI active");
+											$(item).parent().find("i").attr("class", "fa fa-check-circle-o");
+										}
+									}
+
+									for (var _ii in res.data.organization) {
+										if ($(item).val() == res.data.organization[_ii]) {
+											var _hdIndx = $(item).data('hdindx');
+											$(item).parent().prop("disabled", false);
+											$(item).parent().show();
+											$(item).parent().parent().find('b.modelTitel.' + _hdIndx).css('display', 'block');
+										}
+									}
+								});
+							}
+							if (is_active == 0) {
+								$('#multi_model_gen_AI').bootstrapToggle('enable');
+								$("#multi_model_gen_AI").prop("checked", false).change();
+								$('#multi_model_gen_AI').bootstrapToggle('off').bootstrapToggle('disable');
+							} else {
+								$('#multi_model_gen_AI').bootstrapToggle('enable');
+								if (res.data.portal.length != 0) {
+									$("#multi_model_gen_AI").prop("checked", true).change();
+									//$('#multi_model_gen_AI').bootstrapToggle('off').bootstrapToggle('disable');
+								}
+							}
+						}).fail(function (xhr) {
+							Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Model Gen AI Error: " + xhr.statusText);
+						}).always(function () {
+							that.createMultiModelGenAiIsBusy = false;
+						});
+					} else {
+						that.setModelGenAIURL_Items($("#organization_id").val());
+					}
+				}
+			});
+		}
+		//------------------------------------------------------------
+
+	}, {
+		key: 'createCollection',
+		value: function createCollection(id, value) {
+			if (this.createCollectionBusy) {
+				return;
+			}
+			this.createCollectionBusy = true;
+			this.lastPortalID = id;
+			var that = this;
+			$('.col-multi_model_gen_AI .collections').remove();
+			$.ajax({
+				url: LIST_COLLECTIONS,
+				method: 'POST',
+				headers: { apikey: "123" },
+				//processData: false,
+				//contentType: false,
+				data: { userkey: userKey },
+				complete: function complete() {
+					that.createCollectionBusy = false;
+				},
+				error: function error(xhr) {
+					Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Collections List Error: " + xhr.statusText);
+				},
+				success: function success(result) {
+					//---------------------------------------------------------------------
+					var collectionsDiv = $('<div>').attr({ class: "collections", style: "margin-top:10px" });
+					var openCollection = $("<button>Collections</button>").attr({
+						type: "button",
+						class: "btn btn-info btnShowCollections",
+						style: "margin:0 2.5px",
+						'data-toggle': "modal",
+						'data-target': "#myModelCollections"
+					});
+					//---------------------------------------------------------------------
+					var myModelCollections = $('<div>').attr({ id: "myModelCollections", class: "modal fade", role: "dialog", style: "z-index:1060 !important" });
+					var modalDialog = $('<div>').attr({ class: "modal-dialog", style: "z-index:1061 !important" });
+					var modalContent = $('<div>').attr({ class: "modal-content", style: "z-index:1062 !important" });
+					var modalHeader = $('<div>').attr({ class: "modal-header" }).append('<h4 class="modal-title">Collections</h4>');
+					var modalFooter = $('<div>').attr({ class: "modal-footer" }).append('<button type="button" class="btn btn-default" data-dismiss="modal">Back</button>');
+
+					var caption = value == 1 ? "Select multiple collections" : "Select a collection";
+					var modalBody = $('<div>').attr({ class: "modal-body" }).append('<b id="collectionSelectTitle" style="display:block; margin-bottom:5px">' + caption + ':</b>');
+					var showMLButton = 0;
+					//---------------------------------------------------------------------
+					var indx = 0;
+					var hdIndx = 0;
+					for (var i in result[1]) {
+						var coolection = result[1][i];
+						var attr = {
+							class: "collectionItems",
+							id: "collection" + indx,
+							//name  : "modelGenAI_"+indx,
+							name: value == 1 ? "collectionCHK" + indx : "collectionRadio",
+							type: value == 1 ? "checkbox" : "radio",
+							value: coolection.collection_name,
+							style: "display:none; width:0;",
+							//style : "width:0;",
+							"data-hdindx": hdIndx,
+							autocomplete: "off"
+						};
+						var input = $("<input>").attr(attr);
+
+						//attr = {disabled:"disabled"};
+						attr = { disabled: false };
+						attr.class = "btn btn-default collectionBtnItems";
+						attr.style = "width:48%; text-align:left; margin:5px 1% 5px 1%;";
+						//attr.style = "width:48%; text-align:left; margin:5px 1% 5px 1%; ";
+						var iItem = "<i class='fa fa-circle-o' style='margin-right:10px'></i>";
+						var button = $("<button>").attr(attr).append($(input)).append(iItem).append(coolection.collection_name);
+						$(modalBody).append(button);
+
+						indx++;
+						hdIndx++;
+					}
+					//---------------------------------------------------------------------
+					$(modalContent).append($(modalHeader)).append($(modalBody)).append($(modalFooter));
+
+					$(modalDialog).append($(modalContent));
+					$(myModelCollections).append($(modalDialog));
+					//---------------------------------------------------------------------
+					if ($(".col-multi_model_gen_AI td:nth-child(3) .btnShowCollections").length == 0) {
+						//$(".col-multi_model_gen_AI td:last-child")
+						$(".col-multi_model_gen_AI td:nth-child(3)").css("text-align", "center !important").append($(openCollection));
+					}
+					$(collectionsDiv).append($(myModelCollections));
+					$('.col-multi_model_gen_AI').append($(collectionsDiv));
+					//---------------------------------------------------------------------
+					that.callCollectionSetting('set 1', value);
+					//---------------------------------------------------------------------
+					if ($("#multi_model_gen_AI").prop("disabled")) {
+						$(".btnShowCollections").hide();
+					} else {}
+					//---------------------------------------------------------------------
+				}
+			});
+		}
+	}, {
+		key: 'callCollectionSetting',
+		value: function callCollectionSetting(a, ck) {
+			var id = $("#organization_id").val();
+			//let ck = $("#multi_model_gen_AI").prop('checked');
+			if (ck) {
+				$("#collectionSelectTitle").text("Select multiple collections");
+				var indx = 0;
+				$(".collectionItems").each(function () {
+					$(this).prop("checked", false).attr("name", "collectionCHK" + indx).attr("type", "checkbox").change();
+					indx++;
+				});
+			} else {
+				$("#collectionSelectTitle").text("Select a collection");
+				$(".collectionItems").prop("checked", false).attr("name", "collectionRadio").attr("type", "radio").change();
+			}
+			$("button.collectionBtnItems").removeClass("btn-info").removeClass("active").addClass('btn-default');
+			$("button.collectionBtnItems>i").removeClass("fa-check-circle-o").addClass("fa-circle-o");
+
+			if ($("#multi_model_gen_AI").prop("disabled")) {
+				$(".btnShowCollections").hide();
+			} else {
+				$(".btnShowCollections").show();
+			}
+
+			if (id != 0 && id != "") {
+				var that = this;
+				that.collectionIsloaded = false;
+				$.get(that.collectionURL + that.lastPortalID).done(function (res) {
+					if (res.result == 1) {
+						Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Collection Error: " + res.msg);
+					} else {
+						//-----------------------------------------------------
+						$("input.collectionItems").each(function (index, item) {
+							$(item).removeAttr("checked");
+							$(item).parent().attr("class", "btn btn-default collectionBtnItems");
+							$(item).parent().find("i").attr("class", "fa fa-circle-o");
+
+							for (var ii in res.data) {
+								if ($(item).val() == res.data[ii]) {
+									$(item).attr("checked", "checked");
+									$(item).prop("checked", true);
+									$(item).parent().attr("class", "btn btn-info collectionBtnItems active");
+									$(item).parent().find("i").attr("class", "fa fa-check-circle-o");
+								}
+							}
+						});
+						that.collectionIsloaded = true;
+					}
+				}).fail(function (xhr) {
+					Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Collection Error: " + xhr.statusText);
+				}).always(function () {
+					//that.createCollectionBusy=false;
+				});
+			} else {
+				this.collectionIsloaded = true;
+				$(".btnShowCollections").hide();
+			}
+		}
+		//------------------------------------------------------------
+
+	}, {
+		key: 'setModelGenAIURL_Items',
+		value: function setModelGenAIURL_Items(org_id) {
+			var that = this;
+			if (org_id == "") {
+				org_id = 0;
+			}
+			$.get(that.modelGenAIURL_ORG + org_id).done(function (res) {
+				if (res.result == 1) {
+					Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Model Gen AI Error: " + res.msg);
+				} else {
+					$('b.modelTitel').css('display', 'none');
+					$("input.checkboxModelGenAI[type=radio]").each(function (index, item) {
+						$(item).removeAttr("checked");
+						$(item).parent().attr("class", "btn btn-default checkboxModelGenAI");
+						$(item).parent().find("i").attr("class", "fa fa-circle-o");
+						$(item).parent().hide();
+
+						for (var ii in res.data) {
+							if ($(item).val() == res.data[ii].value) {
+								var indx = $(item).data('hdindx');
+								$(item).parent().prop("disabled", false);
+								$(item).parent().show();
+								$(item).parent().parent().find('b.modelTitel.' + indx).css('display', 'block');
+							}
+						}
+					});
+				}
+				$('#multi_model_gen_AI').bootstrapToggle('enable');
+				$("#multi_model_gen_AI").prop("checked", false).change();
+				if (res.data.length == 0) {
+					$('#multi_model_gen_AI').bootstrapToggle('off').bootstrapToggle('disable');
+				}
+			}).fail(function (xhr) {
+				Object(__WEBPACK_IMPORTED_MODULE_0__DataTable__["d" /* showError */])("Model Gen AI Error: " + xhr.statusText);
+			}).always(function () {
+				that.createMultiModelGenAiIsBusy = false;
+			});
+		}
 	}, {
 		key: 'personalityURL',
 		get: function get() {
@@ -141150,6 +142006,21 @@ var Portal = function (_DataTable) {
 		}
 		//------------------------------------------------------------
 
+	}, {
+		key: 'modelGenAIURL',
+		get: function get() {
+			return this.apiURL + '/get/model_gen_ai/';
+		}
+	}, {
+		key: 'collectionURL',
+		get: function get() {
+			return this.apiURL + '/get/collection/';
+		}
+	}, {
+		key: 'modelGenAIURL_ORG',
+		get: function get() {
+			return this.apiURL + '/get/model_gen_ai_org/';
+		}
 	}]);
 
 	return Portal;
@@ -141176,7 +142047,7 @@ var portalColumns = new __WEBPACK_IMPORTED_MODULE_1__Columns__["a" /* default */
 }, { name: 'OnOff', display: "Active", editable: false, sortable: true, search: false }, { name: 'OnOffBy', display: "Last User", editable: false, sortable: true, search: false },
 
 //{ name: 'feedback', display:"Feedback", hidden:true },
-{ name: 'thumbsup', display: "Thumbsup", hidden: true }, { name: 'comment', display: "Comment", hidden: true }]);
+{ name: 'thumbsup', display: "Thumbsup", hidden: true }, { name: 'comment', display: "Comment", hidden: true }, { name: 'multi_model_gen_AI', display: 'Multi-Model Gen AI', hidden: true, editable: true, sortable: false, search: false }]);
 var data = {
 	columns: portalColumns,
 	apiURL: apiURL + '/api/dashboard/portal'
@@ -142212,11 +143083,12 @@ var Kamalog = function (_DataTable) {
 				if (data) {
 					var tempdata = {};
 					for (var i = 0; i < data.length; i++) {
+						var cssSender = "class_" + data[i].sender.toLowerCase().replace(/ /gi, '_');
 						if (data[i].sender == 'AI') {
 							var newM = JSON.parse(data[i].showRawMsg);
 							if (newM.response.type == 'text') {
 								if (newM.response.err) {
-									tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b" style="color: #ff0000;">' + '<p style="">' + ainame + '<br/>' + newM.response.message + '<br/>' + data[i].timestamp + '</p>' + '</div>' + '</div>';
+									tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b">' + '<p>' + '<span class="' + cssSender + '">' + ainame + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + newM.response.message + '</p>' + '</div>' + '</div>';
 								} else {
 									var msgVal = newM.response.message;
 									try {
@@ -142226,10 +143098,10 @@ var Kamalog = function (_DataTable) {
 											}
 										}
 									} catch (ex) {}
-									tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b" style="color: #6f6f6f;">' + '<p>' + ainame + '<br/>' + msgVal + '<br/>' + data[i].timestamp + '</p>' + '</div>' + '</div>';
+									tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b">' + '<p>' + '<span class="' + cssSender + '">' + ainame + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + msgVal + '</p>' + '</div>' + '</div>';
 								}
 							} else if (newM.response.type == 'yesno') {
-								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b" style="color: #6f6f6f;">' + '<p>' + ainame + '<br/>' + newM.response.message + '<br/>' + data[i].timestamp + '</p>' + '<div class="rd">' + '<span class="myYes">Yes</span>' + '<span class="myNo">No</span>' + '</div>' + '</div>';
+								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b">' + '<p><b class="' + cssSender + '">' + ainame + '</b>' + newM.response.message + '<br/>' + data[i].timestamp + '</p>' + '<div class="rd">' + '<span class="myYes">Yes</span>' + '<span class="myNo">No</span>' + '</div>' + '</div>';
 							} else if (newM.response.type == 'radiobutton') {
 								var rd = '';
 								//----------------------------------------------------------------------------------------------
@@ -142279,18 +143151,24 @@ var Kamalog = function (_DataTable) {
 										}
 									}
 								} catch (ex) {}
-								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b" style="color: #6f6f6f;">' + '<p>' + ainame + '<br>' + _msgVal + '<br/>' + data[i].timestamp + '</p>' + '<div class="rd">' + rd + '</div>' + '</div>' + '</div>';
+								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b">' + '<p>' + '<span class="' + cssSender + '">' + ainame + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + _msgVal + '</p>' + '<div class="rd">' + rd + '</div>' + '</div>' + '</div>';
 							} else if (newM.response.type == 'valueslider') {
 								var rd = '';
 								for (var ii = 0; ii < newM.response.answers.length; ii++) {
 									rd += '' + '<div class="sd_g" type=' + newM.response.answers[ii].value + '>' + '<p>' + newM.response.answers[ii].text + ':' + '<span class="tn">' + '? (1 to 10), (' + newM.response.answers[ii].value + ')?' + ' </span>' + '</p>' + '<div class="sd_l"></div>' + '<div class="sd_s">' + '<div class="sd_b" style="left:' + newM.response.answers[ii].value * 10 + '%' + '"></div>' + '</div>' + '</div>';
 								}
-								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b" style="color: #6f6f6f;">' + '<p>' + ainame + '<br/>' + newM.response.message + '</p>' + '<div class="sd">' + rd + '<div class="sd_sb">click when done</div>' + '</div>' + '</div>' + '<br/>' + '<p>' + data[i].timestamp + '</p>' + '</div>';
+								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b">' + '<p>' + '<span class="' + cssSender + '">' + ainame + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + newM.response.message + '</p>' + '<div class="sd">' + rd + '<div class="sd_sb">click when done</div>' + '</div>' + '</div>' + '</div>';
 							} else {
-								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b" style="color: #6f6f6f;">' + '<p>' + ainame + '<br/>' + newM.response.message + '<br/>' + data[i].timestamp + '</p>' + '</div>' + '</div>';
+								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b">' + '<p>' + '<span class="' + cssSender + '">' + ainame + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + newM.response.message + '</p>' + '</div>' + '</div>';
 							}
 							if (typeof data[i].feedback !== 'undefined') {
-								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b" style="color: #6f6f6f;">' + '<p>feedback: ' + data[i].feedback + '</p>' + '</div>' + '</div>';
+								tmp_table1 += '' +
+								//'<div class="chat_v bot '+cssSender+'">' +
+								'<div class="chat_v bot class_user">' +
+								//'<div class="chat_b" style="margin-top: -8px !important; border-radius: 0px 0px 8px 8px !important;">' +
+								'<div class="chat_b">' +
+								//										'<p>feedback: '+data[i].feedback+'</p>'+
+								'<span class="classUserHeader">' + username + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + '<p>feedback: ' + (data[i].feedback == 1 ? '<span class="fa fa-thumbs-o-up"></span>' : '<span class="fa fa-thumbs-o-down"></span>') + '</p>' + '<p>' + data[i].comment + '</p>' + '</div>' + '</div>';
 							}
 						} else {
 							if (data[i].sender == 'System') {
@@ -142298,32 +143176,61 @@ var Kamalog = function (_DataTable) {
 								if (tempdata[data[i].showRawMsg]) {
 									temp_mmsg = tempdata[data[i].showRawMsg];
 								}
-								tmp_table1 += '' + '<div class="chat_v mine" style="justify-content:flex-start">' + '<div class="chat_b" style="color:#6f6f6f; background:#efefef;">' + '<p>Kamazooie Development<br>' + temp_mmsg + '<br>' + data[i].timestamp + '</p>' + '</div>' + '</div>';
+								tmp_table1 += '' + '<div class="chat_v bot" style="justify-content:flex-start">' + '<div class="chat_b" style="color:#6f6f6f; background:#efefef;">' + '<p>' + '<span class="' + cssSender + '">' + "Kamazooie Development" + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + temp_mmsg + '</p>' + '</div>' + '</div>';
 							} else {
-								var temp_mmsg = "";
-								try {
-									var tmpM = JSON.parse(data[i].showRawMsg);
-									if (tmpM.answers.length != 0) {
-										for (var jj in tmpM.answers) {
-											temp_mmsg += '<span>' + tmpM.answers[jj].text + ' : [ ' + tmpM.answers[jj].value + ' ]</span><br/>';
+								if (data[i].sender.toLowerCase() == 'bot' || data[i].sender.toLowerCase() == 'openai') {
+									var temp_mmsg = data[i].showRawMsg;
+									if (tempdata[data[i].showRawMsg]) {
+										temp_mmsg = tempdata[data[i].showRawMsg];
+									}
+
+									try {
+										var tmpMsg = $(temp_mmsg).text(); //.replace(/<\/?[^>]+(>|$)/g, "");
+										if (tmpMsg != "") {
+											temp_mmsg = tmpMsg;
+										}
+									} catch (ex) {}
+
+									tmp_table1 += '' + '<div class="chat_v bot" style="justify-content:flex-start">' + '<div class="chat_b" >' +
+									//'<p><b class="'+cssSender+'">'+data[i].sender+'</b>'+temp_mmsg +'<br>'+data[i].timestamp+ '</p>'+
+									'<p>' + '<span class="' + cssSender + '">' + data[i].sender + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + temp_mmsg + '</p>' + '</div>' + '</div>';
+								} else {
+									var temp_mmsg = "";
+									try {
+										var tmpM = JSON.parse(data[i].showRawMsg);
+										if (tmpM.answers.length != 0) {
+											for (var jj in tmpM.answers) {
+												temp_mmsg += '<span>' + tmpM.answers[jj].text + ' : [ ' + tmpM.answers[jj].value + ' ]</span><br/>';
+											}
+										}
+										if (tempdata[tmpM.utterance]) {
+											temp_mmsg += tempdata[tmpM.utterance];
+										} else {
+											temp_mmsg += tmpM.utterance;
+										}
+									} catch (ex) {
+										temp_mmsg = data[i].showRawMsg;
+										if (tempdata[temp_mmsg]) {
+											temp_mmsg = tempdata[temp_mmsg];
 										}
 									}
-									if (tempdata[tmpM.utterance]) {
-										temp_mmsg += tempdata[tmpM.utterance];
-									} else {
-										temp_mmsg += tmpM.utterance;
-									}
-								} catch (ex) {
-									temp_mmsg = data[i].showRawMsg;
-									if (tempdata[temp_mmsg]) {
-										temp_mmsg = tempdata[temp_mmsg];
-									}
-								}
 
-								tmp_table1 += '' + '<div class="chat_v mine">' + '<div class="chat_b" style="color: #fff;">' + '<p>' + username + ':<br/>' + temp_mmsg + '<br/>' + data[i].timestamp + '</p>' + '</div>' + '</div>';
+									tmp_table1 += '' + '<div class="chat_v bot ' + cssSender + '">' + '<div class="chat_b">' +
+									//											'<p>' +username+':<br/>' +temp_mmsg +'<br/>'+data[i].timestamp+ '</p>'+
+									'<p>' + '<span class="classUserHeader">' + username + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + temp_mmsg + '</p>' + '</div>' + '</div>';
+								}
 							}
 							if (typeof data[i].feedback !== 'undefined') {
-								tmp_table1 += '' + '<div class="chat_v mine" style="margin-top:-2px;">' + '<div class="chat_b" style="color: #fff;">' + '<p>feedback: ' + data[i].feedback + '</p>' + '</div>' + '</div>';
+								tmp_table1 += '' +
+								//								'<div class="chat_v mine" style="margin-top:-2px;">' +
+								//									'<div class="chat_b" style="color: #fff;">' +
+								//'<div class="chat_v bot" style="justify-content:flex-start">' +
+								//'<div class="chat_v bot '+cssSender+'" style="justify-content:flex-start">' +
+								'<div class="chat_v bot class_user">' +
+								//'<div class="chat_b" style="margin-top: -8px !important; border-radius: 0px 0px 8px 8px !important;">' +
+								'<div class="chat_b">' +
+								//'<p>' +username+ data[i].timestamp+ '</p>'+
+								'<span class="classUserHeader">' + username + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + '<p>feedback: ' + (data[i].feedback == 1 ? '<span class="fa fa-thumbs-o-up"></span>' : '<span class="fa fa-thumbs-o-down"></span>') + '</p>' + '<p>' + data[i].comment + '</p>' + '</div>' + '</div>';
 							}
 						}
 					}
@@ -148134,11 +149041,12 @@ var Feedback = function (_DataTable) {
 				if (data) {
 					var tempdata = {};
 					for (var i = 0; i < data.length; i++) {
+						var cssSender = "class_" + data[i].sender.toLowerCase().replace(/ /gi, '_');
 						if (data[i].sender == 'AI') {
 							var newM = JSON.parse(data[i].showRawMsg);
 							if (newM.response.type == 'text') {
 								if (newM.response.err) {
-									tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b" style="color: #ff0000;">' + '<p style="">' + ainame + '<br/>' + newM.response.message + '<br/>' + data[i].timestamp + '</p>' + '</div>' + '</div>';
+									tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b">' + '<p>' + '<span class="' + cssSender + '">' + ainame + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + newM.response.message + '</p>' + '</div>' + '</div>';
 								} else {
 									var msgVal = newM.response.message;
 									try {
@@ -148148,10 +149056,10 @@ var Feedback = function (_DataTable) {
 											}
 										}
 									} catch (ex) {}
-									tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b" style="color: #6f6f6f;">' + '<p>' + ainame + '<br/>' + msgVal + '<br/>' + data[i].timestamp + '</p>' + '</div>' + '</div>';
+									tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b">' + '<p>' + '<span class="' + cssSender + '">' + ainame + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + msgVal + '</p>' + '</div>' + '</div>';
 								}
 							} else if (newM.response.type == 'yesno') {
-								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b" style="color: #6f6f6f;">' + '<p>' + ainame + '<br/>' + newM.response.message + '<br/>' + data[i].timestamp + '</p>' + '<div class="rd">' + '<span class="myYes">Yes</span>' + '<span class="myNo">No</span>' + '</div>' + '</div>';
+								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b">' + '<p><b class="' + cssSender + '">' + ainame + '</b>' + newM.response.message + '<br/>' + data[i].timestamp + '</p>' + '<div class="rd">' + '<span class="myYes">Yes</span>' + '<span class="myNo">No</span>' + '</div>' + '</div>';
 							} else if (newM.response.type == 'radiobutton') {
 								var rd = '';
 								//----------------------------------------------------------------------------------------------
@@ -148201,18 +149109,18 @@ var Feedback = function (_DataTable) {
 										}
 									}
 								} catch (ex) {}
-								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b" style="color: #6f6f6f;">' + '<p>' + ainame + '<br>' + _msgVal + '<br/>' + data[i].timestamp + '</p>' + '<div class="rd">' + rd + '</div>' + '</div>' + '</div>';
+								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b">' + '<p>' + '<span class="' + cssSender + '">' + ainame + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + _msgVal + '</p>' + '<div class="rd">' + rd + '</div>' + '</div>' + '</div>';
 							} else if (newM.response.type == 'valueslider') {
 								var rd = '';
 								for (var ii = 0; ii < newM.response.answers.length; ii++) {
 									rd += '' + '<div class="sd_g" type=' + newM.response.answers[ii].value + '>' + '<p>' + newM.response.answers[ii].text + ':' + '<span class="tn">' + '? (1 to 10), (' + newM.response.answers[ii].value + ')?' + ' </span>' + '</p>' + '<div class="sd_l"></div>' + '<div class="sd_s">' + '<div class="sd_b" style="left:' + newM.response.answers[ii].value * 10 + '%' + '"></div>' + '</div>' + '</div>';
 								}
-								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b" style="color: #6f6f6f;">' + '<p>' + ainame + '<br/>' + newM.response.message + '</p>' + '<div class="sd">' + rd + '<div class="sd_sb">click when done</div>' + '</div>' + '</div>' + '<br/>' + '<p>' + data[i].timestamp + '</p>' + '</div>';
+								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b">' + '<p>' + '<span class="' + cssSender + '">' + ainame + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + newM.response.message + '</p>' + '<div class="sd">' + rd + '<div class="sd_sb">click when done</div>' + '</div>' + '</div>' + '</div>';
 							} else {
-								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b" style="color: #6f6f6f;">' + '<p>' + ainame + '<br/>' + newM.response.message + '<br/>' + data[i].timestamp + '</p>' + '</div>' + '</div>';
+								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b">' + '<p>' + '<span class="' + cssSender + '">' + ainame + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + newM.response.message + '</p>' + '</div>' + '</div>';
 							}
 							if (typeof data[i].feedback !== 'undefined') {
-								tmp_table1 += '' + '<div class="chat_v bot">' + '<div class="chat_b" style="color: #6f6f6f;">' + '<p>feedback: ' + (data[i].feedback == 1 ? '<span class="fa fa-thumbs-o-up" style="color:green"></span>' : '<span class="fa fa-thumbs-o-down" style="color:black"></span>') + '</p>' + (data[i].is_general == 1 ? '<p>comment: ' + data[i].comment + '</p>' : '<p>comment: ' + data[i].comment + '</p>') + '</div>' + '</div>';
+								tmp_table1 += '' + '<div class="chat_v bot class_user">' + '<div class="chat_b">' + '<span class="classUserHeader">' + username + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + '<p>feedback: ' + (data[i].feedback == 1 ? '<span class="fa fa-thumbs-o-up"></span>' : '<span class="fa fa-thumbs-o-down"></span>') + '</p>' + '<p>' + data[i].comment + '</p>' + '</div>' + '</div>';
 							}
 						} else {
 							if (data[i].sender == 'System') {
@@ -148220,32 +149128,48 @@ var Feedback = function (_DataTable) {
 								if (tempdata[data[i].showRawMsg]) {
 									temp_mmsg = tempdata[data[i].showRawMsg];
 								}
-								tmp_table1 += '' + '<div class="chat_v mine" style="justify-content:flex-start">' + '<div class="chat_b" style="color:#6f6f6f; background:#efefef;">' + '<p>Kamazooie Development<br>' + temp_mmsg + '<br>' + data[i].timestamp + '</p>' + '</div>' + '</div>';
+								tmp_table1 += '' + '<div class="chat_v bot" style="justify-content:flex-start">' + '<div class="chat_b" style="color:#6f6f6f; background:#efefef;">' + '<p>' + '<span class="' + cssSender + '">' + "Kamazooie Development" + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + temp_mmsg + '</p>' + '</div>' + '</div>';
 							} else {
-								var temp_mmsg = "";
-								try {
-									var tmpM = JSON.parse(data[i].showRawMsg);
-									if (tmpM.answers.length != 0) {
-										for (var jj in tmpM.answers) {
-											temp_mmsg += '<span>' + tmpM.answers[jj].text + ' : [ ' + tmpM.answers[jj].value + ' ]</span><br/>';
+								if (data[i].sender.toLowerCase() == 'bot' || data[i].sender.toLowerCase() == 'openai') {
+									var temp_mmsg = data[i].showRawMsg;
+									if (tempdata[data[i].showRawMsg]) {
+										temp_mmsg = tempdata[data[i].showRawMsg];
+									}
+
+									try {
+										var tmpMsg = $(temp_mmsg).text(); //.replace(/<\/?[^>]+(>|$)/g, "");
+										if (tmpMsg != "") {
+											temp_mmsg = tmpMsg;
+										}
+									} catch (ex) {}
+
+									tmp_table1 += '' + '<div class="chat_v bot" style="justify-content:flex-start">' + '<div class="chat_b" >' + '<p>' + '<span class="' + cssSender + '">' + data[i].sender + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + temp_mmsg + '</p>' + '</div>' + '</div>';
+								} else {
+									var temp_mmsg = "";
+									try {
+										var tmpM = JSON.parse(data[i].showRawMsg);
+										if (tmpM.answers.length != 0) {
+											for (var jj in tmpM.answers) {
+												temp_mmsg += '<span>' + tmpM.answers[jj].text + ' : [ ' + tmpM.answers[jj].value + ' ]</span><br/>';
+											}
+										}
+										if (tempdata[tmpM.utterance]) {
+											temp_mmsg += tempdata[tmpM.utterance];
+										} else {
+											temp_mmsg += tmpM.utterance;
+										}
+									} catch (ex) {
+										temp_mmsg = data[i].showRawMsg;
+										if (tempdata[temp_mmsg]) {
+											temp_mmsg = tempdata[temp_mmsg];
 										}
 									}
-									if (tempdata[tmpM.utterance]) {
-										temp_mmsg += tempdata[tmpM.utterance];
-									} else {
-										temp_mmsg += tmpM.utterance;
-									}
-								} catch (ex) {
-									temp_mmsg = data[i].showRawMsg;
-									if (tempdata[temp_mmsg]) {
-										temp_mmsg = tempdata[temp_mmsg];
-									}
-								}
 
-								tmp_table1 += '' + '<div class="chat_v mine">' + '<div class="chat_b" style="color: #fff;">' + '<p>' + username + ':<br/>' + temp_mmsg + '<br/>' + data[i].timestamp + '</p>' + '</div>' + '</div>';
+									tmp_table1 += '' + '<div class="chat_v bot ' + cssSender + '">' + '<div class="chat_b">' + '<p>' + '<span class="classUserHeader">' + username + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + temp_mmsg + '</p>' + '</div>' + '</div>';
+								}
 							}
 							if (typeof data[i].feedback !== 'undefined') {
-								tmp_table1 += '' + '<div class="chat_v mine" style="margin-top:-2px;">' + '<div class="chat_b" style="color: #fff;">' + '<p>feedback: ' + (data[i].feedback == 1 ? '<span class="fa fa-thumbs-o-up" style="color:green"></span>' : '<span class="fa fa-thumbs-o-down" style="color:black"></span>') + '</p>' + '</div>' + '</div>';
+								tmp_table1 += '' + '<div class="chat_v bot class_user">' + '<div class="chat_b">' + '<span class="classUserHeader">' + username + '<small class="date">' + data[i].timestamp + '</small>' + '</span>' + '<p>feedback: ' + (data[i].feedback == 1 ? '<span class="fa fa-thumbs-o-up"></span>' : '<span class="fa fa-thumbs-o-down"></span>') + '</p>' + '<p>' + data[i].comment + '</p>' + '</div>' + '</div>';
 							}
 						}
 					}
@@ -148444,7 +149368,7 @@ var Feedback = function (_DataTable) {
 //---------------------------------------------
 
 
-var columns = [{ name: 'feedback_id', display: 'ID', primary: true, sortable: false, editable: false, hidden: true }, { name: 'user_name', display: 'Consumer User', sortable: false, editable: false, search: true }, { name: 'org_name', display: 'Organization', sortable: false, editable: false, search: true }, { name: 'chat_date', display: 'Chat Date', sortable: true, editable: false, search: true }, { name: 'portalName', display: 'Portal', sortable: true, editable: false, search: true }, { name: 'thumbs', display: 'Thumbs', sortable: true, editable: false, search: false, reserved: true }, { name: 'comment', display: 'Comment', sortable: true, editable: false, search: true }, { name: 'q_a_pair', display: 'Q & A pair', sortable: false, editable: false, search: true, hidden: true }, { name: 'archived', display: 'Archive', sortable: false, editable: false, search: false, reserved: true }];
+var columns = [{ name: 'feedback_id', display: 'ID', primary: true, sortable: false, editable: false, hidden: true }, { name: 'user_name', display: 'Consumer User', sortable: false, editable: false, search: true }, { name: 'org_name', display: 'Organization', sortable: false, editable: false, search: true }, { name: 'chat_date', display: 'Chat Date', sortable: true, editable: false, search: true }, { name: 'portalName', display: 'Portal', sortable: true, editable: false, search: true }, { name: 'thumbs', display: 'Thumbs', sortable: true, editable: false, search: false, reserved: true }, { name: 'comment', display: 'Comment', sortable: true, editable: false, search: true }, { name: 'Generative_response', display: 'Generative response', sortable: true, editable: false, search: true }, { name: 'signin_id', display: 'Chat', sortable: true, editable: false, search: false }, { name: 'inquiry', display: 'Inquiry', sortable: false, editable: false, search: false }, { name: 'q_a_pair', display: 'Q & A pair', sortable: false, editable: false, search: true, hidden: true }, { name: 'archived', display: 'Archive', sortable: false, editable: false, search: false, reserved: true }];
 
 //---------------------------------------------
 var data = {

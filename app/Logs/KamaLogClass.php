@@ -64,6 +64,7 @@ class KamaLogClass{
 	//---------------------------------------------------------------
 
 	//---------------------------------------------------------------
+	//public static function addLog($apikey, $user_id, $sender, $raw_msg, $msg, $g_r="", $g_e_d="", $m_u="", $c_u=""){
 	public static function addLog($apikey, $user_id, $sender, $raw_msg, $msg){
 		//-----------------------------------------------------------
 		$apikey  = trim($apikey);
@@ -95,6 +96,12 @@ class KamaLogClass{
 		$log->sender    = $sender;
 		$log->raw_msg   = $raw_msg;
 		$log->msg       = $msg;
+/*		
+		if($g_r  !=""){ $log->Generative_response = $g_r;   }
+		if($g_e_d!=""){ $log->GR_Enduser_delivery = $g_e_d; }
+		if($m_u  !=""){ $log->Model_used          = $m_u;   }
+		if($c_u  !=""){ $log->Collection_used     = $c_u;   }
+*/		
 		if($log->save()){ return $log->msg_id; }
 		else{ return -5; }//can't add log record
 	}

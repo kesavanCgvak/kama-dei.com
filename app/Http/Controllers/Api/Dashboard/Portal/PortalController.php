@@ -68,6 +68,7 @@ class PortalController extends \App\Http\Controllers\Controller{
 			$data['ntfctn_mssg_cstmztn'] = substr(trim($data['ntfctn_mssg_cstmztn']), 0, 1000);
 			$data['rqst_mssg_cstmztn'  ] = substr(trim($data['rqst_mssg_cstmztn'  ]), 0, 1000);
 			$data['feedback'           ] = $data['feedback'];
+			$data['multi_model_gen_AI' ] = $data['multi_model_gen_AI'];
 
 			//create random char for code 
 			$code = '';
@@ -112,6 +113,7 @@ class PortalController extends \App\Http\Controllers\Controller{
 			$portal->rqst_mssg_cstmztn    = $data['rqst_mssg_cstmztn'   ];
 			$portal->description          = $data['description'         ];
 			$portal->unknownPersonalityId = $data['unknownPersonalityId'];
+			$portal->multi_model_gen_AI   = $data['multi_model_gen_AI'  ];
 			
 			$portal->feedback             = $data['feedback'];
 			$portal->thumbsup             = $data['feedback'];
@@ -120,8 +122,24 @@ class PortalController extends \App\Http\Controllers\Controller{
 //				$portal->feedback = \App\Organization::find($data['organization_id'])->feedback;
 //			}
 			
-			$portal->last                 = date("Y-m-d H:i:s");
-			if($portal->save()){ return ['result'=>0, 'msg'=>"Portal added"]; }
+			$portal->last = date("Y-m-d H:i:s");
+			if($portal->save()){
+				\App\PortalModel::where('portal_id', $portal->id)->delete();
+				foreach($data['model_gen_ai_items'] as $model_gen_ai){
+					\App\PortalModel::insert([
+						'portal_id'    => $portal->id,
+						'model_gen_ai' => $model_gen_ai
+					]);
+				}
+				\App\PortalCollection::where('portal_id', $portal->id)->delete();
+				foreach($data['collections'] as $collection){
+					\App\PortalCollection::insert([
+						'portal_id'  => $portal->id,
+						'collection' => $collection
+					]);
+				}
+				return ['result'=>0, 'msg'=>"Portal added"];
+			}
 			else{ return ['result'=>1, 'msg'=>"Error on insert record"]; }
 			return $req->all();
 		}catch(\Throwable $ex){
@@ -170,6 +188,7 @@ class PortalController extends \App\Http\Controllers\Controller{
 			$portal->rqst_mssg_cstmztn    = $data['rqst_mssg_cstmztn'   ];
 			$portal->description          = $data['description'         ];
 			$portal->unknownPersonalityId = $data['unknownPersonalityId'];
+			$portal->multi_model_gen_AI   = $data['multi_model_gen_AI'  ];
 
 			$portal->feedback             = $data['feedback'];
 			$portal->thumbsup             = $data['feedback'];
@@ -188,6 +207,22 @@ class PortalController extends \App\Http\Controllers\Controller{
 				if($portal->hasLiveAgent==0){
 					\App\LiveAgentMapBots::where('ownerId', $portal->organization_id)->update(['publish_status'=>'Unpublished']);
 				}
+
+				\App\PortalModel::where('portal_id', $portal->id)->delete();
+				foreach($data['model_gen_ai_items'] as $model_gen_ai){
+					\App\PortalModel::insert([
+						'portal_id'    => $portal->id,
+						'model_gen_ai' => $model_gen_ai
+					]);
+				}
+
+				\App\PortalCollection::where('portal_id', $portal->id)->delete();
+				foreach($data['collections'] as $collection){
+					\App\PortalCollection::insert([
+						'portal_id'  => $portal->id,
+						'collection' => $collection
+					]);
+				}
 				return ['result'=>0, 'msg'=>"Portal change"];
 			}else{ return ['result'=>1, 'msg'=>"Error on edit record"]; }
 			return $req->all();
@@ -202,6 +237,8 @@ class PortalController extends \App\Http\Controllers\Controller{
 			if(is_null($portal) ){ return ['result'=>1, 'msg'=>"portal not found"]; }
 			else{
 				if($portal->organization_id!=$orgID && $orgID!=0){ return ['result'=>1, 'msg'=>"You can't delete this portal"]; }
+				\App\PortalModel::where('portal_id', $portal->id)->delete();
+				\App\PortalCollection::where('portal_id', $portal->id)->delete();
 				$tmp = $portal->delete($id);
 				return ['result'=>($tmp ?0 :1), 'msg'=>''];
 			}
@@ -336,7 +373,24 @@ class PortalController extends \App\Http\Controllers\Controller{
 					'thumbsup'             => $portal->thumbsup * $org->feedback,
 					'feedback_comment'     => $portal->comment * $org->feedback
 				];
-				
+
+				$retVal['collections'] = $org->collections;
+				$retVal['multi_model_gen_AI']['org'] = [];
+				$retVal['multi_model_gen_AI']['org']['value' ] = $org->multi_model_gen_AI;
+				$retVal['multi_model_gen_AI']['org']['models'] = [];
+				$orgMs = \App\OrganizationModel::where('org_id', $orgID)->get();
+				if(!$orgMs->isEmpty()){
+					foreach($orgMs as $orgM){ $retVal['multi_model_gen_AI']['org']['models'][] = $orgM->model_gen_ai; }
+				}
+
+				$retVal['multi_model_gen_AI']['portal'] = [];
+				$retVal['multi_model_gen_AI']['portal']['value' ] = $portal->multi_model_gen_AI;
+				$retVal['multi_model_gen_AI']['portal']['models'] = [];
+				$portalMs = \App\PortalModel::where('portal_id', $portal->id)->get();
+				if(!$portalMs->isEmpty()){
+					foreach($portalMs as $portalM){ $retVal['multi_model_gen_AI']['portal']['models'][] = $portalM->model_gen_ai; }
+				}
+
 				return $retVal;
 			}
 		}catch(\Throwable $ex){
@@ -410,6 +464,55 @@ class PortalController extends \App\Http\Controllers\Controller{
 			return ['result'=>0, 'msg'=>"OK"];
 		}catch(\Throwable $ex){
 			return ['result'=>1, 'msg'=>$ex->getMessage()];
+		}
+	}
+	//---------------------------------------
+	public function getModelGenAI($portal_id){
+		try{
+			if($portal_id==0){ return ['result'=>0, 'msg'=>"", "data"=>["portal"=>[], "organization"=>[]]]; }
+			$portal = \App\Portal::find($portal_id);
+			if($portal==null){ throw new \Exception("Invalid portal"); }
+			//-------------------------------
+			$org = \App\Organization::find($portal->organization_id);
+			//-------------------------------
+			$orgModels = [];
+			if($org->multi_model_gen_AI==1){
+				$orgModel  = \App\OrganizationModel::where('org_id', $portal->organization_id)->get();
+				if(!$orgModel->isEmpty()){ foreach($orgModel as $itm){ $orgModels[]=$itm->model_gen_ai; } }
+			}
+			//-------------------------------
+			$retVal = [];
+			if($org->multi_model_gen_AI==1 ){
+				$items = \App\PortalModel::where('portal_id', $portal_id)->get();
+				if(!$items->isEmpty()){
+					foreach($items as $itm){ $retVal[]=$itm->model_gen_ai; } 
+					//foreach($items as $itm){ if(in_array($itm->model_gen_ai, $orgModels)){ $retVal[]=$itm->model_gen_ai; } }
+				}
+			}
+			//-------------------------------
+			return ['result'=>0, 'msg'=>"", "data"=>["portal"=>$retVal, "organization"=>$orgModels, "is_active"=>$org->multi_model_gen_AI]];
+			//-------------------------------
+		}catch(\Throwable $ex){
+			return ['result'=>1, 'msg'=>$ex->getMessage(), "data"=>["portal"=>[], "organization"=>[], "is_active"=>0]];
+		}
+	}
+	//---------------------------------------
+	public function getCollections($portal_id){
+		try{
+			if($portal_id==0){ return ['result'=>0, 'msg'=>"", "data"=>[]]; }
+			$portal = \App\Portal::find($portal_id);
+			if($portal==null){ throw new \Exception("Invalid portal"); }
+			//-------------------------------
+			$retVal = [];
+			$items = \App\PortalCollection::where('portal_id', $portal_id)->get();
+			if(!$items->isEmpty()){
+				foreach($items as $itm){ $retVal[]=$itm->collection; } 
+			}
+			//-------------------------------
+			return ['result'=>0, 'msg'=>"", "data"=>$retVal];
+			//-------------------------------
+		}catch(\Throwable $ex){
+			return ['result'=>1, 'msg'=>$ex->getMessage(), "data"=>[]];
 		}
 	}
 	//---------------------------------------

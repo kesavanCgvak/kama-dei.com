@@ -128,6 +128,7 @@ class FunctionHelper
      { 
 		return preg_replace("~\s+~"," ",$inputText);
      }
+
 		
     //------   replace "," by "and"    ----------------------------------
 	function replaceCommaByAnd($inputText)

@@ -1088,11 +1088,12 @@ class ExtendedEntity extends DataTable {
 //		$("#internet, #enterprise, #kamaDEI, #sharepoint, #url, #certify").prop('checked', false);
 		$("#internet, #enterprise, #kamaDEI, #url, #certify").prop('checked', false);
 		$("#saveDraft, #copyDraft, #charMax").prop('disabled', true);
-		$(".enterprise.radioItemsElemans").html("").hide();
+		$(".enterprise.radioItemsElemans, .enterpriseLLM.radioItemsElemans").html("").hide();
 		$(".url.radioItemsElemans").hide();
 
 		//$("#prevEdit").prop('checked', false).change();
-		this.showPrevEditResult(0);
+		//this.showPrevEditResult(0);
+		this.showPrevEditResult(1);
 
 		$("#draftModal")
 			.modal({backdrop:"static"})
@@ -1136,27 +1137,87 @@ class ExtendedEntity extends DataTable {
 
 		let radioItems = 0;
 		if($("#internet").prop('checked')){
-			radioItems = 1;
-			searchType = "internet";
+			let owner = "";
+			let modelLLM = "";
+			$(".LLM_Models").each(function(){
+				if($(this).prop('checked')){
+					owner    = $(this).val();
+					modelLLM = $(this).attr('id');
+				}
+			});
+			if(modelLLM==""){
+				showError("LLM Model is required.");
+				$("#internet").focus();
+				return;
+			}
+			data.llm_model = JSON.stringify({ "owner":owner, "model":modelLLM });
+			searchType     = "internet";
+			radioItems     = 1;
 		}
 		if($("#url").prop('checked')){
-			data.site = $("#urlText").val().trim();
-			if(data.site==''){
+			let owner    = "";
+			let modelLLM = "";
+			$(".LLM_Models").each(function(){
+				if($(this).prop('checked')){
+					owner    = $(this).val();
+					modelLLM = $(this).attr('id');
+				}
+			});
+			if(modelLLM==""){
+				showError("LLM Model is required.");
+				$("#url").focus();
+				return;
+			}
+			data.llm_model = JSON.stringify({ "owner":owner, "model":modelLLM });
+
+			let siteURL = $("#urlText").val().trim();
+			if(siteURL==''){
 				showError("URL is empty");
 				$("#urlText").focus();
 				return;
+			}else{
+				let url_rgx = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
+				let urlRgx     = new RegExp(url_rgx);
+				let isValidURL = siteURL.match(urlRgx);
+				if( !isValidURL ){
+					showError("Inavelid URL.");
+					$("#urlText").focus();
+					return;
+				}
 			}
-			searchType = "url";
-			radioItems = 1;
+			data.site      = siteURL; 
+			searchType     = "url";
+			radioItems     = 1;
 		}
 		if($("#enterprise").prop('checked')){
+			let owner = "";
+			let modelLLM = "";
+			$(".LLM_Models").each(function(){
+				if($(this).prop('checked')){
+					owner    = $(this).val();
+					modelLLM = $(this).attr('id');
+				}
+			});
+			if(modelLLM==""){
+				showError("LLM Model is required.");
+				$("#enterprise").focus();
+				return;
+			}
+			data.llm_model       = JSON.stringify({ "owner":owner, "model":modelLLM });
+
 			let collection_name = ""
 			$(".enterpriseCllctns").each(function(){
 				if($(this).prop('checked')){ collection_name = $(this).attr('id'); }
 			});
+			if(collection_name==""){
+				showError("Collection is required.");
+				$("#enterprise").focus();
+				return;
+			}
 			urlSearch = draftSearchURL_enterprise;
 			data.org             = enterpriseOrgID;
 			data.collection_name = collection_name;
+			
 			searchType = "enterprise";
 			//data.filetype = "pdf";
 			radioItems = 1;
@@ -1181,7 +1242,8 @@ class ExtendedEntity extends DataTable {
 				$("#resultResult").show();
 				$("#result").val('');
 				//$("#prevEdit").prop('checked', false).change();				
-				that.showPrevEditResult(0);
+				//that.showPrevEditResult(0);
+				that.showPrevEditResult(1);
 			},
 			complete: function(){ $("#inquiry, #searchBTN").prop('disabled', false); $("#searchBTN").html('Search'); },
 			success: function(res){
@@ -1189,6 +1251,7 @@ class ExtendedEntity extends DataTable {
 				$("#result").val(res.res).change();
 				resultDraftRES = res.res.trim();
 				resultDraftURL = res.urls_dict;
+				that.showPrevEditResult(1);
 			},
 			error: function(e){
 				if(e.status==422){
@@ -1200,12 +1263,66 @@ class ExtendedEntity extends DataTable {
 		});
 	}
 	//--------------------------------------------------------------
+	createDataTitle(obj){
+		//----------------------------------------------------------
+		let retVal = {
+			url: "",
+			title: ""
+		};
+		let throwError = true;
+		//----------------------------------------------------------
+		if(
+			typeof obj.sharedlink!== 'undefined' &&
+			typeof obj.file_name!== 'undefined' &&
+			typeof obj.page!== 'undefined'
+		){
+			let showLink = (
+				(obj.sharedlink.length>=50)
+					?obj.sharedlink.substring(0, 47)+"..."
+					:obj.sharedlink
+			);
+			retVal.url = obj.sharedlink;
+			retVal.title = ""+
+				"file name: "+obj.file_name.replaceAll("<b>", "").replaceAll("</b>", "")+
+				"\n"+
+				"page: "+obj.page;/*+
+				"\n"+
+				"link: "+showLink;*/
+			throwError = false;
+		}
+		//----------------------------------------------------------
+		if(
+			typeof obj.url!== 'undefined' &&
+			typeof obj.name!== 'undefined'
+		){
+			let showLink = (
+				(obj.url.length>=50)
+					?obj.url.substring(0, 47)+"..."
+					:obj.url
+			);
+			retVal.url = obj.url;
+			retVal.title = ""+
+				//"name: "+
+				obj.name.replaceAll("<b>", "").replaceAll("</b>", "");/*+
+				"\n"+
+				"link: "+showLink;*/
+			
+			throwError = false;
+		}
+		//----------------------------------------------------------
+		if(throwError){ throw new Error("Invalid Object"); }
+		return retVal;
+		//----------------------------------------------------------
+	}
+	//--------------------------------------------------------------
 	showPrevEditResult(e){
+		//e=1;
 //		if($("#prevEdit").prop('checked')){
 		if(e==1){
 			$("#resultResult").hide();
 			$("#resultPreview").show();
 			let tmp = $("#result").val().trim();
+
 			let indxs = [];
 			for(let i in resultDraftURL){
 				indxs.push({index:i, pos:tmp.indexOf("["+i+"]")});
@@ -1218,25 +1335,36 @@ class ExtendedEntity extends DataTable {
 					pos  = indxs[i].pos;
 				}
 			}
-			for(let i in resultDraftURL){
-				if(i==indx){
-					tmp = tmp.replace(
-						"["+i+"]",
-						'<br/><a target="_blank" href="'+resultDraftURL[i]+'" data-title="'+resultDraftURL[i]+'">['+i+']</a>'
-					);
-				}else{
-					tmp = tmp.replace(
-						"["+i+"]",
-						'<a target="_blank" href="'+resultDraftURL[i]+'" data-title="'+resultDraftURL[i]+'">['+i+']</a>'
-					);
+			try{
+				for(let i in resultDraftURL){
+					if(i==indx){
+						let obj = this.createDataTitle(resultDraftURL[i]);
+						tmp = tmp.replaceAll(
+							"["+i+"]",
+							'<br/><a class="asdLink" target="_blank" href="'+obj.url+'" data-title="'+obj.title+'">['+i+']</a>'
+						);
+					}else{
+						let obj = this.createDataTitle(resultDraftURL[i]);
+						tmp = tmp.replaceAll(
+							"["+i+"]",
+							'<a class="asdLink" target="_blank" href="'+obj.url+'" data-title="'+obj.title+'">['+i+']</a>'
+						);
+					}
 				}
+/*
+		tmp += '<a  target="_blank" href="https://kama.ai/resources/kama-dei-platform/" '+
+				'data-title="https://kama.ai/resources/kama-dei-platform/">[1]</a>'+
+				'<a  target="_blank" href="https://slashdot.org/software/p/kama-DEI/" '+
+				'data-title="https://slashdot.org/software/p/kama-DEI/">[2]</a>';
+*/
+				$("#resultPreview p").html(tmp.trim()+"<br/><br/><br/><br/>");
+				$("#showEditBtn").removeClass('btn-info').addClass('btn-default');
+				$("#showPrevBtn").removeClass('btn-default').addClass('btn-info');
+				setShowTitle();
+			}catch(ex){
+				showError("Invalid response");
+				console.log(ex);
 			}
-	/*
-			tmp += '<a  target="_blank" href="https://kama.ai/resources/kama-dei-platform/" data-title="https://kama.ai/resources/kama-dei-platform/">[1]</a><a  target="_blank" href="https://slashdot.org/software/p/kama-DEI/" data-title="https://slashdot.org/software/p/kama-DEI/">[2]</a>';
-	*/
-			$("#resultPreview p").html(tmp);
-			$("#showEditBtn").removeClass('btn-info').addClass('btn-default');
-			$("#showPrevBtn").removeClass('btn-default').addClass('btn-info');
 		}else{
 			$("#resultResult").show();
 			$("#resultPreview").hide();
@@ -1254,7 +1382,7 @@ class ExtendedEntity extends DataTable {
 		//if($("#certify").prop('checked')==false){ return; }
 		
 		let style = "<style>"
-			+"[data-title]:hover:after{opacity:1;transition:all 0.1s ease 0.5s;visibility:visible;}"
+			+"[data-title]:hover::after{opacity:1;transition:all 0.1s ease 0.5s;visibility:visible;white-space: pre;}"
 			+"[data-title]:after{content:attr(data-title);color:#111;background:#fff;position:absolute;padding:1px 5px 2px 5px;bottom:0.6em;"+
 			   "left:100%;white-space:nowrap;box-shadow:1px 1px 3px #222222;opacity:0;border:1px solid #111111;z-index:99999;visibility:hidden;}"
 			+"[data-title]{position:relative;}"
@@ -1276,14 +1404,16 @@ class ExtendedEntity extends DataTable {
 		}
 		for(let i in resultDraftURL){
 			if(i==indx){
-				tmp = tmp.replace(
+				let obj = this.createDataTitle(resultDraftURL[i]);
+				tmp = tmp.replaceAll(
 					"["+i+"]",
-					'<br/><a target="_blank" href="'+resultDraftURL[i]+'" data-title="'+resultDraftURL[i]+'">['+i+']</a>'
+					'<br/><a target="_blank" href="'+obj.url+'" data-title="'+obj.title+'">['+i+']</a>'
 				);
 			}else{
-				tmp = tmp.replace(
+				let obj = this.createDataTitle(resultDraftURL[i]);
+				tmp = tmp.replaceAll(
 					"["+i+"]",
-					'<a target="_blank" href="'+resultDraftURL[i]+'" data-title="'+resultDraftURL[i]+'">['+i+']</a>'
+					'<a target="_blank" href="'+obj.url+'" data-title="'+obj.title+'">['+i+']</a>'
 				);
 			}
 		}

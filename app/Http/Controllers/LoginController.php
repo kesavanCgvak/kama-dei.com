@@ -67,16 +67,18 @@ class LoginController extends Controller {
 	public function isLogin(Request $request){
 		$isLogin = $request->session()->get('isLogin');
 		if($isLogin==false){ return redirect('/login'); }
-		else{
-			return redirect('/dashboard');
-		}
+		else{ return redirect('/dashboard'); }
 	}
 	//-----------------------------------------------------------------------------------
 
 	//-----------------------------------------------------------------------------------
 	public function logout(Request $request){
+		$userID = $request->session()->get('userID');
+		\App\UserKey::where('user_id', $userID)->where('valid4ever', 0)->delete();
+
 		$request->session()->put('isLogin', 0);
 		$request->session()->put('userID' , 0);
+		
 		return 1;
 	}
 	//-----------------------------------------------------------------------------------
@@ -120,6 +122,25 @@ class LoginController extends Controller {
 			if($gotoMFA==2){
 				session()->put('isLogin' , 1);
 				\App\User::where('id', $row->id)->update(['lastLogin'=>date("Y-m-d H:i:s")]);
+
+				$userKey = \App\UserKey::where('user_id', $row->id)->first();
+				if($userKey==null){
+					$userKey = new \App\UserKey;
+					$userKey->user_id   = $row->id;
+					$userKey->userKey   = $userKey->hash($row->id.date("YmdHis"));
+					$userKey->genrateAt = date("Y-m-d H:i:s");
+					$len = strlen(env("userkey_emailstartwith_valid4ever", "test_"));
+					if(substr($row->email,0,$len)==env('userkey_emailstartwith_valid4ever', "test_")){ $userKey->valid4ever=1; }
+					$userKey->save();
+				}else{
+					$len = strlen(env("userkey_emailstartwith_valid4ever", "test_"));
+					if(substr($row->email,0,$len)!=env('userkey_emailstartwith_valid4ever', "test_")){
+						$userKey->userKey   = $userKey->hash($row->id.date("YmdHis"));
+						$userKey->genrateAt = date("Y-m-d H:i:s");
+						$userKey->valid4ever=0;
+						$userKey->save();
+					}
+				}
 			}else{
 				$tmpMail = new \App\Mail\SendMail;
 				\Mail::to($row->email)->send($tmpMail->mfa($row));
@@ -366,6 +387,26 @@ try {
 					"mfa_valid_until" => null,
 					"lastLogin"  => date("Y-m-d H:i:s")
 				]);
+			
+			$userKey = \App\UserKey::where('user_id', $usr->id)->first();
+			if($userKey==null){
+				$userKey = new \App\UserKey;
+				$userKey->user_id   = $usr->id;
+				$userKey->userKey   = $userKey->hash($usr->id.date("YmdHis"));
+				$userKey->genrateAt = date("Y-m-d H:i:s");
+				$len = strlen(env("userkey_emailstartwith_valid4ever", "test_"));
+				if(substr($usr->email,0,$len)==env('userkey_emailstartwith_valid4ever', "test_")){ $userKey->valid4ever=1; }
+				else{ $userKey->valid4ever=0; }
+				$userKey->save();
+			}else{
+				$len = strlen(env("userkey_emailstartwith_valid4ever", "test_"));
+				if(substr($usr->email,0,$len)!=env('userkey_emailstartwith_valid4ever', "test_")){
+					$userKey->userKey   = $userKey->hash($usr->id.date("YmdHis"));
+					$userKey->genrateAt = date("Y-m-d H:i:s");
+					$userKey->valid4ever=0;
+					$userKey->save();
+				}
+			}
 			return ['result'=>0, 'msg'=>''];
 			//---------------------------------------------------------------------------
 		}catch(\Throwable $ex){

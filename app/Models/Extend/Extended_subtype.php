@@ -98,7 +98,7 @@ class Extended_subtype extends Model
         //----------------------------------------------------------------
         $retVal = [];
         foreach( $data as $key=>$tmp ){
-            if($tmp->ownerId==null){ $tmp->organizationShortName = env('BASE_ORGANIZATION'); }
+            if($tmp->ownerId==null || $tmp->organizationShortName==null){ $tmp->organizationShortName = env('BASE_ORGANIZATION'); }
             else{ $tmp->organizationShortName = $tmp->organization->organizationShortName; }
             /*if($tmp->extendedTypeId==null){ $tmp->extendedTypeName = ''; }
             else{$tmp->extendedTypeName = $tmp->extendedtype->extendedTypeName;}*/
@@ -119,7 +119,7 @@ class Extended_subtype extends Model
         if($data->isEmpty()){ return null; }
         $retVal = [];
         foreach( $data as $key=>$tmp ){
-            if($tmp->ownerId==null){ $tmp->organizationShortName = env('BASE_ORGANIZATION'); }
+            if($tmp->ownerId==null || $tmp->organizationShortName==null){ $tmp->organizationShortName = env('BASE_ORGANIZATION'); }
             else{ $tmp->organizationShortName = $tmp->organization->organizationShortName; }
             /*if($tmp->extendedTypeId==null){ $tmp->extendedTypeName = ''; }
             else{$tmp->extendedTypeName = $tmp->extendedtype->extendedTypeName;}*/

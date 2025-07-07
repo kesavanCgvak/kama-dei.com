@@ -434,9 +434,9 @@ class Kamalog extends DataTable {
 		$('#kamaLogModal').css('overflow','auto')
 		//--------------------------------------------------------
 		var getheadtalbe=function(data){
-			that.selectedLog.username = data.nickname;
+			that.selectedLog.username  = data.nickname;
 			that.selectedLog.startTime = data.timestamp;
-			that.selectedLog.orgId = data.org_id;
+			that.selectedLog.orgId     = data.org_id;
 			let table_str= ''+
 				'<table width="100%" cellspacing="0" cellpadding="5" border="1">\n' +
 				'<tbody>\n' +
@@ -473,14 +473,21 @@ class Kamalog extends DataTable {
 			if(data){
 				var tempdata={};
 				for(let i=0;i<data.length;i++){
+					let cssSender = "class_"+data[i].sender.toLowerCase().replace(/ /gi, '_');
 					if(data[i].sender=='AI'){
 						var newM = JSON.parse(data[i].showRawMsg);
 						if (newM.response.type == 'text'){
 							if(newM.response.err){
 								tmp_table1+=''+
 									'<div class="chat_v bot">' +
-										'<div class="chat_b" style="color: #ff0000;">' +
-											'<p style="">'+ainame+'<br/>' + newM.response.message+'<br/>' +data[i].timestamp+ '</p>'+
+										'<div class="chat_b">' +
+											'<p>'+
+												'<span class="'+cssSender+'">'+
+													ainame+
+													'<small class="date">'+data[i].timestamp+'</small>'+
+												'</span>'+
+												newM.response.message+
+											'</p>'+
 										'</div>'+
 									'</div>';
 							}else{
@@ -494,8 +501,14 @@ class Kamalog extends DataTable {
 								}catch(ex){}
 								tmp_table1+=''+
 									'<div class="chat_v bot">' +
-										'<div class="chat_b" style="color: #6f6f6f;">' +
-											'<p>'+ainame+'<br/>' + msgVal +'<br/>' +data[i].timestamp+ '</p>'+
+										'<div class="chat_b">' +
+											'<p>'+
+												'<span class="'+cssSender+'">'+
+													ainame+
+													'<small class="date">'+data[i].timestamp+'</small>'+
+												'</span>'+
+												msgVal +
+											'</p>'+
 										'</div>'+
 									'</div>';
 							}
@@ -503,8 +516,8 @@ class Kamalog extends DataTable {
 						else if (newM.response.type == 'yesno'){
 							tmp_table1+=''+
 								'<div class="chat_v bot">' +
-									'<div class="chat_b" style="color: #6f6f6f;">' +
-										'<p>'+ainame+'<br/>' + newM.response.message + '<br/>' +data[i].timestamp + '</p>' +
+									'<div class="chat_b">' +
+										'<p><b class="'+cssSender+'">'+ainame+'</b>'+newM.response.message+'<br/>'+data[i].timestamp+'</p>'+
 										'<div class="rd">' +
 											'<span class="myYes">Yes</span>' +
 											'<span class="myNo">No</span>' +
@@ -572,8 +585,14 @@ class Kamalog extends DataTable {
 							}catch(ex){}
 							tmp_table1+=''+
 								'<div class="chat_v bot">' +
-									'<div class="chat_b" style="color: #6f6f6f;">' +
-										'<p>'+ainame+'<br>' + msgVal +'<br/>' +data[i].timestamp + '</p>' +
+									'<div class="chat_b">' +
+										'<p>'+
+											'<span class="'+cssSender+'">'+
+												ainame+
+												'<small class="date">'+data[i].timestamp+'</small>'+
+											'</span>'+
+											msgVal +
+										'</p>' +
 										'<div class="rd">' + rd + '</div>'+
 									'</div>' +
 								'</div>';
@@ -593,72 +612,153 @@ class Kamalog extends DataTable {
 							}
 							tmp_table1+=''+
 								'<div class="chat_v bot">' +
-									'<div class="chat_b" style="color: #6f6f6f;">' +
-										'<p>'+ainame+'<br/>' + newM.response.message + '</p>' +
+									'<div class="chat_b">' +
+										'<p>'+
+											'<span class="'+cssSender+'">'+
+												ainame+
+												'<small class="date">'+data[i].timestamp+'</small>'+
+											'</span>'+
+											newM.response.message + 
+										'</p>' +
 										'<div class="sd">' + rd + 
 											'<div class="sd_sb">click when done</div>'+
 										'</div>'+
 									'</div>' +
-									'<br/>'+
-									'<p>' +data[i].timestamp+ '</p>'+
 								'</div>';
 						}else{
 							tmp_table1+=''+
 								'<div class="chat_v bot">' +
-									'<div class="chat_b" style="color: #6f6f6f;">' +
-										'<p>'+ainame+'<br/>' + newM.response.message+'<br/>'+data[i].timestamp + '</p>'+
+									'<div class="chat_b">' +
+										'<p>'+
+											'<span class="'+cssSender+'">'+
+												ainame+
+												'<small class="date">'+data[i].timestamp+'</small>'+
+											'</span>'+
+											newM.response.message+
+										'</p>'+
 									'</div>'+
 								'</div>';
 						}
 						if(typeof data[i].feedback!=='undefined'){
 							tmp_table1+=''+
-								'<div class="chat_v bot">' +
-									'<div class="chat_b" style="color: #6f6f6f;">' +
-										'<p>feedback: '+data[i].feedback+'</p>'+
+								//'<div class="chat_v bot '+cssSender+'">' +
+								'<div class="chat_v bot class_user">' +
+									//'<div class="chat_b" style="margin-top: -8px !important; border-radius: 0px 0px 8px 8px !important;">' +
+									'<div class="chat_b">' +
+//										'<p>feedback: '+data[i].feedback+'</p>'+
+										'<span class="classUserHeader">'+
+											username+
+											'<small class="date">'+data[i].timestamp+'</small>'+
+										'</span>'+
+										'<p>feedback: ' +
+											(
+												(data[i].feedback==1)
+												? '<span class="fa fa-thumbs-o-up"></span>'
+												: '<span class="fa fa-thumbs-o-down"></span>'
+											)+
+										'</p>'+
+										'<p>'+ data[i].comment+ '</p>'+
 									'</div>'+
 								'</div>';
 						}
 					}
 					else{
-						if(data[i].sender=='System'){
+						if( data[i].sender=='System' ){
 							var temp_mmsg=data[i].showRawMsg
 								if(tempdata[data[i].showRawMsg]){ temp_mmsg=tempdata[data[i].showRawMsg]; }
 								tmp_table1+=''+
-									'<div class="chat_v mine" style="justify-content:flex-start">' +
+									'<div class="chat_v bot" style="justify-content:flex-start">' +
 										'<div class="chat_b" style="color:#6f6f6f; background:#efefef;">' +
-											'<p>Kamazooie Development<br>' +temp_mmsg +'<br>'+data[i].timestamp+ '</p>'+
+											'<p>'+
+												'<span class="'+cssSender+'">'+
+													"Kamazooie Development"+
+													'<small class="date">'+data[i].timestamp+'</small>'+
+												'</span>'+
+												temp_mmsg +
+											'</p>'+
 										'</div>'+
 									'</div>';
 						}
 						else{
-							var temp_mmsg="";
-							try{
-								var tmpM = JSON.parse(data[i].showRawMsg);
-								if(tmpM.answers.length!=0){
-									for(let jj in tmpM.answers){
-										temp_mmsg+= ('<span>'+tmpM.answers[jj].text+' : [ '+tmpM.answers[jj].value+' ]</span><br/>');
+							if(
+								data[i].sender.toLowerCase()=='bot' ||
+								data[i].sender.toLowerCase()=='openai'
+							){
+								var temp_mmsg=data[i].showRawMsg;
+								if(tempdata[data[i].showRawMsg]){ temp_mmsg=tempdata[data[i].showRawMsg]; }
+
+								try{
+									let tmpMsg = $(temp_mmsg).text();//.replace(/<\/?[^>]+(>|$)/g, "");
+									if(tmpMsg!=""){ temp_mmsg=tmpMsg; }
+								}catch(ex){}
+
+								tmp_table1+=''+
+									'<div class="chat_v bot" style="justify-content:flex-start">' +
+										'<div class="chat_b" >' +
+											//'<p><b class="'+cssSender+'">'+data[i].sender+'</b>'+temp_mmsg +'<br>'+data[i].timestamp+ '</p>'+
+											'<p>'+
+												'<span class="'+cssSender+'">'+
+													data[i].sender+
+													'<small class="date">'+data[i].timestamp+'</small>'+
+												'</span>'+
+												temp_mmsg +
+											'</p>'+
+										'</div>'+
+									'</div>';
+							}else{
+								var temp_mmsg="";
+								try{
+									var tmpM = JSON.parse(data[i].showRawMsg);
+									if(tmpM.answers.length!=0){
+										for(let jj in tmpM.answers){
+											temp_mmsg+= ('<span>'+tmpM.answers[jj].text+' : [ '+tmpM.answers[jj].value+' ]</span><br/>');
+										}
 									}
+									if(tempdata[tmpM.utterance]){ temp_mmsg+=tempdata[tmpM.utterance]; }
+									else{ temp_mmsg+=tmpM.utterance; }
+
+								}catch(ex){
+									temp_mmsg=data[i].showRawMsg;
+									if(tempdata[temp_mmsg]){ temp_mmsg=tempdata[temp_mmsg]; }
 								}
-								if(tempdata[tmpM.utterance]){ temp_mmsg+=tempdata[tmpM.utterance]; }
-								else{ temp_mmsg+=tmpM.utterance; }
 
-							}catch(ex){
-								temp_mmsg=data[i].showRawMsg;
-								if(tempdata[temp_mmsg]){ temp_mmsg=tempdata[temp_mmsg]; }
+								tmp_table1+=''+
+									'<div class="chat_v bot '+cssSender+'">' +
+										'<div class="chat_b">' +
+//											'<p>' +username+':<br/>' +temp_mmsg +'<br/>'+data[i].timestamp+ '</p>'+
+											'<p>' +
+												'<span class="classUserHeader">'+
+													username+
+													'<small class="date">'+data[i].timestamp+'</small>'+
+												'</span>'+
+												temp_mmsg +
+											'</p>'+
+										'</div>'+
+									'</div>';
 							}
-
-							tmp_table1+=''+
-								'<div class="chat_v mine">' +
-									'<div class="chat_b" style="color: #fff;">' +
-										'<p>' +username+':<br/>' +temp_mmsg +'<br/>'+data[i].timestamp+ '</p>'+
-									'</div>'+
-								'</div>';
 						}
 						if(typeof data[i].feedback!=='undefined'){
 							tmp_table1+=''+
-								'<div class="chat_v mine" style="margin-top:-2px;">' +
-									'<div class="chat_b" style="color: #fff;">' +
-										'<p>feedback: '+data[i].feedback+'</p>'+
+//								'<div class="chat_v mine" style="margin-top:-2px;">' +
+//									'<div class="chat_b" style="color: #fff;">' +
+								//'<div class="chat_v bot" style="justify-content:flex-start">' +
+								//'<div class="chat_v bot '+cssSender+'" style="justify-content:flex-start">' +
+								'<div class="chat_v bot class_user">' +
+									//'<div class="chat_b" style="margin-top: -8px !important; border-radius: 0px 0px 8px 8px !important;">' +
+									'<div class="chat_b">' +
+										//'<p>' +username+ data[i].timestamp+ '</p>'+
+										'<span class="classUserHeader">'+
+											username+
+											'<small class="date">'+data[i].timestamp+'</small>'+
+										'</span>'+
+										'<p>feedback: ' +
+											(
+												(data[i].feedback==1)
+												? '<span class="fa fa-thumbs-o-up"></span>'
+												: '<span class="fa fa-thumbs-o-down"></span>'
+											)+
+										'</p>'+
+										'<p>'+ data[i].comment+ '</p>'+
 									'</div>'+
 								'</div>';
 						}
