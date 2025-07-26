@@ -595,3 +595,37 @@ padding: 2px 18px;
     background-color: #c0383d;
     border-color: #a43034;
 }
+
+ .select-loader-container {
+  position: relative;
+  display: inline-block;
+  width: 200px; /* Adjust as needed */
+}
+
+select.loading {
+  padding-right: 30px; /* Make space for loader */
+  opacity: 0.7;
+}
+
+.loader {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+  display: none;
+}
+
+select.loading + .loader {
+  display: block;
+}
+
+@keyframes spin {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}

@@ -30,9 +30,11 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
     <div class="panel-body">
         <div class="row" id="collection-wrapper">
             <div class="col-md-6 col-sm-12 d-flex align-items-center">
-                <div class="col-md-3"><label>Select Organization</label></div>
+                <div class="col-md-3">
+                    <label>Select Organization</label>
+                </div>
                 <div class="col-md-9">
-                    <select class="form-control" id="orgID">
+                    <select class="form-control" id="orgID" data-org-id="<?php echo $orgID; ?>">
                         <?php if ($orgID == 0):
                             $disabledSelect = "disabled";
                             ?>
@@ -53,7 +55,7 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
                         <?php else: ?>
                             <?php
                              $disabledSelect = "";
-                            $org = \App\Organization::orderBy("organizationShortName", 'asc')->find($orgID);                            ?>
+                            $org = \App\Organization::orderBy("organizationShortName", 'asc')->find($orgID);  ?>
                             <option value="<?= $org->organizationId; ?>" data-feedback='<?= $org->feedback; ?>'>
                                 <?= $org->organizationShortName; ?>
                             </option>
@@ -61,8 +63,9 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
                             ?>
                         <?php endif; ?>
                     </select>
+                    <div class="organization-help-text">Select your organization and then select storage type to start your input</div>
+                    <div class="help-text text-danger" id="org-error"></div>
                 </div>
-
             </div>
             <div class="col-md-6 col-sm-12 d-flex align-items-center">
                 <div class="col-md-3"><label>Select Storage Type</label></div>
@@ -70,13 +73,9 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
                     <select id="storage_type" <?php echo $disabledSelect; ?> name="storage_type" class="form-control">
                         <option value="">Select Type</option>
                     </select>
+                    <div class="help-text text-danger" id="storage-type-error"></div>
                 </div>
             </div>
-            <div class="col-md-6 col-sm-12 ">
-                <div class="col-md-3"></div>
-                <div class="col-md-9"><div class="organization-help-text">Select your organization and then select storage type to start your input</div>
-            </div>
-
             </div>
         </div>
     </div>
@@ -207,4 +206,4 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
         </div>
     </div>
 </div>
-<script src="<?php echo $base_url; ?>public/assets/js/manage-collection.js?v12" type="text/javascript"></script>
+<script src="<?php echo $base_url; ?>public/assets/js/manage-collection.js?v16" type="text/javascript"></script>

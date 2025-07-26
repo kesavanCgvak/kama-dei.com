@@ -192,7 +192,7 @@ use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\AuditLogController;
 
 Route::get('/drives', [ApiController::class, 'index'])->name('drives');
-Route::get('/get-system-source-types', [ApiController::class, 'getSystemSourceTypes'])->name('get-system-source-types');
+Route::post('/get-system-source-types', [ApiController::class, 'getSystemSourceTypes'])->name('get-system-source-types');
 Route::post('/getcollections', [ApiController::class, 'getCollections'])->name('getcollections');
 // Route::post('/getbucketitems', [ApiController::class, 'getBucketItems'])->name('getBucketItems');
 Route::post('/getbucketitems', [ApiController::class, 'getBucketItems'])->name('getBucketItems');

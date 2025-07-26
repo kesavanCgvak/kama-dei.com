@@ -6,7 +6,11 @@ $(function () {
     setupToastr();
     initChangevents();
     initClickEvents();
-    getSystemSourceTypes();
+    let $organizationId = $("#orgID");
+    if($organizationId.attr("data-org-id") == 1){
+        getSystemSourceTypes($organizationId.val());
+    }
+    // getSystemSourceTypes();
     $('#form-collection').on('keydown', function (event) {
         // Check if the Enter key (keyCode 13) is pressed
         if (event.keyCode === 13) {
@@ -31,24 +35,30 @@ function CustomeConfirm(options) {
     $.confirm($.extend({}, defaults, options));
 }
 
-function getSystemSourceTypes() {
+function getSystemSourceTypes(orgId) {
+    $("#storage-type-error").text('');
     $.ajax({
-        type: "GET",
+        type: "POST",
         url: "/get-system-source-types",
         dataType: 'json',
+        data: {
+            orgId: orgId
+        },
         beforeSend: function () {
             showLoader();
         },
         success: function (response) {
             hideLoader();
-            if (response.state === 'success') {
-                // Get the select element
-                let $storageTypeSelect = $('#storage_type');
-                //toggleStorageTypeDisable(false);
-                // Clear existing options except the first one
-                $storageTypeSelect.find('option:not(:first)').remove();
 
-                // Add new options from the response
+            //   if (response.state === 'success') {
+            // Get the select element
+            let $storageTypeSelect = $('#storage_type');
+            //toggleStorageTypeDisable(false);
+            // Clear existing options except the first one
+            $storageTypeSelect.find('option:not(:first)').remove();
+
+            // Add new options from the response
+            if (response.data.length > 0) {
                 response.data.forEach(function (item) {
                     $storageTypeSelect.append(
                         $('<option>', {
@@ -57,11 +67,17 @@ function getSystemSourceTypes() {
                         })
                     );
                 });
-
-                hideLoader();
-            } else {
-                throw new Error(response.message || "Unknown error occurred");
             }
+
+            hideLoader();
+            if(response.state ==='error'){
+                let errMsg = response.message || "Error loading storage types.";
+                toastr.error(errMsg);
+                $("#storage-type-error").text(errMsg);
+            }
+            // } else {
+            //  throw new Error(response.message || "Unknown error occurred");
+            // }
         },
         error: function (xhr, status, error) {
             hideLoader();
@@ -178,16 +194,21 @@ $(document).on("keyup", "#document-search", function (event) {
 });
 
 $(document).on('change', '#orgID', function (e) {
-    $("#storage_type").val('');
-    $("#cloud-storage").find('.collection-card-body .accordion-container').html('');
-    $("#documents-collection").find('.collection-card-body').html('');
-    let orgId = $(this).val();
-    if (orgId > 0) {
-        toggleStorageTypeDisable(false)
-    } else {
-        toggleStorageTypeDisable(true);
-    }
+    // cancelAllAjaxRequests();
     cancelAllAjaxRequests();
+
+        $("#storage_type").val('');
+        $("#cloud-storage").find('.collection-card-body .accordion-container').html('');
+        $("#documents-collection").find('.collection-card-body').html('');
+        let orgId = $(this).val();
+
+        getSystemSourceTypes(orgId)
+        if (orgId > 0) {
+            toggleStorageTypeDisable(false)
+        } else {
+            toggleStorageTypeDisable(true);
+        }
+
 });
 
 function toggleStorageTypeDisable(state) {
@@ -1235,7 +1256,7 @@ function getClouldCollection(storage_type, org_id) {
 
     // Create a deferred object for the entire operation
     let deferred = $.Deferred();
-
+    $("#storage-type-error").text();
     $.ajax({
         type: "post",
         url: "/getcollections",
@@ -1262,6 +1283,7 @@ function getClouldCollection(storage_type, org_id) {
                         });
                 } else if (responseData.state == 'error') {
                     toastr.error(responseData.message);
+                    $("#storage-type-error").text(responseData.message);
                     deferred.reject();
                 } else {
                     deferred.reject(); // Reject if the response state is not success
@@ -1784,7 +1806,7 @@ function getClouldBucketItems($clickedObject, bucketName) {
                 bucketName,
                 serviceprovider: $('#storage_type').val(),
             };
-
+            $("#storage-type-error").text('');
             $.ajax({
                 type: "post",
                 url: "/getbucketitems",

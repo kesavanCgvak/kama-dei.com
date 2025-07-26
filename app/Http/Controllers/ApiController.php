@@ -26,7 +26,8 @@ class ApiController extends Controller
     {
         $userKey = \App\UserKey::where('user_id', session()->get('userID'))->first();
         //return $userKey->getAttribute('userKey');
-        return '9c28108c9583cd11e5de14350496566e';
+        //return 'f40a318be8999b1959cb2f788ea37388';
+        return 'f40a318be8999b1959cb2f788ea37388';
     }
 
     public function manageCollection()
@@ -548,16 +549,19 @@ class ApiController extends Controller
         }
     }
 
-    public function getSystemSourceTypes()
+    public function getSystemSourceTypes(Request $request)
     {
         $headers = [
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
             'userkey' => $this->getUserKey(),
         ];
-
+        $orgId = $request->orgId;
+         $body = [
+            'org' =>  $orgId
+        ];
         $end_point = '/get_system_source_types/v1';
-        $response = Http::withHeaders($headers)->asForm()->post(env('API_BASE_URL') . $end_point);
+        $response = Http::withHeaders($headers)->asForm()->post(env('API_BASE_URL') . $end_point, $body);
         $message = '';
         $state = 'success';
         $data = [];
