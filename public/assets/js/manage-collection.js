@@ -7,7 +7,7 @@ $(function () {
     initChangevents();
     initClickEvents();
     let $organizationId = $("#orgID");
-    if($organizationId.attr("data-org-id") == 1){
+    if($organizationId.attr("data-org-id") > 0){
         getSystemSourceTypes($organizationId.val());
     }
     // getSystemSourceTypes();
@@ -167,7 +167,12 @@ function initClickEvents() {
         getClouldBucketItems($(this).closest('.accordion-item'), $(this).closest('.accordion-item').attr('data-bucket-name'));
     });
 
+    $(document).on("click", "#refresh-collection", function (event) {
+        event.preventDefault();
+        syncCloudCollection($("#orgID").val(), $("#storage_type").val());
+    });
 }
+
 
 $(document).on("keyup", "#search-cloud-storage", function (event) {
     event.preventDefault();
@@ -308,7 +313,37 @@ $(document).on("click", ".delete-collection", function (event) {
 
 });
 
-
+function syncCloudCollection(org_id) {
+    $.ajax({
+        type: "POST",
+        url: "/syncPublishedCollections",
+        data: {
+            org_id: org_id
+        },
+        dataType: 'json',
+        beforeSend: function () {
+            showLoader();
+        },
+        success: function (response) {
+            if (response.status === 'success') {
+                hideLoader();
+                toastr.success(response.message || "Cloud collection synced successfully.");
+                $("#documents-collection").find('.collection-card-body').html('');
+                getLocalCollections($("#storage_type").val(), org_id);
+            } else {
+                throw new Error(response.message || "Unknown error occurred");
+            }
+        },
+        error: function (xhr, status, error) {
+            hideLoader();
+            console.error('AJAX Error:', status, error);
+            toastr.error(xhr.responseJSON?.message || "Error on syncing cloud collection.");
+        },
+        complete: function () {
+            hideLoader();
+        }
+    });
+}
 function deleteCloudCollection(collection_name, org_id, storage_type, collection_id) {
     $.ajax({
         type: "POST",
@@ -1149,6 +1184,7 @@ function toggleFolder(folderId, event) {
 
 function initChangevents() {
     let $newCollection = $("#new-collecion");
+    let $refreshCollection = $("#refresh-collection");
     $(document).on("change", "#storage_type", function () {
         cancelAllAjaxRequests();
         let storage_type = $(this).val();
@@ -1162,9 +1198,11 @@ function initChangevents() {
         }
         if (storage_type === '') {
             $newCollection.attr("disabled", "disabled");
+            $refreshCollection.attr("disabled", "disabled");
             return;
         }
         $newCollection.removeAttr("disabled");
+        $refreshCollection.removeAttr("disabled");
 
         // Wait for getClouldCollection to complete before calling getLocalCollections
         getClouldCollection(storage_type, orgID).then(function () {
@@ -1311,6 +1349,7 @@ function getClouldCollection(storage_type, org_id) {
 
 function initChangevents() {
     let $newCollection = $("#new-collecion");
+    let $refreshCollection = $("#refresh-collection");
     $(document).on("change", "#storage_type", function () {
         cancelAllAjaxRequests();
         let storage_type = $(this).val();
@@ -1323,9 +1362,11 @@ function initChangevents() {
         }
         if (storage_type === '') {
             $newCollection.attr("disabled", "disabled");
+            $refreshCollection.attr("disabled", "disabled");
             return;
         }
         $newCollection.removeAttr("disabled");
+        $refreshCollection.removeAttr("disabled");
 
         // Wait for getClouldCollection to complete before calling getLocalCollections
         getClouldCollection(storage_type, orgID).then(function () {

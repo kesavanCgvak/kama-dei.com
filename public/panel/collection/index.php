@@ -24,7 +24,6 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
         </div>
     </div>
 </div>
-
 <div class="panel">
         <?php $disabledSelect = "disabled"; ?>
     <div class="panel-body">
@@ -104,6 +103,7 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
             <div class="card-header card-header-documents">
                 <h2>Collections</h2>
                 <div class="document-action">
+                    <button class="btn btn-xs btn-primary" style="padding: 0px 10px; font-size: large;" disabled id="refresh-collection"><i class="fa fa-refresh" aria-hidden="true"></i></button>
                     <button class="btn btn-xs btn-primary" disabled id="new-collecion">Add</button>
                     <div class="input-group">
                         <input type="text" class="form-control" id="document-search" placeholder="Search">
@@ -206,4 +206,4 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
         </div>
     </div>
 </div>
-<script src="<?php echo $base_url; ?>public/assets/js/manage-collection.js?v16" type="text/javascript"></script>
+<script src="<?php echo $base_url; ?>public/assets/js/manage-collection.js?v18" type="text/javascript"></script>

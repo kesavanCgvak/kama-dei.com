@@ -629,3 +629,6 @@ select.loading + .loader {
   0% { transform: translateY(-50%) rotate(0deg); }
   100% { transform: translateY(-50%) rotate(360deg); }
 }
+#refresh-collection{
+    padding: 0px 10px;
+}

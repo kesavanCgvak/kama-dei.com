@@ -196,6 +196,7 @@ Route::post('/get-system-source-types', [ApiController::class, 'getSystemSourceT
 Route::post('/getcollections', [ApiController::class, 'getCollections'])->name('getcollections');
 // Route::post('/getbucketitems', [ApiController::class, 'getBucketItems'])->name('getBucketItems');
 Route::post('/getbucketitems', [ApiController::class, 'getBucketItems'])->name('getBucketItems');
+Route::post('/syncPublishedCollections', [ApiController::class, 'syncPublishedCollections'])->name('syncPublishedCollections');
 Route::post('/getLocalCollections', [CollectionController::class, 'getLocalCollections'])->name('getLocalCollections');
 Route::get('/getLocalBucketItems', [ApiController::class, 'getLocalBucketItems'])->name('getLocalBucketItems');
 Route::post('/storeLocalIems', [CollectionController::class, 'storeLocalIems'])->name('storeLocalIems');

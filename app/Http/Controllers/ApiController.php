@@ -10,6 +10,7 @@ use App\Models\CollectionData;
 use Carbon\Carbon;
 use App\Traits\AuditLoggable;
 use PhpParser\Node\Expr\FuncCall;
+use Illuminate\Support\Facades\DB;
 
 class ApiController extends Controller
 {
@@ -27,7 +28,7 @@ class ApiController extends Controller
         $userKey = \App\UserKey::where('user_id', session()->get('userID'))->first();
         //return $userKey->getAttribute('userKey');
         //return 'f40a318be8999b1959cb2f788ea37388';
-        return 'f40a318be8999b1959cb2f788ea37388';
+        return '19a5b5a6c93db9cc58a176e309980044';
     }
 
     public function manageCollection()
@@ -613,5 +614,366 @@ class ApiController extends Controller
         }
 
         return $grouped;
+    }
+
+
+
+    /**
+     * Sync published collections from API and update database
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function syncPublishedCollections(Request $request)
+    {
+        try {
+            // Get organization ID and storage type from request
+            $orgId = $request->input('org_id');
+
+            // Fetch data from API
+            $apiData = $this->fetchPublishedCollectionsFromAPI($orgId);
+            if (empty($apiData)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'No published collections found or API error'
+                ], 404);
+            }
+
+            $syncStats = [
+                'collections_processed' => 0,
+                'collections_created' => 0,
+                'collections_updated' => 0,
+                'files_processed' => 0,
+                'files_created' => 0,
+                'files_updated' => 0
+            ];
+
+            // Use database transaction for data consistency
+            DB::transaction(function () use ($apiData, &$syncStats) {
+                foreach ($apiData as $organizationId => $collections) {
+                    $this->processOrganizationCollections($organizationId, $collections, $syncStats);
+                }
+            });
+
+            // $this->logAudit(
+            //     actionName: 'SYNC_PUBLISHED_COLLECTIONS',
+            //     oldData: null,
+            //     newData: null,
+            //     action_description: "Synchronized published collections - Processed: {$syncStats['collections_processed']} collections, {$syncStats['files_processed']} files",
+            //     actionType: 'SYNC'
+            // );
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Published collections synchronized successfully',
+                'stats' => $syncStats
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error synchronizing published collections: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Fetch published collections data from external API
+     *
+     * @param int $orgId
+     * @param string $storageType
+     * @return array
+     */
+    private function fetchPublishedCollectionsFromAPI($orgId)
+    {
+        try {
+            $headers = [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'userkey' => $this->getUserKey(),
+            ];
+
+            $body = [
+                'org' => $orgId
+            ];
+
+            $response = Http::withHeaders($headers)
+                ->timeout(60)
+                ->post(env('API_BASE_URL') . '/list_collections_of_org/v1', $body);
+
+            if ($response->successful()) {
+                return $response->json();
+            } else {
+                throw new \Exception('API request failed with status: ' . $response->status());
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to fetch published collections from API: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Process collections for a single organization efficiently
+     *
+     * @param int $organizationId
+     * @param array $collections
+     * @param array &$syncStats
+     */
+    private function processOrganizationCollections($organizationId, $collections, &$syncStats)
+    {
+        // Batch fetch existing collections to avoid N+1 queries
+        $collectionNames = array_column($collections, 'collection_name');
+        $existingCollections = Collection::where('organization_id', $organizationId)
+            ->whereIn('collection_name', $collectionNames)
+            ->get()
+            ->keyBy(function ($collection) {
+                return $collection->storage_type . '_' . $collection->collection_name;
+            });
+
+        $collectionsToCreate = [];
+        $collectionsToUpdate = [];
+        $allFilesToProcess = [];
+
+        foreach ($collections as $collectionData) {
+            $syncStats['collections_processed']++;
+
+            $collectionName = $collectionData['collection_name'];
+            $storageType = $this->determineStorageType($collectionData);
+            $key = $storageType . '_' . $collectionName;
+
+            if (isset($existingCollections[$key])) {
+                // Prepare for batch update
+                $collectionsToUpdate[] = [
+                    'id' => $existingCollections[$key]->id,
+                    'is_cloud_collection' => 1,
+                    'updated_at' => now()
+                ];
+                $syncStats['collections_updated']++;
+                $collectionId = $existingCollections[$key]->id;
+            } else {
+                // Prepare for batch insert
+                $newCollection = [
+                    'organization_id' => $organizationId,
+                    'storage_type' => $storageType,
+                    'collection_name' => $collectionName,
+                    'published_collection_name' => $collectionName,
+                    'is_synced' => 1,
+                    'is_cloud_collection' => 1,
+                    'created_at' => $collectionData['collectionCreatedDate'],
+                    'updated_at' => now()
+                ];
+                $collectionsToCreate[] = $newCollection;
+                $syncStats['collections_created']++;
+                $collectionId = null; // Will be set after batch insert
+            }
+
+            // Prepare files for processing
+            if (isset($collectionData['files']) && is_array($collectionData['files'])) {
+                $allFilesToProcess[] = [
+                    'collection_key' => $key,
+                    'collection_id' => $collectionId,
+                    'files' => $collectionData['files']
+                ];
+            }
+        }
+
+        // Batch create collections
+        if (!empty($collectionsToCreate)) {
+            Collection::insert($collectionsToCreate);
+
+            // Get the newly created collection IDs
+            $newCollections = Collection::where('organization_id', $organizationId)
+                ->whereIn('collection_name', array_column($collectionsToCreate, 'collection_name'))
+                ->get()
+                ->keyBy(function ($collection) {
+                    return $collection->storage_type . '_' . $collection->collection_name;
+                });
+
+            // Update collection IDs for file processing
+            foreach ($allFilesToProcess as &$fileGroup) {
+                if (is_null($fileGroup['collection_id']) && isset($newCollections[$fileGroup['collection_key']])) {
+                    $fileGroup['collection_id'] = $newCollections[$fileGroup['collection_key']]->id;
+                }
+            }
+        }
+
+        // Batch update collections
+        if (!empty($collectionsToUpdate)) {
+            foreach ($collectionsToUpdate as $updateData) {
+                Collection::where('id', $updateData['id'])->update($updateData);
+            }
+        }
+
+        // Process all files in batches
+        $this->processBatchFiles($allFilesToProcess, $syncStats);
+    }
+
+    /**
+     * Process files in batches for better performance
+     *
+     * @param array $allFilesToProcess
+     * @param array &$syncStats
+     */
+    private function processBatchFiles($allFilesToProcess, &$syncStats)
+    {
+        $filesToCreate = [];
+        $filesToUpdate = [];
+
+        foreach ($allFilesToProcess as $fileGroup) {
+            if (is_null($fileGroup['collection_id'])) continue;
+
+            $collectionId = $fileGroup['collection_id'];
+            $files = $fileGroup['files'];
+
+            // Get existing files for this collection
+            $existingFiles = CollectionData::where('collection_id', $collectionId)
+                ->get()
+                ->keyBy(function ($file) {
+                    return $file->file_name . '_' . $file->bucket_sp_site_name;
+                });
+
+            foreach ($files as $fileData) {
+                $syncStats['files_processed']++;
+
+                $file = $fileData['file'];
+                $fileName = $file['name'];
+                $fileSize = $file['size'];
+                $lastModified = $file['collectionUsedFileDate'];
+                $bucketSiteName = $this->getBucketSiteName($fileData);
+                $fileKey = $fileName . '_' . $bucketSiteName;
+
+                if (isset($existingFiles[$fileKey])) {
+                    // Prepare for update
+                    $filesToUpdate[] = [
+                        'id' => $existingFiles[$fileKey]->id,
+                        'size' => $fileSize,
+                        'last_modified' => $lastModified,
+                        'updated_at' => now()
+                    ];
+                    $syncStats['files_updated']++;
+                } else {
+                    // Prepare for insert
+                    $sanitizedFileName = $this->sanitizeFileName($fileName);
+                    $sanitizedBucketName = $this->sanitizeFileName($bucketSiteName ?? '');
+                    $filesToCreate[] = [
+                        'collection_id' => $collectionId,
+                        'file_name' => $fileName,
+                        'size' => $fileSize,
+                        'bucket_sp_site_name' => $bucketSiteName,
+                        'file_id' =>  $sanitizedBucketName. '-' . $sanitizedFileName,
+                        'last_modified' => $lastModified,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                    $syncStats['files_created']++;
+                }
+            }
+        }
+
+        // Batch insert files (in chunks to avoid memory issues)
+        if (!empty($filesToCreate)) {
+            $chunks = array_chunk($filesToCreate, 500); // Process 500 files at a time
+            foreach ($chunks as $chunk) {
+                CollectionData::insert($chunk);
+            }
+        }
+
+        // Batch update files
+        if (!empty($filesToUpdate)) {
+            foreach ($filesToUpdate as $updateData) {
+                CollectionData::where('id', $updateData['id'])->update($updateData);
+            }
+        }
+    }
+
+    /**
+     * Determine storage type from collection data
+     *
+     * @param array $collectionData
+     * @return string
+     */
+    private function determineStorageType($collectionData)
+    {
+        if (empty($collectionData['files'])) {
+            return 'S3'; // Default fallback
+        }
+
+        $firstFile = $collectionData['files'][0];
+
+        if (isset($firstFile['bucket'])) {
+            return 'S3';
+        } elseif (isset($firstFile['sharepoint_site'])) {
+            return 'SharePoint';
+        } elseif (isset($firstFile['vault'])) {
+            return 'MFiles';
+        }
+
+        return 'S3'; // Default fallback
+    }
+
+    /**
+     * Get bucket or site name from file data
+     *
+     * @param array $fileData
+     * @return string|null
+     */
+    private function getBucketSiteName($fileData)
+    {
+        if (isset($fileData['bucket'])) {
+            return $fileData['bucket'];
+        } elseif (isset($fileData['sharepoint_site'])) {
+            return $fileData['sharepoint_site'];
+        } elseif (isset($fileData['vault'])) {
+            return $fileData['vault'];
+        }
+
+        return null;
+    }
+
+    /**
+     * Sanitize filename by replacing non-alphanumeric characters with dashes
+     *
+     * @param string $fileName
+     * @return string
+     */
+    private function sanitizeFileName($fileName)
+    {
+        // Replace non-alphanumeric characters with dashes
+        $sanitized = preg_replace('/[^a-zA-Z0-9\-_]+/', '-', $fileName);
+
+        // Remove consecutive dashes and trim dashes from the beginning and end
+        $sanitized = preg_replace('/-+/', '-', $sanitized);
+        $sanitized = strtolower(trim($sanitized, '-'));
+
+        return $sanitized;
+    }
+    public function getCollectionDetails(Request $request)
+    {
+        $collection = Collection::find($request->collection_id);
+        if (!$collection) {
+            return response()->json(['error' => 'Collection not found'], 404);
+        }
+
+        $files = CollectionData::where('collection_id', $request->collection_id)->get();
+        $formattedFiles = $files->map(function ($file) {
+            return [
+                'id' => $file->id,
+                'file_name' => $file->file_name,
+                'size' => $this->convertFileSize($file->size),
+                'last_modified' => Carbon::parse($file->last_modified)->format('Y-m-d H:i:s'),
+                'bucket_sp_site_name' => $file->bucket_sp_site_name,
+            ];
+        });
+
+        return response()->json([
+            'collection' => [
+                'id' => $collection->id,
+                'name' => $collection->collection_name,
+                'created_at' => Carbon::parse($collection->created_at)->format('Y-m-d H:i:s'),
+                'storage_type' => $collection->storage_type,
+            ],
+            'files' => $formattedFiles
+        ]);
     }
 }
