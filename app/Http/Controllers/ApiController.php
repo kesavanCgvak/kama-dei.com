@@ -17,7 +17,7 @@ class ApiController extends Controller
 
     use FileSizeConverter;
     use AuditLoggable;
-
+    public const int TIME_OUT = 120;
     public function index()
     {
         return view('directory');
@@ -28,7 +28,7 @@ class ApiController extends Controller
         $userKey = \App\UserKey::where('user_id', session()->get('userID'))->first();
         //return $userKey->getAttribute('userKey');
         //return 'f40a318be8999b1959cb2f788ea37388';
-        return '19a5b5a6c93db9cc58a176e309980044';
+        return '65ebad1d278b1f961429c38d58fa0eaf';
     }
 
     public function manageCollection()
@@ -45,7 +45,10 @@ class ApiController extends Controller
         // logger('Headers:', $headers);
         // logger('Body:', $body);
 
-        $response = Http::withHeaders($headers)->asForm()->post(env('API_BASE_URL') . '/enterprise_list_all_buckets_in_s3/v1', $body);
+        $response = Http::withHeaders($headers)
+        ->asForm()
+        ->timeout(self::TIME_OUT)
+        ->post(env('API_BASE_URL') . '/enterprise_list_all_buckets_in_s3/v1', $body);
         if ($response->successful()) {
             $buckets = $response->json();
             $data = $buckets['res'];
@@ -70,7 +73,10 @@ class ApiController extends Controller
         ];
         // logger('Headers:', $headers);
         // logger('Body:', $body);
-        $response = Http::withHeaders($headers)->asForm()->post(env('API_BASE_URL') . '/enterprise_list_all_buckets_in_s3/v1', $body);
+        $response = Http::withHeaders($headers)
+            ->asForm()
+            ->timeout(self::TIME_OUT)
+            ->post(env('API_BASE_URL') . '/enterprise_list_all_buckets_in_s3/v1', $body);
         if ($response->successful()) {
             $buckets = $response->json();
             $data = $buckets['res'];
@@ -98,7 +104,10 @@ class ApiController extends Controller
         // logger('Headers:', $headers);
         // logger('Body:', $body);
 
-        $response = Http::withHeaders($headers)->asForm()->post(env('API_BASE_URL') . '/enterprise_list_all_objs_in_s3/v1', $body);
+        $response = Http::withHeaders($headers)
+            ->asForm()
+            ->timeout(self::TIME_OUT)
+            ->post(env('API_BASE_URL') . '/enterprise_list_all_objs_in_s3/v1', $body);
         if ($response->successful()) {
             $list_objects = $response->json();
             $data = $list_objects['res'];
@@ -125,6 +134,7 @@ class ApiController extends Controller
         // Use JSON payload instead of `asForm`
         $response = Http::withHeaders($headers)
             ->asForm()
+            ->timeout(self::TIME_OUT)
             ->post(env('API_BASE_URL') . $end_point, $body);
 
         $body['end_point'] = $end_point;
@@ -172,7 +182,10 @@ class ApiController extends Controller
             $actionName = 'LIST_BUCKETS';
         }
 
-        $response = Http::withHeaders($headers)->asForm()->post(env('API_BASE_URL') . $end_point, $body);
+        $response = Http::withHeaders($headers)
+            ->asForm()
+            ->timeout(self::TIME_OUT)
+            ->post(env('API_BASE_URL') . $end_point, $body);
 
         $body['end_point'] = $end_point;
 
@@ -263,6 +276,7 @@ class ApiController extends Controller
             // Make the API request
             $response = Http::withHeaders($headers)
                 ->asForm()
+                ->timeout(self::TIME_OUT)
                 ->post(env('API_BASE_URL') . $end_point, $body);
 
 
@@ -340,7 +354,10 @@ class ApiController extends Controller
             'org' => 1
         ];
         $end_point = '/enterprise_list_all_buckets_in_s3/v1';
-        $response = Http::withHeaders($headers)->asForm()->post(env('API_BASE_URL') . $end_point, $body);
+        $response = Http::withHeaders($headers)
+            ->asForm()
+            ->timeout(self::TIME_OUT)
+            ->post(env('API_BASE_URL') . $end_point, $body);
         return response()->json($response->json());
         if ($response->json() === null) {
             return response()->json(['message' => 'No data recived from api'], status: 500);
@@ -375,6 +392,7 @@ class ApiController extends Controller
 
             $response = Http::withHeaders($headers)
                 ->asForm()
+                ->timeout(self::TIME_OUT)
                 ->post(env('API_BASE_URL') . $end_point, $body);
 
             if ($response->successful() && $response->body() != 'null' && $response->status() == 200) {
@@ -431,6 +449,7 @@ class ApiController extends Controller
             ];
             $response = Http::withHeaders($headers)
                 ->asForm()
+                ->timeout(self::TIME_OUT)
                 ->post(env('API_BASE_URL') . $end_point, $body);
 
             $statusCode = $response->status();
@@ -505,7 +524,10 @@ class ApiController extends Controller
 
     public function deleteCloudeClollection($headers,  $body, $end_point)
     {
-        return Http::withHeaders($headers)->asForm()->post(env('API_BASE_URL') . $end_point, $body);
+        return Http::withHeaders($headers)
+            ->asForm()
+            ->timeout(self::TIME_OUT)
+            ->post(env('API_BASE_URL') . $end_point, $body);
     }
 
 
@@ -562,7 +584,10 @@ class ApiController extends Controller
             'org' =>  $orgId
         ];
         $end_point = '/get_system_source_types/v1';
-        $response = Http::withHeaders($headers)->asForm()->post(env('API_BASE_URL') . $end_point, $body);
+        $response = Http::withHeaders($headers)
+            ->asForm()
+            ->timeout(self::TIME_OUT)
+            ->post(env('API_BASE_URL') . $end_point, $body);
         $message = '';
         $state = 'success';
         $data = [];
