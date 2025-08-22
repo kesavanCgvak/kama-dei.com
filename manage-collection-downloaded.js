@@ -10,7 +10,7 @@ $(function () {
     if($organizationId.attr("data-org-id") > 0){
         getSystemSourceTypes($organizationId.val());
     }
-    // getSystemSourceTypes();
+    
     $('#form-collection').on('keydown', function (event) {
         // Check if the Enter key (keyCode 13) is pressed
         if (event.keyCode === 13) {
@@ -19,7 +19,7 @@ $(function () {
     });
 });
 
-function CustomeConfirm(options) {
+function customeConfirm(options) {
     const defaults = {
         title: false,
         boxWidth: '300px',
@@ -36,7 +36,7 @@ function CustomeConfirm(options) {
 }
 
 function getSystemSourceTypes(orgId) {
-    $("#storage-type-error").text('');
+     $("#storage-type-error").text('');
     $.ajax({
         type: "POST",
         url: "/get-system-source-types",
@@ -68,15 +68,13 @@ function getSystemSourceTypes(orgId) {
                     );
                 });
             }
-
+            
             hideLoader();
             if(response.state ==='error'){
                 let errMsg = response.message || "Error loading storage types.";
+                //toastr.error(errMsg);
                 $("#storage-type-error").text(errMsg);
-            }
-            // } else {
-            //  throw new Error(response.message || "Unknown error occurred");
-            // }
+            }            
         },
         error: function (xhr, status, error) {
             hideLoader();
@@ -166,12 +164,11 @@ function initClickEvents() {
         getClouldBucketItems($(this).closest('.accordion-item'), $(this).closest('.accordion-item').attr('data-bucket-name'));
     });
 
-    $(document).on("click", "#refresh-collection", function (event) {
+  $(document).on("click", "#refresh-collection", function (event) {
         event.preventDefault();
         syncCloudCollection($("#orgID").val(), $("#storage_type").val());
     });
 }
-
 
 $(document).on("keyup", "#search-cloud-storage", function (event) {
     event.preventDefault();
@@ -198,9 +195,8 @@ $(document).on("keyup", "#document-search", function (event) {
 });
 
 $(document).on('change', '#orgID', function (e) {
-    // cancelAllAjaxRequests();
+    
     cancelAllAjaxRequests();
-
         $("#storage_type").val('');
         $("#cloud-storage").find('.collection-card-body .accordion-container').html('');
         $("#documents-collection").find('.collection-card-body').html('');
@@ -212,7 +208,6 @@ $(document).on('change', '#orgID', function (e) {
         } else {
             toggleStorageTypeDisable(true);
         }
-
 });
 
 function toggleStorageTypeDisable(state) {
@@ -229,51 +224,60 @@ $(document).on("click", ".file-delete", function () {
     let $accordionItem = $selectedItem.closest('.accordion-item');
     let collectionFileId = $(this).closest('li').attr('data-details-id');
     let elementIdentifier = $(this).closest('li').attr('data-file-id');
-    let confirmation = confirm('Are you sure you want to delete this file?');
+    let confirmationMsg = 'Do you want to remove this file from the Collection?';
 
-    if (!confirmation) {
-        return false;
-    }
+    customeConfirm({
+        content: confirmationMsg,
+        buttons: {
+            no: {
+                text: 'No', btnClass: 'btn-no', action: function () {
+                    return true; // Do nothing on "No"
+                }
+            },
+            yes: {
+                text: 'Yes', btnClass: 'btn-yes', action: function () {
+                    let collectionName = $(this).closest(".accordion-item").find(".accordion-header").data("collection");
+                    let data = { id: collectionFileId, collectionName: collectionName };
+                    $selectedItem.addClass('delete-item');
+                    $.ajax({
+                        type: "POST",
+                        url: "/deleteLocalFile",
+                        data: data,
+                        dataType: 'json',
+                        beforeSend: function () {
+                            showLoader();
+                        },
+                        success: function (response) {
+                            if (response.status === 'success') {
+                                hideLoader();
+                                toastr.success(response.message || "File deleted successfully.");
+                                $selectedItem.remove();
+                                updateUnPublishedStatus($accordionItem);
+                                checkPublishStatus($accordionItem);
+                                $(`#cloud-storage .accordion-content li[data-file-id="${elementIdentifier}"]`).removeClass('file-selected');
+                                setTimeout(function () {
+                                    initSortable();
+                                    updateFileNotexist(); // Update file existence status
+                                }, 200);
+                                setTimeout(function () { getFileDifferences(); }, 500);
 
-    let collectionName = $(this).closest(".accordion-item").find(".accordion-header").data("collection");
-    let data = { id: collectionFileId, collectionName: collectionName };
-    $selectedItem.addClass('delete-item');
-    $.ajax({
-        type: "POST",
-        url: "/deleteLocalFile",
-        data: data,
-        dataType: 'json',
-        beforeSend: function () {
-            showLoader();
-        },
-        success: function (response) {
-            if (response.status === 'success') {
-                hideLoader();
-                toastr.success(response.message || "File deleted successfully.");
-                $selectedItem.remove();
-                updateUnPublishedStatus($accordionItem);
-                checkPublishStatus($accordionItem);
-                $(`#cloud-storage .accordion-content li[data-file-id="${elementIdentifier}"]`).removeClass('file-selected');
-                setTimeout(function () {
-                    initSortable();
-                    updateFileNotexist(); // Update file existence status
-                }, 200);
-                setTimeout(function () { getFileDifferences(); }, 500);
-
-            } else {
-                throw new Error(response.message || "Unknown error occurred");
+                            } else {
+                                throw new Error(response.message || "Unknown error occurred");
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            hideLoader();
+                            console.error('AJAX Error:', status, error);
+                            toastr.error(xhr.responseJSON?.message || "Error on deleting file.");
+                        },
+                        complete: function () {
+                            hideLoader();
+                        }
+                    });
+                }
             }
-        },
-        error: function (xhr, status, error) {
-            hideLoader();
-            console.error('AJAX Error:', status, error);
-            toastr.error(xhr.responseJSON?.message || "Error on deleting file.");
-        },
-        complete: function () {
-            hideLoader();
         }
     });
-
 });
 
 $(document).on("click", ".delete-collection", function (event) {
@@ -286,12 +290,9 @@ $(document).on("click", ".delete-collection", function (event) {
     let org_id = $('#orgID').val();
     let storage_type = $('#storage_type').val();
     let collection_id = originalItem.attr('data-id');
-    // let consfirmation = confirm('Are you sure you want to delete this collection?');
-    // if (!consfirmation) {
-    //     return false;
-    // }
-    CustomeConfirm({
-        content: 'Do you want to remove this file from the Collection?',
+
+    customeConfirm({
+        content: 'Do you want to remove this Collection?',
         buttons: {
             no: {
                 text: 'No', btnClass: 'btn-no', action: function () {
@@ -300,17 +301,15 @@ $(document).on("click", ".delete-collection", function (event) {
             },
             yes: {
                 text: 'Yes', btnClass: 'btn-yes', action: function () {
-                    originalItem.remove();
                     if (is_cloud_collection == 1) {
                         deleteCloudCollection(collection_name, org_id, storage_type, collection_id);
-                        return;
                     }
+                    originalItem.remove();
                     deleteLocalCollection(collection_id);
                 }
             }
         }
     });
-
 });
 
 function syncCloudCollection(org_id) {
@@ -344,6 +343,7 @@ function syncCloudCollection(org_id) {
         }
     });
 }
+
 function deleteCloudCollection(collection_name, org_id, storage_type, collection_id) {
     $.ajax({
         type: "POST",
@@ -351,8 +351,7 @@ function deleteCloudCollection(collection_name, org_id, storage_type, collection
         data: {
             collection_name: collection_name,
             org_id: org_id,
-            storage_type: storage_type,
-            collection_id: collection_id
+            storage_type: storage_type
         },
         dataType: 'json',
         beforeSend: function () {
@@ -785,7 +784,6 @@ function getFileDifferences(clearFileSelection = false) {
             let localFileDate = localFile.attr("data-last-modified");
             let cloudFileDate = $(this).attr("data-last-modified");
             // Compare the file dates
-
             if (cloudFileDate != localFileDate) {
                 cloudFile.attr('title', 'This file seems outdated in local collection. Please sync by clicking the sync icon.');
                 cloudFile.find('.list-action').html(`<i class="fa fa-refresh cursor-pointer sync-file"></i>`);
@@ -923,13 +921,10 @@ function renameCollection() {
         },
         success: function (response) {
             hideLoader();
-
             if (response.status === 'success') {
+                toastr.success("Collection renamed successfully.");
                 $("#documents-collection").find(`#section-${collecionItemId}`)
                     .attr('data-collection-name', collectionName).attr('data-collection-description', collectionDescription);
-                toastr.success("Collection renamed successfully.");
-                if($('#collection-name').val().trim() !== $('#previous-name').val().trim()){
-
                 $("#documents-collection")
                     .find(`#section-${collecionItemId}`)
                     .addClass('not-published')
@@ -943,11 +938,9 @@ function renameCollection() {
                     .find(`#section-${collecionItemId}`).addClass('not-published');
                 $("#documents-collection")
                     .find(`#section-${collecionItemId}`).find('.submenu .copy-collection').attr("disabled", "disabled").addClass('btn-disabled');
-
                 initSortable();
                 closeModel($('#create-collection'))
             }
-        }
         },
         error: function (xhr, status, error) {
             hideLoader();
@@ -1093,10 +1086,25 @@ function checkDuplicateCollection(collection_name, storage_type, collection_id, 
             hideLoader();
             let data = response.data;
             if (data !== null && collection_id !== null) {
-                let consfirmation = confirm('A Collection already exists with this name. If you proceed, the Collection will be overwritten and document assignments will be removed.');
-                if (consfirmation) {
-                    callback(true);
-                }
+                //let consfirmationMessage = 'A Collection already exists with this name. If you proceed, the Collection will be overwritten and document assignments will be removed.';
+                // if (consfirmation) {
+                //     callback(true);
+                // }
+                customeConfirm({
+                    content: consfirmationMessage,
+                    buttons: {
+                        no: {
+                            text: 'No', btnClass: 'btn-no', action: function () {
+                                return true; // Do nothing on "No"
+                            }
+                        },
+                        yes: {
+                            text: 'Yes', btnClass: 'btn-yes', action: function () {
+                                callback(true);
+                            }
+                        }
+                    }
+                });
                 return;
             }
             if (data !== null && collection_id === null) {
@@ -1210,7 +1218,6 @@ function initChangevents() {
         }
         $newCollection.removeAttr("disabled");
         $refreshCollection.removeAttr("disabled");
-
         // Wait for getClouldCollection to complete before calling getLocalCollections
         getClouldCollection(storage_type, orgID).then(function () {
             getLocalCollections(storage_type, orgID);
@@ -1301,8 +1308,7 @@ function getClouldCollection(storage_type, org_id) {
 
     // Create a deferred object for the entire operation
     let deferred = $.Deferred();
-    $("#storage-type-error").text();
-    $("#storage-type-error").text();
+ $("#storage-type-error").text();
     $.ajax({
         type: "post",
         url: "/getcollections",
@@ -1328,22 +1334,22 @@ function getClouldCollection(storage_type, org_id) {
                             deferred.reject();
                         });
                 } else if (responseData.state == 'error') {
-
-                    $("#storage-type-error").text(responseData.message);
+                     $("#storage-type-error").text(responseData.message);
+                    //toastr.error(responseData.message);
                     deferred.reject();
                 } else {
                     deferred.reject(); // Reject if the response state is not success
                 }
             } catch (e) {
                 conasole.error(e.message);
-                toastr.error("Failed to process response data.");
+               // toastr.error("Failed to process response data.");
                 deferred.reject();
             }
         },
         error: function (xhr, status, error, message) {
             hideLoader();
             $("#cloud_bucket_section").html('');
-              $("#cloud_bucket_section").html('');
+           // toastr.error("No data received from API.");
             deferred.reject();
         },
         complete: function () {
@@ -1375,7 +1381,6 @@ function initChangevents() {
         }
         $newCollection.removeAttr("disabled");
         $refreshCollection.removeAttr("disabled");
-
         // Wait for getClouldCollection to complete before calling getLocalCollections
         getClouldCollection(storage_type, orgID).then(function () {
             getLocalCollections(storage_type, orgID);
@@ -1564,13 +1569,7 @@ function createLocalAccordionItem(data) {
         disablePublishClass = "publish-collection";
     }
 
-    // $contextMenu = `<ul>
-    //     <li><button class="btn-context-menu rename-collection">Rename</button></li>
-    //     <li><button class="btn-context-menu edit-collection-note">Edit Collection Note</button></li>
-    //     <li><button class="btn-context-menu publish-collection">Publish</button></li>
-    //     <li><button ${disableCopy} class="btn-context-menu copy-collection ${disableClass}">Copy</button></li>
-    //     <li><button class="btn-context-menu delete-collection">Delete</button></li>
-    // </ul>`;
+    
     $contextMenu = `<ul>
         <li><button class="btn-context-menu rename-collection">Edit</button></li>
         <li><button ${disablePublish} class="btn-context-menu publish ${disablePublishClass}">Publish</button></li>
@@ -1949,9 +1948,7 @@ function toggleAccordion() {
         }
 
         clearClouldFileSelection();
-        setTimeout(function () {
-             getFileDifferences();
-         }, 100);
+        setTimeout(function () { getFileDifferences(); }, 100);
 
     });
 }

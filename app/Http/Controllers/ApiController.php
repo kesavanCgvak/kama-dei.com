@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use App\Traits\AuditLoggable;
 use PhpParser\Node\Expr\FuncCall;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ApiController extends Controller
 {
@@ -300,17 +301,12 @@ class ApiController extends Controller
                     continue;
                 }
 
-                // Add formatted last modified date
-                $item['file']['last_modified_readable'] = Carbon::parse($item['file']['lastModifiedDateTime'])
-                    ->format('m-d-Y H:i');
-
-                // All files go to root folder as per example
+                // No formatted date; keep original value as returned by API
                 $filesByFolder['root'][] = [
                     'file' => [
                         'name' => $item['file']['name'],
                         'size' => $item['file']['size'],
                         'lastModifiedDateTime' => $item['file']['lastModifiedDateTime'],
-                        'last_modified_readable' => $item['file']['last_modified_readable']
                     ],
                     'vault' => $request->bucketName
                 ];
@@ -319,7 +315,7 @@ class ApiController extends Controller
             usort($filesByFolder['root'], function ($a, $b) {
                 return strcmp($a['file']['name'], $b['file']['name']);
             });
-            // Prepare final response
+
             return response()->json([
                 'state' => 'success',
                 'data' => [
@@ -453,13 +449,14 @@ class ApiController extends Controller
                 ->post(env('API_BASE_URL') . $end_point, $body);
 
             $statusCode = $response->status();
-
+            $responseBody = $response->body();
             if ($response->successful() && $response->body() != 'null' && $response->status() == 200) {
                 $data = $response->json();
-                $message = $data;
+
                 $request->file_details;
                 $file_detials = $this->convertArrayToString($request->file_details, $request->collection_name, $request->org_id, $request->storage_type, $isRenamed, $publishedCollectionName);
-
+                $responseData = json_decode($responseBody);
+                $message = $responseData->res;
                 $this->logAudit(
                     actionName: 'PUBLISH_COLLECTION',
                     oldData: null,
@@ -472,7 +469,8 @@ class ApiController extends Controller
                     ->update([
                         'is_synced' => 1,
                         'is_cloud_collection' => 1,
-                        'published_collection_name' => $request->collection_name
+                        'published_collection_name' => $request->collection_name,
+                        'collection_id' => $responseData->collection_id,
                     ]);
                 // Handle successful response
                 return response()->json([
@@ -556,6 +554,7 @@ class ApiController extends Controller
             );
             // Handle successful response
             $data = $response->json();
+            $this->deleteCollectionAndData($request->collection_id);
             $message = $data['res'];
             return response()->json([
                 'status' => 'success', // or 'error' based on the scenario
@@ -612,6 +611,19 @@ class ApiController extends Controller
         return response()->json(['data' => $data, 'state' => $state, 'message' => $message], $statusCode);
     }
 
+
+    private function deleteCollectionAndData($collectionId)
+    {
+        // Use the relationship to delete related data if defined
+        $collection = Collection::findOrFail($collectionId);
+        // Use the relationship to delete related data if defined
+        if ($collection->collectionData()->exists()) {
+            $collection->collectionData()->delete();
+        }
+        // Delete the collection
+        $collection->delete();
+    }
+
     public function groupFilesByDynamicKey(array $collections, string $groupingKey)
     {
         $grouped = [];
@@ -652,49 +664,32 @@ class ApiController extends Controller
     public function syncPublishedCollections(Request $request)
     {
         try {
-            // Get organization ID and storage type from request
-            $orgId = $request->input('org_id');
-
-            // Fetch data from API
-            $apiData = $this->fetchPublishedCollectionsFromAPI($orgId);
-            if (empty($apiData)) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'No published collections found or API error'
-                ], 404);
+            $orgId = (int) $request->input('org_id');
+            if (!$orgId) {
+                return response()->json(['status' => 'error', 'message' => 'org_id is required'], 422);
             }
 
-            $syncStats = [
-                'collections_processed' => 0,
-                'collections_created' => 0,
-                'collections_updated' => 0,
-                'files_processed' => 0,
-                'files_created' => 0,
-                'files_updated' => 0
-            ];
+            $apiData = $this->fetchPublishedCollectionsFromAPI($orgId);
+            if (empty($apiData)) {
+                return response()->json(['status' => 'success', 'message' => 'No collections returned from API', 'stats' => ['collections_processed' => 0]]);
+            }
 
-            // Use database transaction for data consistency
-            DB::transaction(function () use ($apiData, &$syncStats) {
-                foreach ($apiData as $organizationId => $collections) {
-                    $this->processOrganizationCollections($organizationId, $collections, $syncStats);
-                }
+            $statsCollections = [];
+            \DB::transaction(function () use ($orgId, $apiData, &$statsCollections) {
+                $statsCollections = $this->processOrganizationCollections($orgId, $apiData);
             });
 
-            // $this->logAudit(
-            //     actionName: 'SYNC_PUBLISHED_COLLECTIONS',
-            //     oldData: null,
-            //     newData: null,
-            //     action_description: "Synchronized published collections - Processed: {$syncStats['collections_processed']} collections, {$syncStats['files_processed']} files",
-            //     actionType: 'SYNC'
-            // );
+            // Sync files per collection (outside or inside the same transaction as you prefer)
+            $statsFiles = $this->syncFilesForCollections($orgId, $apiData);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Published collections synchronized successfully',
-                'stats' => $syncStats
+                'message' => 'Collections and files synchronized successfully',
+                'stats' => array_merge($statsCollections, $statsFiles)
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Sync collections error', ['message' => $e->getMessage()]);
             return response()->json([
                 'status' => 'error',
                 'message' => 'Error synchronizing published collections: ' . $e->getMessage()
@@ -702,13 +697,6 @@ class ApiController extends Controller
         }
     }
 
-    /**
-     * Fetch published collections data from external API
-     *
-     * @param int $orgId
-     * @param string $storageType
-     * @return array
-     */
     private function fetchPublishedCollectionsFromAPI($orgId)
     {
         try {
@@ -718,223 +706,146 @@ class ApiController extends Controller
                 'userkey' => $this->getUserKey(),
             ];
 
-            $body = [
-                'org' => $orgId
-            ];
+            $body = ['org' => $orgId];
 
             $response = Http::withHeaders($headers)
-                ->timeout(60)
+                ->asForm()              // API expects form data
+                ->timeout(180)          // long timeout for large orgs
                 ->post(env('API_BASE_URL') . '/list_collections_of_org/v1', $body);
 
             if ($response->successful()) {
-                return $response->json();
-            } else {
-                throw new \Exception('API request failed with status: ' . $response->status());
+                $json = $response->json();
+                // Normalize payload: API may wrap data in "res"
+                $data = (is_array($json) && array_key_exists('res', $json)) ? $json['res'] : $json;
+
+                if (!is_array($data)) {
+                    Log::warning('Unexpected API payload for list_collections_of_org', ['json' => $json]);
+                    return [];
+                }
+
+                return $data;
             }
 
+            throw new \Exception('API request failed with status: ' . $response->status());
         } catch (\Exception $e) {
-            \Log::error('Failed to fetch published collections from API: ' . $e->getMessage());
+            Log::error('Failed to fetch published collections from API: ' . $e->getMessage());
             throw $e;
         }
     }
 
     /**
-     * Process collections for a single organization efficiently
-     *
-     * @param int $organizationId
-     * @param array $collections
-     * @param array &$syncStats
+     * Upsert collections by collection_id and delete ones not present in API response.
      */
-    private function processOrganizationCollections($organizationId, $collections, &$syncStats)
+    private function processOrganizationCollections(int $organizationId, array $collections): array
     {
-        // Batch fetch existing collections to avoid N+1 queries
-        $collectionNames = array_column($collections, 'collection_name');
-        $existingCollections = Collection::where('organization_id', $organizationId)
-            ->whereIn('collection_name', $collectionNames)
+        // If a wrapper slipped through, unwrap it
+        if (isset($collections['res']) && is_array($collections['res'])) {
+            $collections = $collections['res'];
+        }
+
+        $stats = [
+            'collections_processed' => 0,
+            'collections_created' => 0,
+            'collections_updated' => 0,
+            'collections_deleted' => 0,
+        ];
+
+        // incoming IDs from API
+        $incoming = array_values(array_filter(array_map(fn ($c) => $c['collection_id'] ?? null, $collections)));
+        $incomingSet = array_flip($incoming);
+
+        // existing cloud collections for this org having external ids
+        $existing = \App\Models\Collection::query()
+            ->where('organization_id', $organizationId)
+            ->whereNotNull('collection_id')
             ->get()
-            ->keyBy(function ($collection) {
-                return $collection->storage_type . '_' . $collection->collection_name;
-            });
+            ->keyBy('collection_id');
 
-        $collectionsToCreate = [];
-        $collectionsToUpdate = [];
-        $allFilesToProcess = [];
+        // delete ones not returned
+        $toDelete = $existing->keys()->filter(fn ($id) => !isset($incomingSet[$id]))->all();
+        if (!empty($toDelete)) {
+            $stats['collections_deleted'] = \App\Models\Collection::where('organization_id', $organizationId)
+                ->whereIn('collection_id', $toDelete)
+                ->delete();
+        }
 
-        foreach ($collections as $collectionData) {
-            $syncStats['collections_processed']++;
+        $now = now();
+        $toInsert = [];
+        $toUpdate = [];
 
-            $collectionName = $collectionData['collection_name'];
-            $storageType = $this->determineStorageType($collectionData);
-            $key = $storageType . '_' . $collectionName;
+        foreach ($collections as $c) {
+            $stats['collections_processed']++;
+            $extId = $c['collection_id'] ?? null;
+            if (!$extId) {
+                continue;
+            }
 
-            if (isset($existingCollections[$key])) {
-                // Prepare for batch update
-                $collectionsToUpdate[] = [
-                    'id' => $existingCollections[$key]->id,
-                    'is_cloud_collection' => 1,
-                    'updated_at' => now()
-                ];
-                $syncStats['collections_updated']++;
-                $collectionId = $existingCollections[$key]->id;
-            } else {
-                // Prepare for batch insert
-                $newCollection = [
-                    'organization_id' => $organizationId,
+            $storageType = $this->determineStorageType($c);
+            $createdAt = isset($c['collectionCreatedDate']) ? \Carbon\Carbon::parse($c['collectionCreatedDate']) : $now;
+
+            if (isset($existing[$extId])) {
+                // collect for update
+                $toUpdate[] = [
+                    'id' => $existing[$extId]->id,
+                    'collection_name' => $c['collection_name'] ?? $existing[$extId]->collection_name,
+                    'published_collection_name' => $c['collection_name'] ?? $existing[$extId]->published_collection_name,
                     'storage_type' => $storageType,
-                    'collection_name' => $collectionName,
-                    'published_collection_name' => $collectionName,
                     'is_synced' => 1,
                     'is_cloud_collection' => 1,
-                    'created_at' => $collectionData['collectionCreatedDate'],
-                    'updated_at' => now()
+                    'updated_at' => $now,
                 ];
-                $collectionsToCreate[] = $newCollection;
-                $syncStats['collections_created']++;
-                $collectionId = null; // Will be set after batch insert
-            }
-
-            // Prepare files for processing
-            if (isset($collectionData['files']) && is_array($collectionData['files'])) {
-                $allFilesToProcess[] = [
-                    'collection_key' => $key,
-                    'collection_id' => $collectionId,
-                    'files' => $collectionData['files']
+                $stats['collections_updated']++;
+            } else {
+                // collect for insert
+                $toInsert[] = [
+                    'organization_id' => $organizationId,
+                    'collection_id' => $extId,
+                    'collection_name' => $c['collection_name'] ?? '',
+                    'published_collection_name' => $c['collection_name'] ?? '',
+                    'storage_type' => $storageType,
+                    'is_synced' => 1,
+                    'is_cloud_collection' => 1,
+                    'created_at' => $createdAt,
+                    'updated_at' => $now,
                 ];
+                $stats['collections_created']++;
             }
         }
 
-        // Batch create collections
-        if (!empty($collectionsToCreate)) {
-            Collection::insert($collectionsToCreate);
-
-            // Get the newly created collection IDs
-            $newCollections = Collection::where('organization_id', $organizationId)
-                ->whereIn('collection_name', array_column($collectionsToCreate, 'collection_name'))
-                ->get()
-                ->keyBy(function ($collection) {
-                    return $collection->storage_type . '_' . $collection->collection_name;
-                });
-
-            // Update collection IDs for file processing
-            foreach ($allFilesToProcess as &$fileGroup) {
-                if (is_null($fileGroup['collection_id']) && isset($newCollections[$fileGroup['collection_key']])) {
-                    $fileGroup['collection_id'] = $newCollections[$fileGroup['collection_key']]->id;
-                }
-            }
+        if (!empty($toInsert)) {
+            \App\Models\Collection::insert($toInsert);
         }
 
-        // Batch update collections
-        if (!empty($collectionsToUpdate)) {
-            foreach ($collectionsToUpdate as $updateData) {
-                Collection::where('id', $updateData['id'])->update($updateData);
-            }
+        // apply updates
+        foreach ($toUpdate as $row) {
+            \App\Models\Collection::where('id', $row['id'])->update([
+                'collection_name' => $row['collection_name'],
+                'published_collection_name' => $row['published_collection_name'],
+                'storage_type' => $row['storage_type'],
+                'is_synced' => $row['is_synced'],
+                'is_cloud_collection' => $row['is_cloud_collection'],
+                'updated_at' => $row['updated_at'],
+            ]);
         }
 
-        // Process all files in batches
-        $this->processBatchFiles($allFilesToProcess, $syncStats);
+        return $stats;
     }
 
-    /**
-     * Process files in batches for better performance
-     *
-     * @param array $allFilesToProcess
-     * @param array &$syncStats
-     */
-    private function processBatchFiles($allFilesToProcess, &$syncStats)
-    {
-        $filesToCreate = [];
-        $filesToUpdate = [];
-
-        foreach ($allFilesToProcess as $fileGroup) {
-            if (is_null($fileGroup['collection_id'])) continue;
-
-            $collectionId = $fileGroup['collection_id'];
-            $files = $fileGroup['files'];
-
-            // Get existing files for this collection
-            $existingFiles = CollectionData::where('collection_id', $collectionId)
-                ->get()
-                ->keyBy(function ($file) {
-                    return $file->file_name . '_' . $file->bucket_sp_site_name;
-                });
-
-            foreach ($files as $fileData) {
-                $syncStats['files_processed']++;
-
-                $file = $fileData['file'];
-                $fileName = $file['name'];
-                $fileSize = $file['size'];
-                $lastModified = $file['collectionUsedFileDate'];
-                $bucketSiteName = $this->getBucketSiteName($fileData);
-                $fileKey = $fileName . '_' . $bucketSiteName;
-
-                if (isset($existingFiles[$fileKey])) {
-                    // Prepare for update
-                    $filesToUpdate[] = [
-                        'id' => $existingFiles[$fileKey]->id,
-                        'size' => $fileSize,
-                        'last_modified' => $lastModified,
-                        'updated_at' => now()
-                    ];
-                    $syncStats['files_updated']++;
-                } else {
-                    // Prepare for insert
-                    $sanitizedFileName = $this->sanitizeFileName($fileName);
-                    $sanitizedBucketName = $this->sanitizeFileName($bucketSiteName ?? '');
-                    $filesToCreate[] = [
-                        'collection_id' => $collectionId,
-                        'file_name' => $fileName,
-                        'size' => $fileSize,
-                        'bucket_sp_site_name' => $bucketSiteName,
-                        'file_id' =>  $sanitizedBucketName. '-' . $sanitizedFileName,
-                        'last_modified' => $lastModified,
-                        'created_at' => now(),
-                        'updated_at' => now()
-                    ];
-                    $syncStats['files_created']++;
-                }
-            }
-        }
-
-        // Batch insert files (in chunks to avoid memory issues)
-        if (!empty($filesToCreate)) {
-            $chunks = array_chunk($filesToCreate, 500); // Process 500 files at a time
-            foreach ($chunks as $chunk) {
-                CollectionData::insert($chunk);
-            }
-        }
-
-        // Batch update files
-        if (!empty($filesToUpdate)) {
-            foreach ($filesToUpdate as $updateData) {
-                CollectionData::where('id', $updateData['id'])->update($updateData);
-            }
-        }
-    }
-
-    /**
-     * Determine storage type from collection data
-     *
-     * @param array $collectionData
-     * @return string
-     */
     private function determineStorageType($collectionData)
     {
-        if (empty($collectionData['files'])) {
-            return 'S3'; // Default fallback
+        // Derive by first file hints
+        if (!empty($collectionData['files']) && is_array($collectionData['files'])) {
+            $f = $collectionData['files'][0] ?? [];
+            if (array_key_exists('bucket', $f)) return 'S3';
+            if (array_key_exists('sharepoint_site', $f)) return 'SharePoint';
+            if (array_key_exists('vault', $f)) return 'MFiles';
         }
-
-        $firstFile = $collectionData['files'][0];
-
-        if (isset($firstFile['bucket'])) {
-            return 'S3';
-        } elseif (isset($firstFile['sharepoint_site'])) {
-            return 'SharePoint';
-        } elseif (isset($firstFile['vault'])) {
-            return 'MFiles';
-        }
-
-        return 'S3'; // Default fallback
+        // fallback by naming convention
+        $name = (string)($collectionData['collection_name'] ?? '');
+        if (str_ends_with(strtolower($name), '-s3')) return 'S3';
+        if (str_ends_with(strtolower($name), '-sharepoint')) return 'SharePoint';
+        if (str_ends_with(strtolower($name), '-mfiles')) return 'MFiles';
+        return 'S3';
     }
 
     /**
@@ -1000,5 +911,129 @@ class ApiController extends Controller
             ],
             'files' => $formattedFiles
         ]);
+    }
+
+    /**
+     * Sync files for each collection returned by the API.
+     * - Upsert by composite key: (collection_id, file_name, bucket_sp_site_name)
+     * - Delete files not returned by API for that collection
+     */
+    private function syncFilesForCollections(int $organizationId, array $apiCollections): array
+    {
+        // Build map of external collection_id => local DB id
+        $extIds = array_values(array_filter(array_map(fn ($c) => $c['collection_id'] ?? null, $apiCollections)));
+        if (empty($extIds)) {
+            return [
+                'files_processed' => 0,
+                'files_created' => 0,
+                'files_updated' => 0,
+                'files_deleted' => 0,
+            ];
+        }
+
+        $collectionIdMap = \App\Models\Collection::query()
+            ->where('organization_id', $organizationId)
+            ->whereIn('collection_id', $extIds)
+            ->pluck('id', 'collection_id')
+            ->toArray();
+
+        $stats = [
+            'files_processed' => 0,
+            'files_created' => 0,
+            'files_updated' => 0,
+            'files_deleted' => 0,
+        ];
+
+        foreach ($apiCollections as $collection) {
+            $extId = $collection['collection_id'] ?? null;
+            if (!$extId || !isset($collectionIdMap[$extId])) {
+                continue;
+            }
+            $localCollectionId = (int) $collectionIdMap[$extId];
+
+            // Existing files keyed by composite key
+            $existing = \App\Models\CollectionData::where('collection_id', $localCollectionId)
+                ->get()
+                ->keyBy(function ($row) {
+                    return strtolower(($row->file_name ?? '') . '|' . ($row->bucket_sp_site_name ?? ''));
+                });
+
+            // Incoming files keyed the same way
+            $incoming = [];
+            foreach (($collection['files'] ?? []) as $item) {
+                if (!isset($item['file']['name'])) {
+                    continue;
+                }
+                $fileName = $item['file']['name'];
+                $size = $item['file']['size'] ?? null;
+                $lastModified = $item['file']['collectionUsedFileDate'] ?? null;
+                $bucketSite = $this->getBucketSiteName($item);
+                $key = strtolower($fileName . '|' . ($bucketSite ?? ''));
+
+                $incoming[$key] = [
+                    'file_name' => $fileName,
+                    'size' => $size,
+                    'bucket_sp_site_name' => $bucketSite,
+                    'file_id' => $this->sanitizeFileName(($bucketSite ?? '') . '-' . $fileName),
+                    'last_modified' => $lastModified,
+                ];
+                $stats['files_processed']++;
+            }
+
+            // Delete files not in API
+            $toDeleteIds = [];
+            foreach ($existing as $key => $row) {
+                if (!isset($incoming[$key])) {
+                    $toDeleteIds[] = $row->id;
+                }
+            }
+            if (!empty($toDeleteIds)) {
+                $deleted = \App\Models\CollectionData::whereIn('id', $toDeleteIds)->delete();
+                $stats['files_deleted'] += $deleted;
+            }
+
+            // Prepare inserts and updates
+            $toInsert = [];
+            $toUpdate = [];
+
+            foreach ($incoming as $key => $f) {
+                if (isset($existing[$key])) {
+                    $row = $existing[$key];
+
+                    $update = [];
+                    if ((int) $row->size !== (int) ($f['size'] ?? 0)) {
+                        $update['size'] = $f['size'];
+                    }
+                    if (($row->last_modified ?? null) !== $f['last_modified']) {
+                        $update['last_modified'] = $f['last_modified'];
+                    }
+                    if (!empty($update)) {
+                        $update['updated_at'] = now();
+                        \App\Models\CollectionData::where('id', $row->id)->update($update);
+                        $stats['files_updated']++;
+                    }
+                } else {
+                    $toInsert[] = [
+                        'collection_id' => $localCollectionId,
+                        'file_name' => $f['file_name'],
+                        'size' => $f['size'],
+                        'bucket_sp_site_name' => $f['bucket_sp_site_name'],
+                        'file_id' => $f['file_id'],
+                        'last_modified' => $f['last_modified'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                    $stats['files_created']++;
+                }
+            }
+
+            if (!empty($toInsert)) {
+                foreach (array_chunk($toInsert, 500) as $chunk) {
+                    \App\Models\CollectionData::insert($chunk);
+                }
+            }
+        }
+
+        return $stats;
     }
 }

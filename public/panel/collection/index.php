@@ -206,4 +206,4 @@ $base_url = $protocol . $_SERVER['HTTP_HOST'] . '/';
         </div>
     </div>
 </div>
-<script src="<?php echo $base_url; ?>public/assets/js/manage-collection.js?v18" type="text/javascript"></script>
+<script src="<?php echo $base_url; ?>public/assets/js/manage-collection.js?v20" type="text/javascript"></script>

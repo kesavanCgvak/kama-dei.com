@@ -16,7 +16,8 @@ class Collection extends Model
         'collection_description',
         'published_collection_name',
         'is_synced',
-        'is_cloud_collection'
+        'is_cloud_collection',
+        'collection_id', // external GUID from API
     ];
 
     // Define the relationship to CollectionData

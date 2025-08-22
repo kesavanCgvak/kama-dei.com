@@ -109,19 +109,26 @@ class CollectionController extends Controller
 
     public function destroy(Request $request)
     {
-        $collection = Collection::findOrFail($request->collection_id);
-        // Use the relationship to delete related data if defined
-        if ($collection->collectionData()->exists()) {
-            $collection->collectionData()->delete();
-        }
-        // Delete the collection
-        $collection->delete();
+        $collectionId = $request->collection_id;
+        $this->deleteCollectionAndData($collectionId);
 
         return response()->json([
             'status' => 'success', // or 'error' based on the scenario
             'message' => 'Collections deleted successfully',
             'data' => '' // Using the resource for structured data
         ]);
+    }
+
+    private function deleteCollectionAndData($collectionId)
+    {
+        // Use the relationship to delete related data if defined
+        $collection = Collection::findOrFail($collectionId);
+        // Use the relationship to delete related data if defined
+        if ($collection->collectionData()->exists()) {
+            $collection->collectionData()->delete();
+        }
+        // Delete the collection
+        $collection->delete();
     }
 
 
@@ -239,12 +246,15 @@ class CollectionController extends Controller
             ], 404);
         }
         $oldDataArray = $oldData->toArray();
-        // Update the collection
-        $updated = $oldData->update([
+        $updateData = [
             'collection_name' => $request->collection_name,
-            'collection_description' => $request->collection_description,
-            'is_synced' => 0
-        ]);
+            'collection_description' => $request->collection_description
+        ];
+        if($oldDataArray['collection_name'] !== $request->collection_name){
+            $updateData['is_synced'] = 0;
+        }
+        // Update the collection
+        $updated = $oldData->update(attributes: $updateData);
 
         if ($updated) {
             // Fetch the updated state of the collection
