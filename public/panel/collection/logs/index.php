@@ -9,6 +9,14 @@
     <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
     <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
     <style>
+       .scroll-div {
+        max-height: 120px;
+        width: 500px;
+        max-width: 600px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 4px;
+       }
         td.details-control {
             text-align: center;
             cursor: pointer;
@@ -119,7 +127,7 @@
             <thead class="thead-dark">
                 <tr>
 
-                    <th>Event Name</th>
+                    <th style="width: 300px;">Event Name</th>
                     <th>Actions</th>
                     <th>User ID</th>
                     <th>IP Address</th>
@@ -146,15 +154,8 @@
                     },
                     {
                         "data": "action_description",
-                        "render": function(data, type, row) {
-                            if (type === 'display') {
-                                return '<div class="truncate-cell" data-tooltip="' +
-                                       data.replace(/"/g, '&quot;') + '">' +
-                                       data.substring(0, 150) +
-                                       (data.length > 150 ? '...' : '') +
-                                       '</div>';
-                            }
-                            return data;
+                        "render": function(data) {
+                            return '<div class="scroll-div">' + data + '</div>';
                         },
                         "width": "200px"
                     },
@@ -178,37 +179,6 @@
                 ]
             });
 
-            // Custom tooltip handling
-            $(document).on('mouseenter', '.truncate-cell', function(e) {
-                var tooltip = $('<div class="custom-tooltip"></div>')
-                    .text($(this).data('tooltip'))
-                    .appendTo('body');
-
-                var pos = $(this).offset();
-                var tooltipWidth = tooltip.outerWidth();
-                var tooltipHeight = tooltip.outerHeight();
-
-                tooltip.css({
-                    top: pos.top - tooltipHeight - 10,
-                    left: pos.left + ($(this).width() / 2) - (tooltipWidth / 2)
-                }).fadeIn('fast');
-
-                $(this).data('tooltip-element', tooltip);
-            });
-
-            $(document).on('mouseleave', '.truncate-cell', function() {
-                var tooltip = $(this).data('tooltip-element');
-                if (tooltip) {
-                    tooltip.fadeOut('fast', function() {
-                        $(this).remove();
-                    });
-                }
-            });
-
-            // Clean up any remaining tooltips before table redraws
-            table.on('preXhr', function() {
-                $('.custom-tooltip').remove();
-            });
         });
     </script>
 </body>

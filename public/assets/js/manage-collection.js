@@ -71,7 +71,7 @@ function getSystemSourceTypes(orgId) {
 
             hideLoader();
             if(response.state ==='error'){
-                let errMsg = response.message || "Error loading storage types.";
+                let errMsg = response.message || "Storage type connection error. Please report to kama.ai";
                 $("#storage-type-error").text(errMsg);
             }
             // } else {
@@ -81,7 +81,7 @@ function getSystemSourceTypes(orgId) {
         error: function (xhr, status, error) {
             hideLoader();
             console.error('AJAX Error:', status, error);
-            toastr.error(xhr.responseJSON?.message || "Error loading storage types.");
+            toastr.error(xhr.responseJSON?.message || "Storage type connection error. Please report to kama.ai");
         },
         complete: function () {
             hideLoader();
@@ -168,7 +168,7 @@ function initClickEvents() {
 
     $(document).on("click", "#refresh-collection", function (event) {
         event.preventDefault();
-        syncCloudCollection($("#orgID").val(), $("#storage_type").val());
+        syncCloudCollection($("#orgID").val());
     });
 }
 
@@ -193,6 +193,9 @@ $(document).on("keyup", "#document-search", function (event) {
         expandCollapseAllAccordions($('#documents-collection'), 'collapse');
     } else {
         expandCollapseAllAccordions($('#documents-collection'), 'expand');
+        setTimeout(() => {
+            getFileDifferences();
+        }, 500);
         initDocumentSearch('local');
     }
 });
@@ -229,13 +232,22 @@ $(document).on("click", ".file-delete", function () {
     let $accordionItem = $selectedItem.closest('.accordion-item');
     let collectionFileId = $(this).closest('li').attr('data-details-id');
     let elementIdentifier = $(this).closest('li').attr('data-file-id');
-    let confirmation = confirm('Are you sure you want to delete this file?');
+    // let confirmation = confirm('Are you sure you want to delete this file?');
 
-    if (!confirmation) {
-        return false;
-    }
-
-    let collectionName = $(this).closest(".accordion-item").find(".accordion-header").data("collection");
+    // if (!confirmation) {
+    //     return false;
+    // }
+ CustomeConfirm({
+        content: 'Do you want to remove this file from the Collection?',
+        buttons: {
+            no: {
+                text: 'No', btnClass: 'btn-no', action: function () {
+                    return true; // Do nothing on "No"
+                }
+            },
+            yes: {
+                text: 'Yes', btnClass: 'btn-yes', action: function () {
+let collectionName = $(this).closest(".accordion-item").find(".accordion-header").data("collection");
     let data = { id: collectionFileId, collectionName: collectionName };
     $selectedItem.addClass('delete-item');
     $.ajax({
@@ -249,7 +261,7 @@ $(document).on("click", ".file-delete", function () {
         success: function (response) {
             if (response.status === 'success') {
                 hideLoader();
-                toastr.success(response.message || "File deleted successfully.");
+                toastr.success(response.message || "File deleted successfully. ");
                 $selectedItem.remove();
                 updateUnPublishedStatus($accordionItem);
                 checkPublishStatus($accordionItem);
@@ -261,18 +273,24 @@ $(document).on("click", ".file-delete", function () {
                 setTimeout(function () { getFileDifferences(); }, 500);
 
             } else {
-                throw new Error(response.message || "Unknown error occurred");
+                throw new Error(response.message || "Unknown error occurred. Please report to kama.ai");
             }
         },
         error: function (xhr, status, error) {
             hideLoader();
             console.error('AJAX Error:', status, error);
-            toastr.error(xhr.responseJSON?.message || "Error on deleting file.");
+            toastr.error(xhr.responseJSON?.message || "Error on deleting file. Please report to kama.ai");
         },
         complete: function () {
             hideLoader();
         }
     });
+
+                }
+            }
+        }
+    });
+
 
 });
 
@@ -286,10 +304,7 @@ $(document).on("click", ".delete-collection", function (event) {
     let org_id = $('#orgID').val();
     let storage_type = $('#storage_type').val();
     let collection_id = originalItem.attr('data-id');
-    // let consfirmation = confirm('Are you sure you want to delete this collection?');
-    // if (!consfirmation) {
-    //     return false;
-    // }
+
     CustomeConfirm({
         content: 'Do you want to remove this file from the Collection?',
         buttons: {
@@ -313,12 +328,12 @@ $(document).on("click", ".delete-collection", function (event) {
 
 });
 
-function syncCloudCollection(org_id) {
+function syncCloudCollection(org_id, hideSuccessMessage = false) {
     $.ajax({
         type: "POST",
         url: "/syncPublishedCollections",
         data: {
-            org_id: org_id
+            org_id: org_id,
         },
         dataType: 'json',
         beforeSend: function () {
@@ -327,17 +342,19 @@ function syncCloudCollection(org_id) {
         success: function (response) {
             if (response.status === 'success') {
                 hideLoader();
-                toastr.success(response.message || "Cloud collection synced successfully.");
+                if(!hideSuccessMessage){
+                    toastr.success(response.message || "Cloud collection synced successfully.");
+                }
                 $("#documents-collection").find('.collection-card-body').html('');
                 getLocalCollections($("#storage_type").val(), org_id);
             } else {
-                throw new Error(response.message || "Unknown error occurred");
+                throw new Error(response.message || "Unknown error occurred. Please report to kama.ai");
             }
         },
         error: function (xhr, status, error) {
             hideLoader();
             console.error('AJAX Error:', status, error);
-            toastr.error(xhr.responseJSON?.message || "Error on syncing cloud collection.");
+            toastr.error(xhr.responseJSON?.message || "Error on syncing cloud collection. Please report to kama.ai");
         },
         complete: function () {
             hideLoader();
@@ -364,13 +381,13 @@ function deleteCloudCollection(collection_name, org_id, storage_type, collection
                 toastr.success(response.message || "Collection deleted successfully.");
 
             } else {
-                throw new Error(response.message || "Unknown error occurred");
+                throw new Error(response.message || "Collection delete error. Please report to kama.ai");
             }
         },
         error: function (xhr, status, error) {
             hideLoader();
             console.error('AJAX Error:', status, error);
-            toastr.error(xhr.responseJSON?.message || "Error on deleting collection.");
+            toastr.error(xhr.responseJSON?.message || "Collection delete error. Please report to kama.ai");
         },
         complete: function () {
             hideLoader();
@@ -398,7 +415,7 @@ function deleteLocalCollection(collection_id) {
         error: function (xhr, status, error) {
             hideLoader();
             console.error('AJAX Error:', status, error);
-            toastr.error(xhr.responseJSON?.message || "Error on deleting collection.");
+            toastr.error(xhr.responseJSON?.message || "Collection delete error. Please report to kama.ai");
         },
         complete: function () {
             hideLoader();
@@ -426,7 +443,7 @@ function updateCollectiononDb(collection, id) {
         error: function (xhr, status, error) {
             hideLoader();
             // Handle error
-            toastr.error('Error updating collection');
+            toastr.error('Error updating collection. Please report to kama.ai');
         }
     });
 }
@@ -514,7 +531,7 @@ $(document).on("click", ".copy-collection", function (event) {
     clonedItem.attr('id', "section-" + newBucketName);
     clonedItem.attr('data-published-collection-name', baseBucketName);
 
-    updateUnPublishedStatus(clonedItem.closest('.accordion-item'));
+    updateUnPublishedStatus(clonedItem.closest('.accordion-item'), type='copy');
     copyCollectionsToDatabases(clonedItem);
     initSortable();
 });
@@ -585,7 +602,7 @@ function copyCollectionsToDatabases(clonedItem) {
         error: function (xhr, status, error) {
             hideLoader();
             console.error('AJAX error:', error);
-            toastr.error('Failed to update file information.');
+            toastr.error('Failed to update file information. Please report to kama.ai');
         },
     });
 }
@@ -700,10 +717,15 @@ function createLocalItems(data, droppedItem) {
 }
 
 
-function updateUnPublishedStatus($element) {
+function updateUnPublishedStatus($element, type='') {
+    $element.find('.submenu').find('.copy-collection').addClass('btn-disabled').prop('disabled', true);
+    if (type === 'copy') {
+        $element.addClass('new-collection');
+        $element.find('.accordion-header').attr('title', 'New Collection');
+        return;
+    }
     $element.addClass('not-published');
     $element.find('.accordion-header').attr('title', 'Not Published');
-    $element.find('.submenu').find('.copy-collection').addClass('btn-disabled').prop('disabled', true);
 }
 
 
@@ -740,7 +762,7 @@ $(document).off('click', ".sync-file").on('click', ".sync-file", function () {
         success: function (response) {
             hideLoader();
             if (response.status === 'error') {
-                toastr.error('Error on updating file.');
+                toastr.error('Error on updating file. Please report to kama.ai');
                 return;
             }
             toastr.success('The file information has been synced successfully');
@@ -759,7 +781,7 @@ $(document).off('click', ".sync-file").on('click', ".sync-file", function () {
         error: function (xhr, status, error) {
             hideLoader();
             console.error('AJAX error:', error);
-            toastr.error('Failed to update file information.');
+            toastr.error('Failed to update file information. Please report to kama.ai');
         },
     });
 });
@@ -776,8 +798,13 @@ function getFileDifferences(clearFileSelection = false) {
     $expandedCloudAccordions.each(function () {
         let cloudFileId = $(this).data('file-id');
         // Check for matching file in #accordionLocal
-        let localFile = $('#documents-collection .accordion-item .show-accordion').siblings('.accordion-content').find('.file-item[data-file-id="' + cloudFileId + '"]');
-        // let localFile = $('#documents-collection .accordion-content .file-item[data-file-id="' + cloudFileId + '"]');
+        ///let localFile = $('#documents-collection .accordion-item .show-accordion').siblings('.accordion-content').find('.file-item[data-file-id="' + cloudFileId + '"]');
+        let localFile = $('#documents-collection .accordion-item .show-accordion')
+            .siblings('.accordion-content')
+            .find('.file-item[data-file-id="' + cloudFileId + '"]').filter(function () {
+                return !$(this).hasClass('hide-search');
+            });
+
 
         if (localFile.length > 0) {
             let cloudFile = $('#cloud-storage .accordion-content .file-item[data-file-id="' + cloudFileId + '"]');
@@ -857,7 +884,7 @@ function updateCollectionNote() {
         error: function (xhr, status, error) {
             hideLoader();
             console.error('AJAX Error:', status, error);
-            toastr.error("Error on creating new collection.");
+            toastr.error("Error on creating new collection. Please report to kama.ai");
         },
         complete: function () {
             hideLoader();
@@ -932,15 +959,15 @@ function renameCollection() {
 
                 $("#documents-collection")
                     .find(`#section-${collecionItemId}`)
-                    .addClass('not-published')
+                    .addClass('new-collection')
                     .find('.accordion-title')
                     .text(collectionName);
                 $("#documents-collection")
                     .find(`#section-${collecionItemId}`)
-                    .find("accordion-header")
-                    .attr('title', 'Not Published');
+                    .find(".accordion-header")
+                    .attr('title', 'New Collection');
                 $("#documents-collection")
-                    .find(`#section-${collecionItemId}`).addClass('not-published');
+                    .find(`#section-${collecionItemId}`).addClass('new-collection');
                 $("#documents-collection")
                     .find(`#section-${collecionItemId}`).find('.submenu .copy-collection').attr("disabled", "disabled").addClass('btn-disabled');
 
@@ -952,7 +979,7 @@ function renameCollection() {
         error: function (xhr, status, error) {
             hideLoader();
             console.error('AJAX Error:', status, error);
-            toastr.error("Error on creating new collection.");
+            toastr.error("Error on creating new collection. Please report to kama.ai");
         },
         complete: function () {
             hideLoader();
@@ -986,7 +1013,7 @@ function saveLocalCollection() {
         success: function (response) {
             hideLoader();
             if (response.status === 'error') {
-                toastr.error(response.message || "Error on creating new collection.");
+                toastr.error(response.message || "Error on creating new collection. Please report to kama.ai");
                 return;
             }
             toastr.success("New collection created successfully.");
@@ -998,7 +1025,7 @@ function saveLocalCollection() {
         error: function (xhr, status, error) {
             hideLoader();
             console.error('AJAX Error:', status, error);
-            toastr.error("Error on creating new collection.");
+            toastr.error("Error on creating new collection. Please report to kama.ai");
         },
         complete: function () {
             hideLoader();
@@ -1112,7 +1139,7 @@ function checkDuplicateCollection(collection_name, storage_type, collection_id, 
         error: function (xhr, status, error) {
             hideLoader();
             console.error('AJAX Error:', status, error);
-            toastr.error("Error on creating new collection.");
+            toastr.error("Error on creating new collection. Please report to kama.ai");
         },
         complete: function () {
             hideLoader();
@@ -1213,7 +1240,7 @@ function initChangevents() {
 
         // Wait for getClouldCollection to complete before calling getLocalCollections
         getClouldCollection(storage_type, orgID).then(function () {
-            getLocalCollections(storage_type, orgID);
+            //getLocalCollections(storage_type, orgID);
         }).catch(function () {
             toastr.error("An error occurred while fetching cloud collections.");
         });
@@ -1335,8 +1362,8 @@ function getClouldCollection(storage_type, org_id) {
                     deferred.reject(); // Reject if the response state is not success
                 }
             } catch (e) {
-                conasole.error(e.message);
-                toastr.error("Failed to process response data.");
+                console.error(e.message);
+                toastr.error("Collection get error. Please report to kama.ai");
                 deferred.reject();
             }
         },
@@ -1378,7 +1405,7 @@ function initChangevents() {
 
         // Wait for getClouldCollection to complete before calling getLocalCollections
         getClouldCollection(storage_type, orgID).then(function () {
-            getLocalCollections(storage_type, orgID);
+            syncCloudCollection(orgID, true)
         }).catch(function (error) {
             console.error(error);
         });
@@ -1511,7 +1538,7 @@ $(document).on("click", ".publish-collection", function (event) {
                 $collectionWrapper.attr('data-is-cloud-collecion', 1);
                 $collectionWrapper.attr('data-published-collection-name', collectionName);
                 $collectionWrapper.find('.accordion-header').attr('title', 'Published');
-                $collectionWrapper.removeClass('not-published');
+                $collectionWrapper.removeClass('not-published new-collection');
                 $collectionWrapper.find('.copy-collection').removeClass('btn-disabled').removeAttr('disabled');
                 toastr.success(response.message);
             }
@@ -1550,10 +1577,15 @@ function createLocalAccordionItem(data) {
     let disableCopy = "";
     let disableClass = "";
     toolTipText = 'Published';
-    if (data.is_synced === 0) {
+    if (data.is_synced === 0 && data.collection_id != null) {
         disableCopy = 'disabled';
         //toolTipText = 'Not Published'
         classNotPublished = 'not-published';
+        disableClass = 'btn-disabled';
+    }
+    if (data.is_synced === 0 && data.collection_id == null) {
+        disableCopy = 'disabled';
+        classNotPublished = 'new-collection';
         disableClass = 'btn-disabled';
     }
 
@@ -1564,13 +1596,6 @@ function createLocalAccordionItem(data) {
         disablePublishClass = "publish-collection";
     }
 
-    // $contextMenu = `<ul>
-    //     <li><button class="btn-context-menu rename-collection">Rename</button></li>
-    //     <li><button class="btn-context-menu edit-collection-note">Edit Collection Note</button></li>
-    //     <li><button class="btn-context-menu publish-collection">Publish</button></li>
-    //     <li><button ${disableCopy} class="btn-context-menu copy-collection ${disableClass}">Copy</button></li>
-    //     <li><button class="btn-context-menu delete-collection">Delete</button></li>
-    // </ul>`;
     $contextMenu = `<ul>
         <li><button class="btn-context-menu rename-collection">Edit</button></li>
         <li><button ${disablePublish} class="btn-context-menu publish ${disablePublishClass}">Publish</button></li>
@@ -1951,7 +1976,7 @@ function toggleAccordion() {
         clearClouldFileSelection();
         setTimeout(function () {
              getFileDifferences();
-         }, 100);
+         }, 500);
 
     });
 }
@@ -1965,8 +1990,9 @@ function expandCollapseAllAccordions($selector, mode = 'expand') {
         return;
     }
     $selector.find('.accordion-content').css('display', 'block');
-    $selector.find('.accordion-header').removeClass('show-accordion');
+    $selector.find('.accordion-header').addClass('show-accordion');
     $selector.find('.accordion-header').find('.collapse-btn > i').removeClass('fa-angle-down').addClass('fa-angle-up');
+    return;
 }
 
 

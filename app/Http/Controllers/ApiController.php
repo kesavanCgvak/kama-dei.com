@@ -28,8 +28,8 @@ class ApiController extends Controller
     {
         $userKey = \App\UserKey::where('user_id', session()->get('userID'))->first();
         //return $userKey->getAttribute('userKey');
-        //return 'f40a318be8999b1959cb2f788ea37388';
         return '65ebad1d278b1f961429c38d58fa0eaf';
+       //eturn '65ebad1d278b1f961429c38d58fa0eaf';
     }
 
     public function manageCollection()
@@ -54,7 +54,15 @@ class ApiController extends Controller
             $buckets = $response->json();
             $data = $buckets['res'];
         } else {
-            return response()->json(['error' => 'Failed to post data'], $response->status());
+            $message = 'Failed to post data. Please report to kama.ai';
+             $this->logAudit(
+                    actionName: 'ERROR',
+                    oldData: null,
+                    newData: null,
+                    action_description: $message,
+                    actionType: 'ERROR'
+                );
+            return response()->json(['error' => $message], $response->status());
         }
         $local_collections = Collection::where('storage_type', 'S3')->get();
 
@@ -82,7 +90,15 @@ class ApiController extends Controller
             $buckets = $response->json();
             $data = $buckets['res'];
         } else {
-            return response()->json(['error' => 'Failed to post data'], $response->status());
+             $message = 'An error occurred. Please report to kama.ai';
+             $this->logAudit(
+                    actionName: 'ERROR',
+                    oldData: null,
+                    newData: null,
+                    action_description: $message,
+                    actionType: 'ERROR'
+                );
+            return response()->json(['error' => $message], $response->status());
         }
         $local_collections = Collection::where('storage_type', 'S3')->get();
 
@@ -113,7 +129,15 @@ class ApiController extends Controller
             $list_objects = $response->json();
             $data = $list_objects['res'];
         } else {
-            return response()->json(['error' => 'Failed to post data'], $response->status());
+             $message = 'An error occurred. Please report to kama.ai';
+             $this->logAudit(
+                    actionName: 'ERROR',
+                    oldData: null,
+                    newData: null,
+                    action_description: $message,
+                    actionType: 'ERROR'
+                );
+            return response()->json(['error' => $message], $response->status());
         }
         return view('s3details', compact('data'));
     }
@@ -154,9 +178,18 @@ class ApiController extends Controller
             $data = $buckets;
         } else {
             $responseBody = $response->json();
-            $message = $responseBody['detail']['message'] ?? $responseBody;
+            $message = $responseBody['detail']?? $responseBody;
             $state = 'error';
+            $message .= 'Please report to kama.ai';
             $statusCode = 200;
+
+             $this->logAudit(
+                    actionName: 'ERROR',
+                    oldData: null,
+                    newData: null,
+                    action_description: $message,
+                    actionType: 'ERROR'
+                );
         }
 
         return response()->json(['data' => $data, 'state' => $state, 'message' => $message], $statusCode);
@@ -196,7 +229,15 @@ class ApiController extends Controller
             $buckets = $response->json();
             $data = $buckets['res'];
         } else {
-            return response()->json(['error' => 'Failed to post data'], $response->status());
+            $message = 'An error occurred. Please report to kama.ai';
+            $this->logAudit(
+                actionName: 'ERROR',
+                oldData: null,
+                newData: null,
+                action_description: $message,
+                    actionType: 'ERROR'
+                );
+            return response()->json(['error' => $message], $response->status());
         }
         return response()->json(['data' => $data, 'state' => 'success'], status: $response->status());
     }
@@ -285,7 +326,7 @@ class ApiController extends Controller
             if (!$response->successful()) {
                 return response()->json([
                     'state' => 'error',
-                    'message' => 'Failed to fetch data',
+                    'message' => 'Bucket Item get Error. Please report to kama.ai',
                     'data' => null
                 ], $response->status());
             }
@@ -307,6 +348,7 @@ class ApiController extends Controller
                         'name' => $item['file']['name'],
                         'size' => $item['file']['size'],
                         'lastModifiedDateTime' => $item['file']['lastModifiedDateTime'],
+                        'last_modified_readable' => Carbon::parse($item['file']['lastModifiedDateTime'])->format('m-d-Y H:i:s'),
                     ],
                     'vault' => $request->bucketName
                 ];
@@ -328,10 +370,17 @@ class ApiController extends Controller
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
+            $message =  $e->getMessage();
+            $this->logAudit(
+                actionName: 'ERROR',
+                oldData: null,
+                newData: null,
+                action_description: $message,
+                    actionType: 'ERROR'
+                );
             return response()->json([
                 'state' => 'error',
-                'message' => $e->getMessage(),
+                'message' => 'Bucket Item get Error. Please report to kama.ai',
                 'data' => null
             ], 500);
         }
@@ -356,12 +405,20 @@ class ApiController extends Controller
             ->post(env('API_BASE_URL') . $end_point, $body);
         return response()->json($response->json());
         if ($response->json() === null) {
-            return response()->json(['message' => 'No data recived from api'], status: 500);
+            return response()->json(['message' => 'No data recived from api. Please report to kama.ai'], status: 500);
         } elseif ($response->status() == 200 && $response->successful()) {
             $buckets = $response->json();
             $data = $buckets['res'];
         } else {
-            return response()->json(['error' => 'Failed to post data'], $response->status());
+             $message =  'An error occurred. Please report to kama.ai';
+            $this->logAudit(
+                actionName: 'ERROR',
+                oldData: null,
+                newData: null,
+                action_description: $message,
+                    actionType: 'ERROR'
+                );
+            return response()->json(['error' => $message], $response->status());
         }
 
         return view('collections.cloudcollection', compact('data'));
@@ -421,10 +478,18 @@ class ApiController extends Controller
 
                 if (!$response->successful() && $response->body() == 'null') {
                     // Handle failed response
+                     $message =  'Collection publish error. Please report to kama.ai';
+                    $this->logAudit(
+                    actionName: 'ERROR',
+                    oldData: null,
+                    newData: null,
+                    action_description: $response->body(),
+                        actionType: 'ERROR'
+                    );
                     return response()->json([
-                        'error' => 'Request failed',
+                        'error' => $message,
                         'status' => $response->status(),
-                        'message' => $response->body(), // optional: display the response body
+                        'message' => $message, // optional: display the response body
                     ], $response->status());
                 }
                 $isRenamed = true;
@@ -475,16 +540,25 @@ class ApiController extends Controller
                 // Handle successful response
                 return response()->json([
                     'status' => 'success', // or 'error' based on the scenario
-                    'message' => $message,
+                    'message' => 'Collection published successfully',
                     'data' => $response->body(), // Using the resource for structured data
                 ]); // or process the response data as needed
             } else {
-                // Handle failed response
+
                 $data = json_decode($response->body(), true);
+                 $message = $data['detail']['message']  ?? 'Unknown error occurred. Please report to kama.ai';
+                // Handle failed response
+                 $this->logAudit(
+                    actionName: 'ERROR',
+                    oldData: null,
+                    newData: null,
+                    action_description: $message,
+                    actionType: 'ERROR'
+                );
                 return response()->json([
-                    'error' => 'Request failed',
+                    'error' => 'Request failed. Please report to kama.ai',
                     'status' => $response->status(),
-                    'message' => $data['detail']['message'], // optional: display the response body
+                    'message' => 'Collection publish error. Please report to kama.ai', // optional: display the response body
                 ], $response->status());
             }
         } catch (\Exception $e) {
@@ -558,15 +632,30 @@ class ApiController extends Controller
             $message = $data['res'];
             return response()->json([
                 'status' => 'success', // or 'error' based on the scenario
-                'message' => $message,
+                'message' => 'Collection deleted successfully',
                 'data' => $response->body(), // Using the resource for structured data
             ]);
+        } elseif ($response->status() === '404') {
+             return response()->json([
+                'status' => 'success', // or 'error' based on the scenario
+                'message' => 'Collection deleted successfully',
+                'data' => [] // Using the resource for structured data
+            ]);
         } else {
+
             // Handle failed response
+             $message =  'Collection delete error. Please report to kama.ai';
+                    $this->logAudit(
+                    actionName: 'ERROR',
+                    oldData: null,
+                    newData: null,
+                    action_description: $response->body(),
+                        actionType: 'ERROR'
+                    );
             return response()->json([
-                'error' => 'Request failed',
+                'error' => $message,
                 'status' => $response->status(),
-                'message' => $response->body(), // optional: display the response body
+                'message' => $message,
             ], $response->status());
         }
     }
@@ -603,12 +692,20 @@ class ApiController extends Controller
             $data = $buckets;
         } else {
             $responseBody = $response->json();
-            $message = $responseBody['detail']['message'] ?? $responseBody;
+            $message = $responseBody['detail']['message'].' Please report to kama.ai' ?? $responseBody;
             $state = 'error';
             $statusCode = 200;
-        }
 
-        return response()->json(['data' => $data, 'state' => $state, 'message' => $message], $statusCode);
+                    $this->logAudit(
+                    actionName: 'ERROR',
+                    oldData: null,
+                    newData: null,
+                    action_description: $message,
+                        actionType: 'ERROR'
+                    );
+        }
+        $errorMessage = 'Storage type connection error. Please report to kama.ai';
+        return response()->json(['data' => $data, 'state' => $state, 'message' => $errorMessage], $statusCode);
     }
 
 
@@ -666,12 +763,12 @@ class ApiController extends Controller
         try {
             $orgId = (int) $request->input('org_id');
             if (!$orgId) {
-                return response()->json(['status' => 'error', 'message' => 'org_id is required'], 422);
+                return response()->json(['status' => 'error', 'message' => 'org_id is required. Please report to kama.ai'], 422);
             }
 
             $apiData = $this->fetchPublishedCollectionsFromAPI($orgId);
             if (empty($apiData)) {
-                return response()->json(['status' => 'success', 'message' => 'No collections returned from API', 'stats' => ['collections_processed' => 0]]);
+                return response()->json(['status' => 'error', 'message' => 'No collections returned from API. Please report to kama.ai', 'stats' => ['collections_processed' => 0]]);
             }
 
             $statsCollections = [];
@@ -690,9 +787,17 @@ class ApiController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Sync collections error', ['message' => $e->getMessage()]);
+                    $message =  $e->getMessage();
+                    $this->logAudit(
+                    actionName: 'ERROR',
+                    oldData: null,
+                    newData: null,
+                    action_description: $message,
+                        actionType: 'ERROR'
+                    );
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error synchronizing published collections: ' . $e->getMessage()
+                'message' => 'Error synchronizing published collections: Please report to kama.ai' . $e->getMessage()
             ], 500);
         }
     }
@@ -719,16 +824,40 @@ class ApiController extends Controller
                 $data = (is_array($json) && array_key_exists('res', $json)) ? $json['res'] : $json;
 
                 if (!is_array($data)) {
-                    Log::warning('Unexpected API payload for list_collections_of_org', ['json' => $json]);
+                    $message = 'Unexpected API payload for list_collections_of_org. Please report to kama.ai';
+                    Log::warning($message, ['json' => $json]);
+
+                    $this->logAudit(
+                    actionName: 'ERROR',
+                    oldData: null,
+                    newData: null,
+                    action_description: $message,
+                        actionType: 'ERROR'
+                    );
                     return [];
                 }
 
                 return $data;
             }
-
-            throw new \Exception('API request failed with status: ' . $response->status());
+            $message = 'API request failed with status. Please report to kama.ai' . $response->status();
+            $this->logAudit(
+                actionName: 'ERROR',
+                oldData: null,
+                newData: null,
+                action_description: $message,
+                actionType: 'ERROR'
+            );
+            throw new \Exception($message . $response->status());
         } catch (\Exception $e) {
-            Log::error('Failed to fetch published collections from API: ' . $e->getMessage());
+              $message = 'Failed to fetch published collections from API. Please report to kama.ai' . $response->status();
+            $this->logAudit(
+                actionName: 'ERROR',
+                oldData: null,
+                newData: null,
+                action_description: $message,
+                actionType: 'ERROR'
+            );
+            Log::error($message . $e->getMessage());
             throw $e;
         }
     }
@@ -762,11 +891,13 @@ class ApiController extends Controller
             ->keyBy('collection_id');
 
         // delete ones not returned
-        $toDelete = $existing->keys()->filter(fn ($id) => !isset($incomingSet[$id]))->all();
-        if (!empty($toDelete)) {
+        $toUnPublish = $existing->keys()->filter(fn (int|string $id) => !isset($incomingSet[$id]))->all();
+        if (!empty($toUnPublish)) {
             $stats['collections_deleted'] = \App\Models\Collection::where('organization_id', $organizationId)
-                ->whereIn('collection_id', $toDelete)
-                ->delete();
+                ->whereIn('collection_id', $toUnPublish)
+                ->update([
+                    'is_synced' => 0,
+                ]);
         }
 
         $now = now();
@@ -779,29 +910,53 @@ class ApiController extends Controller
             if (!$extId) {
                 continue;
             }
-
             $storageType = $this->determineStorageType($c);
             $createdAt = isset($c['collectionCreatedDate']) ? \Carbon\Carbon::parse($c['collectionCreatedDate']) : $now;
+            $collectionName = $c['collection_name'] ?? '';
 
-            if (isset($existing[$extId])) {
+            // Check if collection_name exists in published_collection_name of $existing array
+            $publishedExists = false;
+            foreach ($existing as $exist) {
+                if ($exist->published_collection_name === $collectionName) {
+                    $publishedExists = true;
+                    break;
+                }
+            }
+
+            if (isset($existing[$extId]) || $publishedExists) {
                 // collect for update
-                $toUpdate[] = [
-                    'id' => $existing[$extId]->id,
-                    'collection_name' => $c['collection_name'] ?? $existing[$extId]->collection_name,
-                    'published_collection_name' => $c['collection_name'] ?? $existing[$extId]->published_collection_name,
-                    'storage_type' => $storageType,
-                    'is_synced' => 1,
-                    'is_cloud_collection' => 1,
-                    'updated_at' => $now,
-                ];
-                $stats['collections_updated']++;
+                $targetId = isset($existing[$extId]) ? $existing[$extId]->id : null;
+                $is_synced = isset($existing[$extId]) ? $existing[$extId]->is_synced : 1;
+                if (!$targetId && $publishedExists) {
+                    // Find the id by published_collection_name
+                    foreach ($existing as $exist) {
+                        if ($exist->published_collection_name === $collectionName) {
+                            $targetId = $exist->id;
+                            $is_synced = $exist->is_synced;
+                            break;
+                        }
+                    }
+                }
+                if ($targetId) {
+                    $toUpdate[] = [
+                        'id' => $targetId,
+                        'collection_name' => $collectionName,
+                        'published_collection_name' => $collectionName,
+                        'storage_type' => $storageType,
+                        'is_synced' =>  $is_synced,
+                        'is_cloud_collection' => isset($existing[$extId]) ? $existing[$extId]->is_cloud_collection : 1,
+                        'updated_at' => $now,
+                        'collection_id' => $extId
+                    ];
+                    $stats['collections_updated']++;
+                }
             } else {
                 // collect for insert
                 $toInsert[] = [
                     'organization_id' => $organizationId,
                     'collection_id' => $extId,
-                    'collection_name' => $c['collection_name'] ?? '',
-                    'published_collection_name' => $c['collection_name'] ?? '',
+                    'collection_name' => $collectionName,
+                    'published_collection_name' => $collectionName,
                     'storage_type' => $storageType,
                     'is_synced' => 1,
                     'is_cloud_collection' => 1,
@@ -931,11 +1086,32 @@ class ApiController extends Controller
             ];
         }
 
-        $collectionIdMap = \App\Models\Collection::query()
+        // Build collectionIdMap using both collection_id and published_collection_name
+        $collectionsDb = \App\Models\Collection::query()
             ->where('organization_id', $organizationId)
-            ->whereIn('collection_id', $extIds)
-            ->pluck('id', 'collection_id')
-            ->toArray();
+            ->get();
+
+        $collectionIdMap = [];
+        foreach ($apiCollections as $collection) {
+            $extId = $collection['collection_id'] ?? null;
+            $collectionName = $collection['collection_name'] ?? null;
+            $publishedExists = false;
+            $targetId = null;
+            foreach ($collectionsDb as $exist) {
+                if ($exist->collection_id == $extId) {
+                    $targetId = $exist->id;
+                    break;
+                }
+                if ($exist->published_collection_name === $collectionName) {
+                    $publishedExists = true;
+                    $targetId = $exist->id;
+                    break;
+                }
+            }
+            if ($targetId) {
+                $collectionIdMap[$extId] = $targetId;
+            }
+        }
 
         $stats = [
             'files_processed' => 0,
@@ -980,17 +1156,6 @@ class ApiController extends Controller
                 $stats['files_processed']++;
             }
 
-            // Delete files not in API
-            $toDeleteIds = [];
-            foreach ($existing as $key => $row) {
-                if (!isset($incoming[$key])) {
-                    $toDeleteIds[] = $row->id;
-                }
-            }
-            if (!empty($toDeleteIds)) {
-                $deleted = \App\Models\CollectionData::whereIn('id', $toDeleteIds)->delete();
-                $stats['files_deleted'] += $deleted;
-            }
 
             // Prepare inserts and updates
             $toInsert = [];

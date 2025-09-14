@@ -207,7 +207,7 @@ class CollectionController extends Controller
         // Return the response
         return response()->json([
             'status' => 'success',
-            'message' => "Record updated successfully.",
+            'message' => "File updated successfully.",
         ]);
     }
 

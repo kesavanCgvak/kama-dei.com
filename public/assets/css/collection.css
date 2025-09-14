@@ -2,6 +2,7 @@
     --file-not-exists-background-color: #fa543f;
     --file-outdated-background-color: #fe8d2b;
     --selected-background-color: #cfe2ff;
+    --new-collection-background-color: #2685FC;
 }
 .card-header h2 {
     font-size: 18px;
@@ -430,6 +431,7 @@ ul.list-draagable {
 .file-selected{
     background-color: var(--selected-background-color) !important;
 }
+
 .card-header-documents {
     display: flex;
     justify-content: space-between;
@@ -527,6 +529,10 @@ padding: 2px 18px;
 }
 .not-published h2, .not-published .accordion-heading i {
     color: var(--file-outdated-background-color) !important;
+}
+
+.new-collection h2, .new-collection .accordion-heading i {
+    color: var(--new-collection-background-color) !important;
 }
 #collection-description {
     max-width: 100%; /* Ensure the width does not exceed the modal */

@@ -24,6 +24,7 @@ class CollectionResource extends JsonResource
             'user_id' => $this->user_id,
             'is_synced' => $this->is_synced,
             'is_cloud_collection' => $this->is_cloud_collection,
+            'collection_id' => $this->collection_id,
             'collection_data' => CollectionDataResource::collection($this->whenLoaded('collectionData')),
         ];
     }
