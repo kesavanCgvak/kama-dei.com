@@ -237,7 +237,7 @@ $(document).on("click", ".file-delete", function () {
     // if (!confirmation) {
     //     return false;
     // }
- CustomeConfirm({
+    CustomeConfirm({
         content: 'Do you want to remove this file from the Collection?',
         buttons: {
             no: {
@@ -247,44 +247,44 @@ $(document).on("click", ".file-delete", function () {
             },
             yes: {
                 text: 'Yes', btnClass: 'btn-yes', action: function () {
-let collectionName = $(this).closest(".accordion-item").find(".accordion-header").data("collection");
-    let data = { id: collectionFileId, collectionName: collectionName };
-    $selectedItem.addClass('delete-item');
-    $.ajax({
-        type: "POST",
-        url: "/deleteLocalFile",
-        data: data,
-        dataType: 'json',
-        beforeSend: function () {
-            showLoader();
-        },
-        success: function (response) {
-            if (response.status === 'success') {
-                hideLoader();
-                toastr.success(response.message || "File deleted successfully. ");
-                $selectedItem.remove();
-                updateUnPublishedStatus($accordionItem);
-                checkPublishStatus($accordionItem);
-                $(`#cloud-storage .accordion-content li[data-file-id="${elementIdentifier}"]`).removeClass('file-selected');
-                setTimeout(function () {
-                    initSortable();
-                    updateFileNotexist(); // Update file existence status
-                }, 200);
-                setTimeout(function () { getFileDifferences(); }, 500);
+                    let collectionName = $(this).closest(".accordion-item").find(".accordion-header").data("collection");
+                    let data = { id: collectionFileId, collectionName: collectionName };
+                    $selectedItem.addClass('delete-item');
+                    $.ajax({
+                        type: "POST",
+                        url: "/deleteLocalFile",
+                        data: data,
+                        dataType: 'json',
+                        beforeSend: function () {
+                            showLoader();
+                        },
+                        success: function (response) {
+                            if (response.status === 'success') {
+                                hideLoader();
+                                toastr.success(response.message || "File deleted successfully. ");
+                                $selectedItem.remove();
+                                updateUnPublishedStatus($accordionItem);
+                                checkPublishStatus($accordionItem);
+                                $(`#cloud-storage .accordion-content li[data-file-id="${elementIdentifier}"]`).removeClass('file-selected');
+                                setTimeout(function () {
+                                    initSortable();
+                                    updateFileNotexist(); // Update file existence status
+                                }, 200);
+                                setTimeout(function () { getFileDifferences(); }, 500);
 
-            } else {
-                throw new Error(response.message || "Unknown error occurred. Please report to kama.ai");
-            }
-        },
-        error: function (xhr, status, error) {
-            hideLoader();
-            console.error('AJAX Error:', status, error);
-            toastr.error(xhr.responseJSON?.message || "Error on deleting file. Please report to kama.ai");
-        },
-        complete: function () {
-            hideLoader();
-        }
-    });
+                            } else {
+                                throw new Error(response.message || "Unknown error occurred. Please report to kama.ai");
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            hideLoader();
+                            console.error('AJAX Error:', status, error);
+                            toastr.error(xhr.responseJSON?.message || "Error on deleting file. Please report to kama.ai");
+                        },
+                        complete: function () {
+                            hideLoader();
+                        }
+                    });
 
                 }
             }
@@ -631,16 +631,33 @@ function initSortable() {
                     transition: ""
                 });
             }, 2000); // Remove after 2 seconds
+
+            // Always move dropped item just after the 'Drag and Drop files here' message
+            let $parentList = $(this);
+            let $dropMessage = $parentList.find('.drop-message');
+            if ($dropMessage.length > 0) {
+                $dropMessage.after(droppedItem);
+            } else {
+                $parentList.prepend(droppedItem);
+            }
+            console.log('Dropped item moved after drop message', $parentList);
+            // Add class based on closest ancestor .new-collection
+            if ($parentList.closest('.new-collection').length > 0) {
+                droppedItem.removeClass('unpublished-item').addClass('new-item');
+            } else {
+                droppedItem.removeClass('new-item').addClass('unpublished-item');
+            }
+
             let data = {
                 file_name: droppedItem.data('file-name'),
                 size: droppedItem.data("file-size"),
                 last_modified: droppedItem.data("last-modified"),
-                collection_id: $(this).closest(".accordion-item").find(".accordion-header").data("id"),
+                collection_id: $parentList.closest(".accordion-item").find(".accordion-header").data("id"),
                 file_id: droppedItem.data("file-id"),
                 bucket_name: droppedItem.data("bucket-name"),
             };
 
-            let sortedItems = $(this).children("li");
+            let sortedItems = $parentList.children("li");
             let seenIds = new Set();
             let hasDuplicates = false; // Flag to track duplicates
 
@@ -659,7 +676,7 @@ function initSortable() {
             if (!hasDuplicates) {
                 data['org_id'] = $('#orgID').val();
                 data['storage_type'] = $('#storage_type').val();
-                data['collection_name'] = $(this).closest(".accordion-item").find(".accordion-header").data("collection");
+                data['collection_name'] = $parentList.closest(".accordion-item").find(".accordion-header").data("collection");
 
                 createLocalItems(data, droppedItem);
                 return;
@@ -667,7 +684,7 @@ function initSortable() {
             } else {
                 toastr.warning("Duplicate Item");
             }
-            updateDropZoneMessage($(this)); // Ensure message updates when sorting
+            updateDropZoneMessage($parentList); // Ensure message updates when sorting
         },
         over: function (event, ui) {
             $(this).addClass("highlight-dropzone"); // Highlight the drop area when dragging over
@@ -721,6 +738,7 @@ function updateUnPublishedStatus($element, type='') {
     $element.find('.submenu').find('.copy-collection').addClass('btn-disabled').prop('disabled', true);
     if (type === 'copy') {
         $element.addClass('new-collection');
+         $element.removeClass('not-published');
         $element.find('.accordion-header').attr('title', 'New Collection');
         return;
     }
@@ -1577,6 +1595,7 @@ function createLocalAccordionItem(data) {
     let disableCopy = "";
     let disableClass = "";
     toolTipText = 'Published';
+    console.log('data.collection_name', data.is_synced, data.collection_id);
     if (data.is_synced === 0 && data.collection_id != null) {
         disableCopy = 'disabled';
         //toolTipText = 'Not Published'
@@ -1602,7 +1621,7 @@ function createLocalAccordionItem(data) {
         <li><button ${disableCopy} class="btn-context-menu copy-collection ${disableClass}">Copy</button></li>
         <li><button class="btn-context-menu delete-collection">Delete</button></li>
     </ul>`;
-
+    console.log('classNotPublished', classNotPublished);
     return `
           <div class="accordion-item ${classNotPublished}" data-id="${data.id}" id="section-${data.id}" data-is-cloud-collecion="${data.is_cloud_collection}"
            data-published-collection-name="${data.published_collection_name}" data-collection-name="${data.collection_name}" data-collection-description="${collectionDecsription}">

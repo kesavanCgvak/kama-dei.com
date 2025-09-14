@@ -401,6 +401,25 @@ ul.list-draagable {
     background-color: rgba(250, 159, 85, 0.5);
     animation: blinkEffect 2s infinite alternate; /* Apply the animation */
 }
+.unpublished-item {
+    /* color:  #fe8d2b; */
+    color: var(--file-outdated-background-color) !important;
+}
+.unpublished-item .circle {
+    /* background-color: #fe8d2b !important; */
+    background-color: var(--file-outdated-background-color) !important;
+    color: #fff;
+}
+.new-item {
+    /* color:  #f17100; */
+    color: var(--new-collection-background-color) !important;
+}
+
+.new-item .circle {
+    /* background-color: #f17100 !important; */
+    background-color: var(--new-collection-background-color) !important;
+    color: #fff;
+}
 
 @keyframes blinkEffect {
     0% {
