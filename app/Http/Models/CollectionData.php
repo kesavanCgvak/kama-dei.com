@@ -16,6 +16,7 @@ class CollectionData extends Model
         'file_name',
         'size',
         'created_date',
+        'is_synced'
     ];
 
     // Define the relationship to Collection

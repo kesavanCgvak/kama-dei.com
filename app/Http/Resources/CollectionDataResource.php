@@ -23,7 +23,8 @@ class CollectionDataResource extends JsonResource
             'file_id' => $this->file_id,
             'bucket_sp_site_name' => $this->bucket_sp_site_name,
             'last_modified' => $this->last_modified,
-            'last_modified_readable' => Carbon::parse($this->last_modified)->format('m-d-Y H:i')
+            'last_modified_readable' => Carbon::parse($this->last_modified)->format('m-d-Y H:i'),
+            'is_synced' => $this->is_synced,
         ];
     }
 }

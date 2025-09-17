@@ -640,13 +640,10 @@ function initSortable() {
             } else {
                 $parentList.prepend(droppedItem);
             }
-            console.log('Dropped item moved after drop message', $parentList);
             // Add class based on closest ancestor .new-collection
-            if ($parentList.closest('.new-collection').length > 0) {
-                droppedItem.removeClass('unpublished-item').addClass('new-item');
-            } else {
-                droppedItem.removeClass('new-item').addClass('unpublished-item');
-            }
+           // if ($parentList.closest('.new-collection').length > 0 || $parentList.closest('.not-published').length > 0) {
+                droppedItem.addClass('unpublished-item')
+           // }
 
             let data = {
                 file_name: droppedItem.data('file-name'),
@@ -740,6 +737,9 @@ function updateUnPublishedStatus($element, type='') {
         $element.addClass('new-collection');
          $element.removeClass('not-published');
         $element.find('.accordion-header').attr('title', 'New Collection');
+        $element.find('li.file-item').each(function () {
+            $(this).addClass('unpublished-item');
+        });
         return;
     }
     $element.addClass('not-published');
@@ -1457,12 +1457,16 @@ function createCloudAccordionItem(data) {
           </div>`;
 }
 
-function buildLocalCollectionFiles(collectionData) {
+function buildLocalCollectionFiles(collectionData, itemType = 'new-item') {
     let $fileHtml = `<ul class="collection ui-sortable"><div class="drop-message">Drag and Drop files here</div>`;
     $.each(collectionData, function (index, collection) {
         let sanitizedFileName = sanitizeFileName(collection.file_name);
-        let iocnName = getFileIcon(collection.file_name);
-        $fileHtml += ` <li class="file-item collection-item local-files"
+        let iconName = getFileIcon(collection.file_name);
+        let itemTypeClass = '';
+       if (collection.is_synced === 0 && itemType == 'not-published' || collection.is_synced === 0 && itemType == 'new') {
+            itemTypeClass = 'unpublished-item';
+        }
+        $fileHtml += ` <li class="file-item collection-item local-files ${itemTypeClass}"
            data-file-name="${collection.file_name}"
            data-bucket-name="${collection.bucket_sp_site_name}"
            data-file-size="${collection.size}"
@@ -1472,7 +1476,7 @@ function buildLocalCollectionFiles(collectionData) {
            >
       <div class="list-details">
       <div className="list-item-icon">
-       <span class="circle"><i class="${iocnName} list-icon"></i></span>
+       <span class="circle"><i class="${iconName} list-icon"></i></span>
       </div>
         <div class="list-item-name">
           <span class="title">${collection.file_name}</span>
@@ -1558,6 +1562,9 @@ $(document).on("click", ".publish-collection", function (event) {
                 $collectionWrapper.find('.accordion-header').attr('title', 'Published');
                 $collectionWrapper.removeClass('not-published new-collection');
                 $collectionWrapper.find('.copy-collection').removeClass('btn-disabled').removeAttr('disabled');
+                $collectionWrapper.find('li').each(function () {
+                    $(this).removeClass('unpublished-item');
+                });
                 toastr.success(response.message);
             }
 
@@ -1587,25 +1594,24 @@ function createLocalAccordionItem(data) {
     let classNotPublished = '';
     let collectionData = data.collection_data
     let collectionDecsription = data.collection_description === null ? "" : data.collection_description;
-    let $collectionList = `<ul class="collection" style="min-height: 150px"> </ul>`;
-    if (collectionData.length > 0) {
-        $collectionList = buildLocalCollectionFiles(collectionData);
-    }
+
     let $contextMenu = ``;
     let disableCopy = "";
     let disableClass = "";
+    let itemType = "published";
     toolTipText = 'Published';
-    console.log('data.collection_name', data.is_synced, data.collection_id);
     if (data.is_synced === 0 && data.collection_id != null) {
         disableCopy = 'disabled';
         //toolTipText = 'Not Published'
         classNotPublished = 'not-published';
         disableClass = 'btn-disabled';
+        itemType = "not-published";
     }
     if (data.is_synced === 0 && data.collection_id == null) {
         disableCopy = 'disabled';
         classNotPublished = 'new-collection';
         disableClass = 'btn-disabled';
+        itemType = "new";
     }
 
     let disablePublish = 'disabled';
@@ -1614,14 +1620,16 @@ function createLocalAccordionItem(data) {
         disablePublish = "";
         disablePublishClass = "publish-collection";
     }
-
+ let $collectionList = `<ul class="collection" style="min-height: 150px"> </ul>`;
+    if (collectionData.length > 0) {
+        $collectionList = buildLocalCollectionFiles(collectionData, itemType);
+    }
     $contextMenu = `<ul>
         <li><button class="btn-context-menu rename-collection">Edit</button></li>
         <li><button ${disablePublish} class="btn-context-menu publish ${disablePublishClass}">Publish</button></li>
         <li><button ${disableCopy} class="btn-context-menu copy-collection ${disableClass}">Copy</button></li>
         <li><button class="btn-context-menu delete-collection">Delete</button></li>
     </ul>`;
-    console.log('classNotPublished', classNotPublished);
     return `
           <div class="accordion-item ${classNotPublished}" data-id="${data.id}" id="section-${data.id}" data-is-cloud-collecion="${data.is_cloud_collection}"
            data-published-collection-name="${data.published_collection_name}" data-collection-name="${data.collection_name}" data-collection-description="${collectionDecsription}">

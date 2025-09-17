@@ -27,9 +27,8 @@ class ApiController extends Controller
     private function getUserKey()
     {
         $userKey = \App\UserKey::where('user_id', session()->get('userID'))->first();
-        //return $userKey->getAttribute('userKey');
-        return '65ebad1d278b1f961429c38d58fa0eaf';
-       //eturn '65ebad1d278b1f961429c38d58fa0eaf';
+        return $userKey->getAttribute('userKey');
+        //return '65ebad1d278b1f961429c38d58fa0eaf';
     }
 
     public function manageCollection()
@@ -537,6 +536,10 @@ class ApiController extends Controller
                         'published_collection_name' => $request->collection_name,
                         'collection_id' => $responseData->collection_id,
                     ]);
+                CollectionData::where('collection_id', $request->db_collection_id)
+                    ->update([
+                        'is_synced' => 1,
+                    ]);
                 // Handle successful response
                 return response()->json([
                     'status' => 'success', // or 'error' based on the scenario
@@ -617,6 +620,7 @@ class ApiController extends Controller
 
         $end_point = '/delete_collection_of_org/v1';
         $response = $this->deleteCloudeClollection($headers,  $body, $end_point);
+        $response->status();
         if ($response->successful() && $response->body() != 'null' && $response->status() == 200) {
             $file_detials = "Deleted the collection '$request->collection_name'";
             $this->logAudit(
@@ -630,12 +634,15 @@ class ApiController extends Controller
             $data = $response->json();
             $this->deleteCollectionAndData($request->collection_id);
             $message = $data['res'];
+            $response->status();
             return response()->json([
                 'status' => 'success', // or 'error' based on the scenario
                 'message' => 'Collection deleted successfully',
                 'data' => $response->body(), // Using the resource for structured data
             ]);
-        } elseif ($response->status() === '404') {
+
+        } elseif ($response->status() === 404) {
+            $this->deleteCollectionAndData($request->collection_id);
              return response()->json([
                 'status' => 'success', // or 'error' based on the scenario
                 'message' => 'Collection deleted successfully',
@@ -643,6 +650,7 @@ class ApiController extends Controller
             ]);
         } else {
 
+            $status = $response->status();
             // Handle failed response
              $message =  'Collection delete error. Please report to kama.ai';
                     $this->logAudit(
@@ -652,6 +660,7 @@ class ApiController extends Controller
                     action_description: $response->body(),
                         actionType: 'ERROR'
                     );
+
             return response()->json([
                 'error' => $message,
                 'status' => $response->status(),
@@ -768,7 +777,16 @@ class ApiController extends Controller
 
             $apiData = $this->fetchPublishedCollectionsFromAPI($orgId);
             if (empty($apiData)) {
-                return response()->json(['status' => 'error', 'message' => 'No collections returned from API. Please report to kama.ai', 'stats' => ['collections_processed' => 0]]);
+                $message = 'No collections returned from API. Please report to kama.ai';
+                $this->logAudit(
+                                    actionName: 'ERROR',
+                                    oldData: null,
+                                    newData: null,
+                                    action_description: $message,
+                                    actionType: 'ERROR'
+                                    );
+                return response()->json(['data' => [], 'status' => 'success', 'message' => 'success'], 200);
+
             }
 
             $statsCollections = [];
